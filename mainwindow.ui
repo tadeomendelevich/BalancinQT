@@ -6,115 +6,151 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>868</width>
-    <height>644</height>
+    <width>907</width>
+    <height>690</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Comunications</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">
-#centralwidget {
-background-color:
-qlineargradient(spread:reflect, x1:0.5, y1:0, x2:0, y2:0,
-stop:0 rgba(91, 204, 233, 100), stop:1 rgba(32, 80, 96,
-100));
-
- }
-QMenu
-{
-background-color:
-qlineargradient(spread:reflect, x1:0.9, y1:0, x2:0.6, y2:0, x3:0.2, y3:0
-stop:0.2 rgba(100, 210, 255, 70), stop:0.5 rgba(91, 180, 249, 70), stop:1 rgba(32, 80, 96,
-100));
-color:white;
-font-style:bold;
+   <string notr="true">#centralwidget {
+    background-color: black;
+    background-image: url(:/img/logoUNERsolo.png);
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
-
-
-QPushButton
-{
-color: white;
-background-color: #27a9e3;
-border-width: 2px;
-border-radius: 12px;
-height:25px;
+/* QMenu con verde militar degradado */
+QMenu {
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #556b2f, stop:1 #3a5f0b);
+    color: white;
+    font-weight: bold;
+    border: 1px solid #6b8e23;
 }
 
-QPushButton:hover { background-color: lime; }
-
-QLabel
-{
-color: white; 
-border: 2px solid #27a9e3;
-border-radius: 10px;
-padding: 2px;
-
+/* Botones */
+QPushButton {
+    color: white;
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #6b8e23, stop:1 #3a5f0b);
+    border: 2px solid #2e4600;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-weight: bold;
 }
+QPushButton:hover {
+    background-color: #4b6e1f;
+}
+
+/* Labels */
+QLabel {
+    color: #d0ffcc;
+    border: 1px solid #4a6620;
+    background-color: rgba(50, 80, 30, 0.3);
+    border-radius: 6px;
+    padding: 4px;
+}
+
+/* QTextEdit */
 QTextEdit {
- border: 2px solid #27a9e3;
- border-radius: 30px;
- background-color: rgba(0,0,0,0);
-
- }
-
-QTextEdit#textEdit_RAW{
-	font-family: &quot;Verdana&quot;;
-	font-size: 14px ;
-	font-style: bold;
-	padding:5px;
-   color:white;
+    border: 2px solid #4a6620;
+    border-radius: 10px;
+    background-color: rgba(30, 50, 20, 0.3);
+    color: #e6ffe6;
+    padding: 6px;
+    font-family: Consolas;
 }
 
-QTextEdit#textEdit_PROCCES{
-    font-family: &quot;Verdana&quot;;
-	font-size: 20px ;
-	font-style: bold;
-	padding:5px;
-   color:white;
+/* Personalizados */
+QTextEdit#textEdit_RAW {
+    font-size: 14px;
+    font-style: italic;
+}
+QTextEdit#textEdit_PROCCES {
+    font-size: 18px;
+    font-style: italic;
 }
 
-QComboBox{
-color: white;
-background-color: #27a9e3;
-border-width: 2px;
-border-radius: 12px;
-height:25px;
+/* ComboBox */
+QComboBox {
+    color: white;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 #6b8e23, stop:1 #3a5f0b);
+    border: 2px solid #2e4600;
+    border-radius: 10px;
+    padding: 3px;
 }
-
-QComboBox:on { /* shift the text when the popup opens */
+QComboBox:on {
     padding-top: 3px;
     padding-left: 4px;
 }
-
 QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
     width: 15px;
-
-    border-left-width: 1px;
-    border-left-color: darkgray;
-    border-left-style: solid; /* just a single line */
-    border-top-right-radius: 6px; /* same radius as the QComboBox */
+    border-left: 1px solid #2e4600;
+    border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
 }
-
-
-
-
-
-
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="styleSheet">
-    <string notr="true">#centralWidget { background: rgba(32, 80, 96, 100); }</string>
+    <string notr="true">#centralWidget { background: rgb(255, 164, 73); }
+</string>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_10">
+      <item>
+       <widget class="QTextEdit" name="textEdit_RAW">
+        <property name="font">
+         <font>
+          <family>Consolas</family>
+          <pointsize>-1</pointsize>
+          <italic>true</italic>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::HLine</enum>
+        </property>
+        <property name="html">
+         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:14px; font-weight:700; font-style:italic;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:16px; font-weight:400; font-style:normal; text-decoration: underline;&quot;&gt;Dato sin procesar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTextEdit" name="textEdit_PROCCES">
+        <property name="font">
+         <font>
+          <family>Consolas</family>
+          <pointsize>-1</pointsize>
+          <italic>true</italic>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="html">
+         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:18px; font-weight:700; font-style:italic;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:24px; font-weight:400; font-style:normal; text-decoration: underline;&quot;&gt;Dato procesado&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
@@ -153,6 +189,14 @@ QComboBox::drop-down {
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
                <widget class="QLabel" name="label_9">
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
                 <property name="text">
                  <string>local PORT:</string>
                 </property>
@@ -178,6 +222,11 @@ QComboBox::drop-down {
              <layout class="QHBoxLayout" name="horizontalLayout_8">
               <item>
                <widget class="QLabel" name="label_7">
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>device IP :</string>
                 </property>
@@ -192,6 +241,11 @@ QComboBox::drop-down {
              <layout class="QHBoxLayout" name="horizontalLayout_9">
               <item>
                <widget class="QLabel" name="label_8">
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>device PORT:</string>
                 </property>
@@ -227,64 +281,96 @@ QComboBox::drop-down {
          </spacer>
         </item>
         <item>
-         <widget class="QTextEdit" name="textEdit">
-          <property name="html">
-           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:14pt; font-weight:700;&quot;&gt;Box buffer&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTextEdit" name="textEdit_2">
-          <property name="html">
-           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;CAJAS PATEADAS:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0">
+          <item>
+           <widget class="QLabel" name="label_6">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Valores ADC</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
-             <widget class="QLabel" name="label">
+             <widget class="QLabel" name="label_ADC_1">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="frameShape">
                <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
-               <string>LEFT_IR</string>
+               <string>ADC 1</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_2">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="frameShape">
                <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
-               <string>CENTER_IR</string>
+               <string>ADC 2</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_3">
+             <widget class="QLabel" name="label_ADC_3">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="frameShape">
                <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
-               <string>RIGHT_IR</string>
+               <string>ADC 3</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADC_4">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>ADC 4</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -293,50 +379,77 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
             <item>
-             <widget class="QLabel" name="label_LIR">
+             <widget class="QLabel" name="label_ADCVALUE_1">
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
-                <bold>true</bold>
+                <italic>false</italic>
+                <bold>false</bold>
                </font>
               </property>
               <property name="frameShape">
                <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
-               <string>LIR</string>
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_CIR">
+             <widget class="QLabel" name="label_ADCVALUE_2">
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
-                <bold>true</bold>
+                <italic>false</italic>
+                <bold>false</bold>
                </font>
               </property>
               <property name="frameShape">
                <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
-               <string>CIR</string>
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_RIR">
+             <widget class="QLabel" name="label_ADCVALUE_3">
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
-                <bold>true</bold>
+                <italic>false</italic>
+                <bold>false</bold>
                </font>
               </property>
               <property name="frameShape">
                <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
-               <string>RIR</string>
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADCVALUE_4">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -345,28 +458,352 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,1">
+         <layout class="QVBoxLayout" name="verticalLayout_7">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,1">
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <widget class="QLabel" name="label_ADC_5">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>ADC 5</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADC_6">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>ADC 6</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADC_7">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>ADC 7</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADC_8">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>ADC 8</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <item>
+             <widget class="QLabel" name="label_ADCVALUE_5">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <italic>false</italic>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADCVALUE_6">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <italic>false</italic>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADCVALUE_7">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <italic>false</italic>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ADCVALUE_8">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <italic>false</italic>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>000</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>Aceleracion MPU6050</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0,0">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
-               <widget class="QLabel" name="label_4">
-                <property name="frameShape">
-                 <enum>QFrame::Panel</enum>
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <item>
+                 <widget class="QLabel" name="label_AX">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>AX</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_3">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>AY</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_4">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>AZ</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_12">
+                <item>
+                 <widget class="QLabel" name="label_AX_VALUE">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>000</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_AY_VALUE">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>000</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_AZ_VALUE">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>000</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <bold>true</bold>
+                <underline>true</underline>
+               </font>
+              </property>
+              <property name="text">
+               <string>Giroscopio MPU6050</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <item>
+               <widget class="QLabel" name="label_GX">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <bold>true</bold>
+                 </font>
                 </property>
                 <property name="text">
-                 <string>LEFT_ENCODER</string>
+                 <string>GX</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_5">
-                <property name="frameShape">
-                 <enum>QFrame::Panel</enum>
+               <widget class="QLabel" name="label_GY">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <bold>true</bold>
+                 </font>
                 </property>
                 <property name="text">
-                 <string>RIGHT_ENCODER</string>
+                 <string>GY</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_GZ">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>GZ</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -375,34 +812,47 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QLabel" name="label_LENC">
+               <widget class="QLabel" name="label_GX_VALUE">
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
-                  <bold>true</bold>
                  </font>
                 </property>
-                <property name="frameShape">
-                 <enum>QFrame::Panel</enum>
-                </property>
                 <property name="text">
-                 <string>L_ENC</string>
+                 <string>000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_RENC">
+               <widget class="QLabel" name="label_GY_VALUE">
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
-                  <bold>true</bold>
                  </font>
                 </property>
-                <property name="frameShape">
-                 <enum>QFrame::Panel</enum>
+                <property name="text">
+                 <string>000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_GZ_VALUE">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
                 </property>
                 <property name="text">
-                 <string>R_ENC</string>
+                 <string>000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -410,81 +860,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,0">
-            <item>
-             <widget class="QLabel" name="label_6">
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
-              <property name="text">
-               <string>DISTANCE:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_DISTANCE">
-              <property name="font">
-               <font>
-                <pointsize>28</pointsize>
-                <bold>false</bold>
-               </font>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
-              <property name="text">
-               <string>168 cm</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
          </layout>
         </item>
        </layout>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="textEdit_RAW">
-        <property name="font">
-         <font>
-          <family>Verdana</family>
-          <pointsize>-1</pointsize>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="html">
-         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Verdana'; font-size:14px; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16px; text-decoration: underline;&quot;&gt;Dato sin procesar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="textEdit_PROCCES">
-        <property name="font">
-         <font>
-          <family>Verdana</family>
-          <pointsize>-1</pointsize>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="html">
-         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Verdana'; font-size:20px; font-weight:700; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:24px; font-weight:400; text-decoration: underline;&quot;&gt;Dato procesado&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>
@@ -502,7 +880,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>868</width>
+     <width>907</width>
      <height>21</height>
     </rect>
    </property>

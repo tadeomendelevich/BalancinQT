@@ -27,17 +27,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->comboBox_CMD->addItem("ALIVE", 0xF0);
     ui->comboBox_CMD->addItem("FIRMWARE", 0xF1);
-    ui->comboBox_CMD->addItem("SENSORES", 0xA0);
+    ui->comboBox_CMD->addItem("MPU6050", 0xA6);
     ui->comboBox_CMD->addItem("MOTORES", 0xA1);
-    ui->comboBox_CMD->addItem("SERVO", 0xA2);
-    ui->comboBox_CMD->addItem("DISTANCIA", 0xA3);
     ui->comboBox_CMD->addItem("VELOCIDAD", 0xA4);
-    ui->comboBox_CMD->addItem("SWITCHS", 0x12);
-    ui->comboBox_CMD->addItem("LEDS", 0x10);
     ui->comboBox_CMD->addItem("SENDALLSENSORS", 0xA9);
     ui->comboBox_CMD->addItem("STOPALLSENSORS", 0xAA);
-    ui->comboBox_CMD->addItem("BOXCATEGORY", 0xB3);
-    ui->comboBox_CMD->addItem("GETALLBOXES", 0xB7);
+
 
 
     estadoProtocolo=START;
@@ -191,7 +186,6 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     int32_t length = sizeof(*datosRx)/sizeof(datosRx[0]);
     QString str, strOut;
     _udat w;
-    uint8_t cantidad, contadorCajas;
     for(int i = 1; i<length; i++){
         if(isalnum(datosRx[i]))
             str = str + QString("%1").arg(char(datosRx[i]));
@@ -201,7 +195,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     ui->textEdit_RAW->append("*(MBED-S->PC)->decodeData (" + str + ")");
 
     switch (datosRx[1]) {
-    case GETANALOGSENSORS://     ANALOGSENSORS=0xA0,
+    /*case GETANALOGSENSORS://     ANALOGSENSORS=0xA0,
         w.ui8[0] = datosRx[2];
         w.ui8[1] = datosRx[3];
         str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
@@ -284,18 +278,18 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         else
             str = str + "LOW";
         ui->textEdit_PROCCES->append(str);
-        break;
+        break;*/
 
     case GETALIVE://     GETALIVE=0xF0,
         if(datosRx[2]==ACK){
-            contadorAlive++;
-            if(source)
+            if(source) {
+                    contadorAlive++;
                     str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
-            else{
+            } else {
                     contadorAlive++;
                     str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
             }
-        }else{
+        } else {
             str= "ALIVE BLUEPILL VIA *SERIE*  NO ACK!!!";
         }
         ui->textEdit_PROCCES->append(str);
@@ -366,132 +360,77 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         str = "Servo C pateó";
         ui->textEdit_PROCCES->append(str);
         break;
+    case GETMPU6050VALUES:  //GETMPU6050VALUES=0xA6,
+        w.ui8[0] = datosRx[2];  // AX
+        w.ui8[1] = datosRx[3];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_AX_VALUE->setText(str);
 
-    case CAJASPATEADAS: // CAJASPATEADAS = 0xB8
-        ui->textEdit_2->clear();
-        contadorCajas = datosRx[2];
-        str = QString("<span style='font-size:18pt;'><b>CAJAS PATEADAS: %1</b></span>").arg(contadorCajas);
-        ui->textEdit_2->setHtml(str);
+        w.ui8[0] = datosRx[4];  // AY
+        w.ui8[1] = datosRx[5];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_AY_VALUE->setText(str);
+
+        w.ui8[0] = datosRx[6];  // AZ
+        w.ui8[1] = datosRx[7];
+        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_AZ_VALUE->setText(str);
+
+        w.ui8[0] = datosRx[8];  // GX
+        w.ui8[1] = datosRx[9];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_GX_VALUE->setText(str);
+
+        w.ui8[0] = datosRx[10];  // GY
+        w.ui8[1] = datosRx[11];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_GY_VALUE->setText(str);
+
+        w.ui8[0] = datosRx[12];  // GZ
+        w.ui8[1] = datosRx[13];
+        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_GZ_VALUE->setText(str);
+
+        str = "Valores de MPU6050 obtenidos correctamente.";
+        ui->textEdit_PROCCES->append(str);
         break;
+    case SENDALLSENSORS: //SENDALLSENSORS=0xA9
+        w.ui8[0] = datosRx[2];  // AX
+        w.ui8[1] = datosRx[3];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_AX_VALUE->setText(str);
 
-    case GETALLBOXES: // GETALLBOXES
-        ui->textEdit->clear();
-        ui->textEdit->append("                              Box buffer");
+        w.ui8[0] = datosRx[4];  // AY
+        w.ui8[1] = datosRx[5];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_AY_VALUE->setText(str);
 
-        str = "Tipos de cajas en buffer: [";
+        w.ui8[0] = datosRx[6];  // AZ
+        w.ui8[1] = datosRx[7];
+        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_AZ_VALUE->setText(str);
 
-        cantidad = datosRx[0] - 2;  // Descontamos ID y checksum
-        for (int i = 2; i < 2 + cantidad; i++) {
-            switch (datosRx[i]) {
-            case CATEGORY_A:     str += "A "; break;
-            case CATEGORY_B:     str += "B "; break;
-            case CATEGORY_C:     str += "C "; break;
-            case CATEGORY_NONE:  str += "Desconocido "; break;
-            default:             str += "? "; break;
-            }
-        }
+        w.ui8[0] = datosRx[8];  // GX
+        w.ui8[1] = datosRx[9];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_GX_VALUE->setText(str);
 
-        str += " ]";
-        ui->textEdit->append(str);
+        w.ui8[0] = datosRx[10];  // GY
+        w.ui8[1] = datosRx[11];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_GY_VALUE->setText(str);
 
-        str = "GETALLBOXES Payload crudo: ";
-        for (int i = 1; i <= datosRx[0]; i++) {
-            str += QString("[%1]").arg(datosRx[i], 2, 16, QChar('0'));
-        }
-        ui->textEdit_RAW->append(str);
+        w.ui8[0] = datosRx[12];  // GZ
+        w.ui8[1] = datosRx[13];
+        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        ui->label_GZ_VALUE->setText(str);
+
+        ui->textEdit_PROCCES->append(str);
         break;
-
-
-
     default:
         str = str + "Comando DESCONOCIDO!!!!";
         ui->textEdit_PROCCES->append(str);
     }
-}
-
-void MainWindow::sendDataSerial(){
-    uint8_t cmdId;
-    _udat   w;
-    bool ok;
-
-    unsigned char dato[256];
-    unsigned char indice=0, chk=0;
-
-    QString str="";
-
-    dato[indice++]='U';
-    dato[indice++]='N';
-    dato[indice++]='E';
-    dato[indice++]='R';
-    dato[indice++]=0x00;
-    dato[indice++]=':';
-    cmdId = ui->comboBox_CMD->currentData().toInt();
-    switch (cmdId) {
-    case SETMOTORTEST://MOTORTEST=0xA1,
-        dato[indice++] =SETMOTORTEST;
-        w.i32 = QInputDialog::getInt(this, "Velocidad", "Motor1:", 0, -100, 100, 1, &ok);
-        if(!ok)
-            break;
-        dato[indice++] = w.ui8[0];
-        dato[indice++] = w.ui8[1];
-        dato[indice++] = w.ui8[2];
-        dato[indice++] = w.ui8[3];
-        w.i32 = QInputDialog::getInt(this, "Velocidad", "Motor2:", 0, -100, 100, 1, &ok);
-        if(!ok)
-            break;
-        dato[indice++] = w.ui8[0];
-        dato[indice++] = w.ui8[1];
-        dato[indice++] = w.ui8[2];
-        dato[indice++] = w.ui8[3];
-        dato[NBYTES]= 0x0A;
-        break;
-    case SETSERVOANGLE://SERVOANGLE=0xA2,
-        dato[indice++] =SETSERVOANGLE;
-        w.i32 = QInputDialog::getInt(this, "SERVO", "Angulo:", 0, 0, 180, 1, &ok);
-        if(!ok)
-            break;
-        dato[indice++] = w.i8[0];
-        dato[NBYTES]= 0x03;
-        break;
-    case GETALIVE:
-    case GETDISTANCE://GETDISTANCE=0xA3
-    case GETSPEED://GETSPEED=0xA4
-    case GETSWITCHES://GETSWITCHES=0xA5
-    case GETFIRMWARE:// GETFIRMWARE=0xF1
-    case GETANALOGSENSORS://ANALOGSENSORS=0xA0
-    case SENDALLSENSORS: //SENDALLSENSORS=0xA9
-    case STOPALLSENSORS: //STOPALLSENSORS=0xAA
-    case BOXCATEGORY:   // BOXCATEGORY=0xB3
-    case GETALLBOXES:
-    case SETLEDS:
-        dato[indice++]=cmdId;
-        //falta implementar el envío del valor de seteo
-        dato[NBYTES]=0x02;
-        break;
-    default:
-        return;
-    }
-    for(int a=0 ;a<indice;a++)
-        chk^=dato[a];
-    dato[indice]=chk;
-
-    if(serial->isWritable()){
-        serial->write(reinterpret_cast<char *>(dato),dato[NBYTES]+PAYLOAD);
-    }
-
-    for(int i=0; i<=indice; i++){
-        if(isalnum(dato[i]))
-            str = str + QString("%1").arg(char(dato[i]));
-        else
-            str = str +"{" + QString("%1").arg(dato[i],2,16,QChar('0')) + "}";
-    }
-
-    uint16_t valor=dato[NBYTES]+PAYLOAD;
-    ui->textEdit_RAW->append("INDICE ** " +QString().number(indice,10) + " **" );
-    ui->textEdit_RAW->append("NUMERO DE DATOS ** " +QString().number(valor,10) + " **" );
-    ui->textEdit_RAW->append("CHECKSUM ** " +QString().number(chk,16) + " **" );
-    ui->textEdit_RAW->append("PC--SERIAL-->MBED ( " + str + " )");
-
 }
 
 void MainWindow::timeOut(){
@@ -681,7 +620,7 @@ void MainWindow::sendDataUDP(){
         dato[indice++] = w.ui8[3];
         dato[NBYTES]= 0x0A;
         break;
-    case SETSERVOANGLE://SERVOANGLE=0xA2,
+    case SETSERVOANGLE: //SERVOANGLE=0xA2,
         dato[indice++] =SETSERVOANGLE;
         w.i32 = QInputDialog::getInt(this, "SERVO", "Angulo:", 0, -90, 90, 1, &ok);
         if(!ok)
@@ -690,11 +629,13 @@ void MainWindow::sendDataUDP(){
         dato[NBYTES]= 0x03;
         break;
     case GETALIVE:
-    case GETDISTANCE://GETDISTANCE=0xA3,
-    case GETSPEED://GETSPEED=0xA4,
-    case GETSWITCHES://GETSWITCHES=0xA5
-    case GETFIRMWARE:// GETFIRMWARE=0xF1
-    case GETANALOGSENSORS://ANALOGSENSORS=0xA0,
+    case GETMPU6050VALUES:  //GETMPU6050VALUES=0xA6
+    case SENDALLSENSORS: //SENDALLSENSORS=0xA9
+    case GETDISTANCE:   //GETDISTANCE=0xA3
+    case GETSPEED:  //GETSPEED=0xA4
+    case GETSWITCHES:   //GETSWITCHES=0xA5
+    case GETFIRMWARE:   //GETFIRMWARE=0xF1
+    case GETANALOGSENSORS:  //ANALOGSENSORS=0xA0
     case SETLEDS:
         dato[indice++]=cmdId;
         dato[NBYTES]=0x02;
@@ -727,17 +668,100 @@ void MainWindow::sendDataUDP(){
     ui->textEdit_RAW->append("PC--UDP-->MBED ( " + str + " )");
 }
 
+void MainWindow::sendDataSerial(){
+    uint8_t cmdId;
+    _udat   w;
+    bool ok;
 
+    unsigned char dato[256];
+    unsigned char indice=0, chk=0;
+
+    QString str="";
+
+    dato[indice++]='U';
+    dato[indice++]='N';
+    dato[indice++]='E';
+    dato[indice++]='R';
+    dato[indice++]=0x00;
+    dato[indice++]=':';
+    cmdId = ui->comboBox_CMD->currentData().toInt();
+    switch (cmdId) {
+    case SETMOTORTEST://MOTORTEST=0xA1,
+        dato[indice++] =SETMOTORTEST;
+        w.i32 = QInputDialog::getInt(this, "Velocidad", "Motor1:", 0, -100, 100, 1, &ok);
+        if(!ok)
+            break;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        w.i32 = QInputDialog::getInt(this, "Velocidad", "Motor2:", 0, -100, 100, 1, &ok);
+        if(!ok)
+            break;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        dato[NBYTES]= 0x0A;
+        break;
+    case SETSERVOANGLE://SERVOANGLE=0xA2,
+        dato[indice++] =SETSERVOANGLE;
+        w.i32 = QInputDialog::getInt(this, "SERVO", "Angulo:", 0, 0, 180, 1, &ok);
+        if(!ok)
+            break;
+        dato[indice++] = w.i8[0];
+        dato[NBYTES]= 0x03;
+        break;
+    case GETALIVE:
+    case GETMPU6050VALUES:  //GETMPU6050VALUES=0xA6
+    case GETDISTANCE://GETDISTANCE=0xA3
+    case GETSPEED://GETSPEED=0xA4
+    case GETSWITCHES://GETSWITCHES=0xA5
+    case GETFIRMWARE:// GETFIRMWARE=0xF1
+    case GETANALOGSENSORS://ANALOGSENSORS=0xA0
+    case SENDALLSENSORS: //SENDALLSENSORS=0xA9
+    case STOPALLSENSORS: //STOPALLSENSORS=0xAA
+    case BOXCATEGORY:   // BOXCATEGORY=0xB3
+    case GETALLBOXES:
+    case SETLEDS:
+        dato[indice++]=cmdId;
+        //falta implementar el envío del valor de seteo
+        dato[NBYTES]=0x02;
+        break;
+    default:
+        return;
+    }
+    for(int a=0 ;a<indice;a++)
+        chk^=dato[a];
+    dato[indice]=chk;
+
+    if(serial->isWritable()){
+        serial->write(reinterpret_cast<char *>(dato),dato[NBYTES]+PAYLOAD);
+    }
+
+    for(int i=0; i<=indice; i++){
+        if(isalnum(dato[i]))
+            str = str + QString("%1").arg(char(dato[i]));
+        else
+            str = str +"{" + QString("%1").arg(dato[i],2,16,QChar('0')) + "}";
+    }
+
+    uint16_t valor=dato[NBYTES]+PAYLOAD;
+    ui->textEdit_RAW->append("INDICE ** " +QString().number(indice,10) + " **" );
+    ui->textEdit_RAW->append("NUMERO DE DATOS ** " +QString().number(valor,10) + " **" );
+    ui->textEdit_RAW->append("CHECKSUM ** " +QString().number(chk,16) + " **" );
+    ui->textEdit_RAW->append("PC--SERIAL-->MBED ( " + str + " )");
+
+}
 
 void MainWindow::on_pushButton_clicked()    // BOTON DE "CLEAR DISPLAYS"
 {
     ui->textEdit_PROCCES->clear();
     ui->textEdit_RAW->clear();
-    ui->textEdit->clear();
-    ui->textEdit_2->clear();
-    ui->textEdit_RAW->append("           Dato sin procesar");
-    ui->textEdit_PROCCES->append("       Dato procesado");
-    ui->textEdit->append("                              Box buffer");
+    ui->textEdit_RAW->append("         Dato sin procesar");
+    ui->textEdit_PROCCES->append("      Dato procesado");
+}
 
-    ui->textEdit->append("                              CAJAS PATEADAS");
+void MainWindow::on_pushButton_released() {
+    // Acción vacía o algo temporal
 }
