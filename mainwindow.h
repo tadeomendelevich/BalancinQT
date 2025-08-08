@@ -10,6 +10,18 @@
 #include <QTimer>
 #include "settingsdialog.h"
 
+#include <QtCharts/QChartView>
+#include <QtCharts/QChart>
+#include <QtCharts/QLineSeries>
+#include <QtCharts/QValueAxis>
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QScatterSeries>
+
+#define SAMPLE_INTERVAL_MS 30   // Intervalo de muestreo en milisegundos de todos los sensores
+#define SAMPLE_INTERVAL_S  (static_cast<double>(SAMPLE_INTERVAL_MS) / 1000.0)   // Deriva el intervalo en segundos (double)
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -47,6 +59,10 @@ private slots:
 
     void on_pushButton_released();
 
+    void updatePlot();
+
+    void updatePosition();
+
 private:
     Ui::MainWindow *ui;
     QSerialPort *serial;
@@ -58,7 +74,7 @@ private:
     QHostAddress RemoteAddress;
     quint16 RemotePort;
     QHostAddress clientAddress;
-    int puertoremoto;
+    int puertoremoto = 0;
 
     typedef enum{
         START,
@@ -82,14 +98,14 @@ private:
         SETLEDS=0x10,
         GETSWITCHES=0x12,
         GETANALOGSENSORS=0xA0,
-        SETMOTORTEST=0xA1,
+        SETMOTORSPEED=0xA1,
         SETSERVOANGLE=0xA2,
         SERVOMOVESTOP=0x0A,
         GETDISTANCE=0xA3,
         GETSPEED=0xA4,
-        SETSERVOLIMITS=0xA5,
+        GETADCVALUES=0xA5,
         GETMPU6050VALUES=0xA6,
-        SETWHITECOLORDETECTED=0xA7,
+        GETANGLE = 0XA7,
         SENDALLSENSORS=0xA9,
         STOPALLSENSORS=0xAA,
         BOXCATEGORY = 0xB3,
@@ -136,5 +152,50 @@ private:
 
     int contadorAlive=0;
 
+    QTimer *mpuPollTimer;
+    bool    mpuStarted;
+
+    // Tu puntero generado por Designer
+    QChartView    *chartView;
+
+    // Accelerometer
+    QChartView   *accChartView;
+    QChart       *accChart;
+    QLineSeries  *seriesAx, *seriesAy, *seriesAz;
+    QValueAxis   *accAxisX, *accAxisY;
+
+    // Gyroscope
+    QChartView   *gyroChartView;
+    QChart       *gyroChart;
+    QLineSeries  *seriesGx, *seriesGy, *seriesGz;
+    QValueAxis   *gyroAxisX, *gyroAxisY;
+
+    // Para el gráfico de barras de ADC
+    QChartView    *adcChartView;
+    QChart        *adcChart;
+    QBarSeries    *adcSeries;
+    QBarSet       *adcBarSet;
+    QBarCategoryAxis *adcAxisX;
+    QValueAxis       *adcAxisY;
+
+    // Para llevar el tiempo en el eje X
+    qreal          elapsedSec;
+
+    // Grafica posicion MPU6050
+    QChartView   *positionChartView;
+    QChart       *positionChart;
+    QScatterSeries *positionSeries;
+    QLineSeries    *borderSeries;
+    QValueAxis    *posAxisX;
+    QValueAxis    *posAxisY;
+
+    // Raw MPU readings, actualizados en decodeData()
+    qint16    lastAx = 0;
+    qint16    lastAy = 0;
+    qint16    lastAz = 0;
+    double posScale = 100.0 / 16384.0;  // factor original
+
+    int16_t roll = 0;   // eje x
+    int16_t pitch = 0;  // eje y
 };
 #endif // MAINWINDOW_H
