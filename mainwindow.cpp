@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QtNetwork/QNetworkDatagram>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -35,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("SENDALLSENSORS", 0xA9);
 
     estadoProtocolo=START;
+    estadoProtocoloUdp = START;
     rxData.timeOut=0;
     ui->pushButton_UDP->setEnabled(false);
     ui->pushButton_ALIVE->setEnabled(false);
@@ -332,136 +334,141 @@ void MainWindow::on_pushButton_ALIVE_clicked()
 
 void MainWindow::on_pushButton_OPENUDP_clicked()
 {
-    int Port;
-    bool ok;
+    bool ok = false;
+    const int localPort = ui->lineEdit_LOCALPORT->text().toInt(&ok, 10);
+    if (!ok || localPort <= 0 || localPort > 65535) {
+        QMessageBox::information(this, tr("SERVER PORT"), tr("ERROR: invalid local PORT."));
+        return;
+    }
 
-    if(UdpSocket1->isOpen()){
+    // Toggle: si ya está abierto, cerramos y salimos
+    if (UdpSocket1->state() != QAbstractSocket::UnconnectedState) {
         UdpSocket1->close();
-        ui->pushButton_OPENUDP->setText("OPEN UDP");
+        ui->pushButton_OPENUDP->setText("Open UDP");
+        ui->pushButton_UDP->setEnabled(false);
         return;
     }
 
-    Port=ui->lineEdit_LOCALPORT->text().toInt(&ok,10);
-    if(!ok || Port<=0 || Port>65535){
-        QMessageBox::information(this, tr("SERVER PORT"),tr("ERRRO. Number PORT."));
+    // Limpio cualquier estado previo y hago bind robusto
+    UdpSocket1->abort();
+    const bool okBind = UdpSocket1->bind(
+        QHostAddress::AnyIPv4,
+        static_cast<quint16>(localPort),
+        QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint
+        );
+
+    if (!okBind) {
+        QMessageBox::critical(this, tr("SERVER PORT"),
+                              tr("Can't bind UDP port %1: %2")
+                                  .arg(localPort).arg(UdpSocket1->errorString()));
         return;
     }
 
-    try{
-        UdpSocket1->abort();
-        UdpSocket1->bind(Port);
-        UdpSocket1->open(QUdpSocket::ReadWrite);
-    }catch(...){
-        QMessageBox::information(this, tr("SERVER PORT"),tr("Can't OPEN Port."));
-        return;
-    }
-    ui->pushButton_OPENUDP->setText("CLOSE UDP");
+    ui->pushButton_OPENUDP->setText("Close UDP");
     ui->pushButton_UDP->setEnabled(true);
-    if(UdpSocket1->isOpen()){
-        if(clientAddress.isNull())
-            clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text());
-        if(puertoremoto==0)
-            puertoremoto=ui->lineEdit_DEVICEPORT->text().toInt();
-        UdpSocket1->writeDatagram("r", 1, clientAddress, puertoremoto);
+
+    // Cargar destino si ya está ingresado en la UI
+    if (clientAddress.isNull()) {
+        clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text().trimmed());
+    }
+    if (puertoremoto == 0) {
+        bool okp = false;
+        puertoremoto = ui->lineEdit_DEVICEPORT->text().toInt(&okp);
+        if (!okp) puertoremoto = 0;
+    }
+
+    // (Opcional) ping de descubrimiento si ya tengo IP/puerto remoto
+    if (!clientAddress.isNull() && puertoremoto > 0) {
+        static const char pingByte = 'r';
+        UdpSocket1->writeDatagram(&pingByte, 1, clientAddress, static_cast<quint16>(puertoremoto));
     }
 }
-
 
 
 void MainWindow::OnUdpRxData()
 {
-    qint64          count=0;
-    unsigned char   *incomingBuffer;
+    while (UdpSocket1->hasPendingDatagrams()) {
+        QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
+        const QByteArray payload = dgram.data();
+        RemoteAddress = dgram.senderAddress();
+        RemotePort    = dgram.senderPort();
 
-    while(UdpSocket1->hasPendingDatagrams()){
-        count = UdpSocket1->pendingDatagramSize();
-        incomingBuffer = new unsigned char[count];
-        UdpSocket1->readDatagram( reinterpret_cast<char *>(incomingBuffer), count, &RemoteAddress, &RemotePort);
-    }
-    if (count<=0)
-        return;
+        // Aprender/actualizar IP/puerto destino (para respuestas)
+        clientAddress = RemoteAddress;
+        puertoremoto  = RemotePort;
 
-    QString str="";
-    for(int i=0; i<=count; i++){
-        if(isalnum(incomingBuffer[i]))
-            str = str + QString("%1").arg(char(incomingBuffer[i]));
-        else
-            str = str +"{" + QString("%1").arg(incomingBuffer[i],2,16,QChar('0')) + "}";
-    }
-    ui->textEdit_RAW->append("MBED-->UDP-->PC (" + str + ")");
-    QString adress=RemoteAddress.toString();
-    ui->textEdit_RAW->append(" adr " + adress);
-    ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString().right((RemoteAddress.toString().length())-7));
-    ui->lineEdit_DEVICEPORT->setText(QString().number(RemotePort,10));
+        // Refrescar UI con lo recibido
+        ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString());
+        ui->lineEdit_DEVICEPORT->setText(QString::number(RemotePort));
 
-    // 4) Procesamos byte a byte según tu protocolo
-    for (int i = 0; i < count; ++i) {
-        unsigned char b = incomingBuffer[i];
-        switch (estadoProtocoloUdp) {
-        case START:
-            if (b == 'U') {
-                estadoProtocoloUdp = HEADER_1;
-                rxDataUdp.cheksum = 0;
-            }
-            break;
-        case HEADER_1:
-            if (b == 'N')
-                estadoProtocoloUdp = HEADER_2;
-            else
-                estadoProtocoloUdp = START;
-            break;
-        case HEADER_2:
-            if (b == 'E')
-                estadoProtocoloUdp = HEADER_3;
-            else
-                estadoProtocoloUdp = START;
-            break;
-        case HEADER_3:
-            if (b == 'R')
-                estadoProtocoloUdp = NBYTES;
-            else
-                estadoProtocoloUdp = START;
-            break;
-        case NBYTES:
-            rxDataUdp.nBytes = b;
-            estadoProtocoloUdp = TOKEN;
-            break;
-        case TOKEN:
-            if (b == ':') {
-                estadoProtocoloUdp = PAYLOAD;
-                rxDataUdp.cheksum = 'U' ^ 'N' ^ 'E' ^ 'R' ^ rxDataUdp.nBytes ^ ':';
-                rxDataUdp.payLoad[0] = rxDataUdp.nBytes;
-                rxDataUdp.index = 1;
-            } else {
-                estadoProtocoloUdp = START;
-            }
-            break;
-        case PAYLOAD:
-            if (rxDataUdp.nBytes > 1) {
-                rxDataUdp.payLoad[rxDataUdp.index++] = b;
-                rxDataUdp.cheksum ^= b;
-            }
-            rxDataUdp.nBytes--;
-            if (rxDataUdp.nBytes == 0) {
-                estadoProtocoloUdp = START;
-                if (rxDataUdp.cheksum == b) {
-                    decodeData(&rxDataUdp.payLoad[0], UDP);
-                } else {
-                    ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
-                }
-            }
-            break;
-        default:
-            estadoProtocoloUdp = START;
-            break;
+        // Log amigable
+        QString str;
+        str.reserve(payload.size() * 4);
+        for (int i = 0; i < payload.size(); ++i) {
+            unsigned char b = static_cast<unsigned char>(payload.at(i));
+            if (isalnum(b)) str += QChar(b);
+            else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
         }
-    }
+        ui->textEdit_RAW->append("MBED-->UDP-->PC (" + str + ")");
+        ui->textEdit_RAW->append(" adr " + RemoteAddress.toString());
 
-    // 5) Liberamos memoria
-    delete [] incomingBuffer;
+        // ---------- Parser de protocolo UNER ----------
+        // Evita OOB: usar índice < payload.size()
+        for (int i = 0; i < payload.size(); ++i) {
+            unsigned char ch = static_cast<unsigned char>(payload.at(i));
+            switch (estadoProtocoloUdp) {
+            case START:
+                if (ch == 'U') { estadoProtocoloUdp = HEADER_1; rxDataUdp.cheksum = 0; }
+                break;
+            case HEADER_1:
+                if (ch == 'N') estadoProtocoloUdp = HEADER_2;
+                else { i--; estadoProtocoloUdp = START; }
+                break;
+            case HEADER_2:
+                if (ch == 'E') estadoProtocoloUdp = HEADER_3;
+                else { i--; estadoProtocoloUdp = START; }
+                break;
+            case HEADER_3:
+                if (ch == 'R') estadoProtocoloUdp = NBYTES;
+                else { i--; estadoProtocoloUdp = START; }
+                break;
+            case NBYTES:
+                rxDataUdp.nBytes = ch;
+                estadoProtocoloUdp = TOKEN;
+                break;
+            case TOKEN:
+                if (ch == ':') {
+                    estadoProtocoloUdp = PAYLOAD;
+                    rxDataUdp.cheksum  = 'U' ^ 'N' ^ 'E' ^ 'R' ^ rxDataUdp.nBytes ^ ':';
+                    rxDataUdp.payLoad[0] = rxDataUdp.nBytes;
+                    rxDataUdp.index = 1;
+                } else {
+                    i--; estadoProtocoloUdp = START;
+                }
+                break;
+            case PAYLOAD:
+                if (rxDataUdp.nBytes > 1) {
+                    rxDataUdp.payLoad[rxDataUdp.index++] = ch;
+                    rxDataUdp.cheksum ^= ch;
+                }
+                rxDataUdp.nBytes--;
+                if (rxDataUdp.nBytes == 0) {
+                    estadoProtocoloUdp = START;
+                    // 'ch' es el checksum recibido en el último byte del paquete
+                    if (rxDataUdp.cheksum == ch) {
+                        decodeData(&rxDataUdp.payLoad[0], UDP);
+                    } else {
+                        ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
+                    }
+                }
+                break;
+            default:
+                estadoProtocoloUdp = START;
+                break;
+            } // switch
+        } // for payload
+    } // while
 }
-
-
 
 
 
@@ -564,90 +571,135 @@ void MainWindow::OnUdpRxData()
 
 }*/
 
-void MainWindow::sendDataUDP(){
-    uint8_t cmdId;
+void MainWindow::sendDataUDP()
+{
+    // --- Verificar que el socket esté realmente BIND (abierto para recibir) ---
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+            return;
+    }
+
+    // --- Cargar/validar destino ---
+    QHostAddress dest = clientAddress;
+    if (dest.isNull()) {
+        const QString ip = ui->lineEdit_IP_REMOTA->text().trimmed();
+        if (!dest.setAddress(ip)) {
+            QMessageBox::warning(this, "UDP", "IP remota inválida.");
+                return;
+        }
+        clientAddress = dest; // recordar para próximos envíos
+    }
+
+    if (puertoremoto <= 0) {
+        bool okp = false;
+        puertoremoto = ui->lineEdit_DEVICEPORT->text().toUShort(&okp);
+        if (!okp || puertoremoto == 0) {
+            QMessageBox::warning(this, "UDP", "Falta/incorrecto el PORT del dispositivo.");
+            return;
+        }
+    }
+
+    // --- Armado de trama ---
     _udat w;
+    uint8_t cmdId = static_cast<uint8_t>(ui->comboBox_CMD->currentData().toInt());
     unsigned char dato[256];
-    unsigned char indice=0, chk=0;
-    QString str;
-    int puerto=0;
-    bool ok;
+    int indice = 0;
+    bool ok = false;
 
-    dato[indice++]='U';
-    dato[indice++]='N';
-    dato[indice++]='E';
-    dato[indice++]='R';
-    dato[indice++]=0x00;
-    dato[indice++]=':';
-    cmdId = ui->comboBox_CMD->currentData().toInt();
+    // Encabezado "UNER" + NBYTES placeholder + ':'
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    const int idxNbytes = indice;        // posición del campo NBYTES
+    dato[indice++] = 0x00;               // se completa al final
+    dato[indice++] = ':';                // token
+    const int payloadStart = indice;     // inicio del payload
+
+    // Payload según comando (misma lógica con switch)
     switch (cmdId) {
-    case SETMOTORSPEED://MOTORTEST=0xA1,
-        dato[indice++] =SETMOTORSPEED;
+    case SETMOTORSPEED: {                // 0xA1
+        dato[indice++] = SETMOTORSPEED;
+
         w.i32 = QInputDialog::getInt(this, "Velocidad", "Motor1:", 0, -100, 100, 1, &ok);
-        if(!ok)
-            return;
+        if (!ok) return;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
         dato[indice++] = w.ui8[3];
+
         w.i32 = QInputDialog::getInt(this, "Velocidad", "Motor2:", 0, -100, 100, 1, &ok);
-        if(!ok)
-            break;
+        if (!ok) return;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
         dato[indice++] = w.ui8[3];
-        dato[NBYTES]= 0x0A;
         break;
-    case SETSERVOANGLE: //SERVOANGLE=0xA2,
-        dato[indice++] =SETSERVOANGLE;
+    }
+    case SETSERVOANGLE: {                // 0xA2
+        dato[indice++] = SETSERVOANGLE;
         w.i32 = QInputDialog::getInt(this, "SERVO", "Angulo:", 0, -90, 90, 1, &ok);
-        if(!ok)
-            return;
+        if (!ok) return;
         dato[indice++] = w.i8[0];
-        dato[NBYTES]= 0x03;
         break;
-    case GETALIVE:
-    case GETANGLE: //GETANGLE = 0XA7
-    case GETADCVALUES: //GETADCVALUES=0xA5
-    case GETMPU6050VALUES:  //GETMPU6050VALUES=0xA6
-    case SENDALLSENSORS: //SENDALLSENSORS=0xA9
-    case GETDISTANCE:   //GETDISTANCE=0xA3
-    case GETSPEED:  //GETSPEED=0xA4
-    case GETSWITCHES:   //GETSWITCHES=0xA5
-    case GETFIRMWARE:   //GETFIRMWARE=0xF1
-    case GETANALOGSENSORS:  //ANALOGSENSORS=0xA0
+    }
+
+        // Comandos simples (sólo ID)
+    case GETALIVE:          // 0xF0
+    case GETANGLE:          // 0xA7
+    case GETADCVALUES:      // 0xA5
+    case GETMPU6050VALUES:  // 0xA6
+    case SENDALLSENSORS:    // 0xA9
+    case GETDISTANCE:       // 0xA3
+    case GETSPEED:          // 0xA4
+    case GETSWITCHES:       // ¡revisar si no choca con 0xA5!
+    case GETFIRMWARE:       // 0xF1
+    case GETANALOGSENSORS:  // 0xA0
     case SETLEDS:
-        dato[indice++]=cmdId;
-        dato[NBYTES]=0x02;
+        dato[indice++] = cmdId;
         break;
+
     default:
-        ;
-
+        QMessageBox::warning(this, "UDP", "Comando desconocido.");
+        return;
     }
 
-    puerto=ui->lineEdit_DEVICEPORT->text().toInt();
-    puertoremoto=puerto;
-    for(int a=0 ;a<indice;a++)
-        chk^=dato[a];
-    dato[indice]=chk;
-    if(clientAddress.isNull())
-        clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text());
-    if(puertoremoto==0)
-        puertoremoto=puerto;
-    if(UdpSocket1->isOpen()){
-        UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), (dato[4]+7), clientAddress, puertoremoto);
-    }
+    // Longitud NBYTES = (cmd + datos) + 1 (checksum)
+    const int payloadSinChk = indice - payloadStart;
+    const unsigned char nbytes = static_cast<unsigned char>(payloadSinChk + 1);
+    dato[idxNbytes] = nbytes;
 
-    for(int i=0; i<=indice; i++){
-        if(isalnum(dato[i]))
-            str = str + QString("%1").arg(char(dato[i]));
-        else
-            str = str +"{" + QString("%1").arg(dato[i],2,16,QChar('0')) + "}";
+    // Checksum: 'U'^'N'^'E'^'R'^NBYTES^':' ^ payload (sin el checksum)
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    // Envío: 4 + 1 + 1 + nbytes
+    const int totalLen = 6 + nbytes;
+    const qint64 sent = UdpSocket1->writeDatagram(
+        reinterpret_cast<const char *>(dato),
+        totalLen,
+        clientAddress,
+        static_cast<quint16>(puertoremoto)
+        );
+
+    // Log
+    QString str;
+    str.reserve(totalLen * 4);
+    for (int i = 0; i < totalLen; ++i) {
+        unsigned char b = dato[i];
+        if (isalnum(b)) str += QChar(b);
+        else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
     }
-    str=str + clientAddress.toString() + "  " +  QString().number(puertoremoto,10);
+    str += "  " + clientAddress.toString() + "  " + QString::number(puertoremoto);
     ui->textEdit_RAW->append("PC--UDP-->MBED ( " + str + " )");
+
+    if (sent != totalLen) {
+        ui->textEdit_RAW->append("** UDP TX error: " + UdpSocket1->errorString());
+    }
 }
+
+
 
 void MainWindow::sendDataSerial(){
     uint8_t cmdId;
