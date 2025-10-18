@@ -108,12 +108,9 @@ private:
         GETANGLE = 0XA7,
         SENDALLSENSORS=0xA9,
         STOPALLSENSORS=0xAA,
-        BOXCATEGORY = 0xB3,
-        SERVOAPATEO = 0xB4,
-        SERVOBPATEO = 0xB5,
-        SERVOCPATEO = 0xB6,
-        GETALLBOXES = 0xB7,
-        CAJASPATEADAS = 0xB8,
+        MODIFYKP = 0xB1,
+        MODIFYKD = 0xB2,
+        MODIFYKI = 0xB3,
         OTHERS
     }_eCmd;
 

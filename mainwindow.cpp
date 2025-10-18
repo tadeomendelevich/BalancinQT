@@ -34,6 +34,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MOTORES", 0xA1);
     ui->comboBox_CMD->addItem("VELOCIDAD", 0xA4);
     ui->comboBox_CMD->addItem("SENDALLSENSORS", 0xA9);
+    ui->comboBox_CMD->addItem("MODIFYKP", 0xB1);
+    ui->comboBox_CMD->addItem("MODIFYKD", 0xB2);
+    ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -346,6 +349,8 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         UdpSocket1->close();
         ui->pushButton_OPENUDP->setText("Open UDP");
         ui->pushButton_UDP->setEnabled(false);
+        ui->lineEdit_IP_REMOTA->clear();
+        ui->lineEdit_DEVICEPORT->clear();
         return;
     }
 
@@ -470,107 +475,6 @@ void MainWindow::OnUdpRxData()
     } // while
 }
 
-
-
-
-/*void MainWindow::OnUdpRxData(){
-    qint64          count=0;
-    unsigned char   *incomingBuffer;
-
-    while(UdpSocket1->hasPendingDatagrams()){
-        count = UdpSocket1->pendingDatagramSize();
-        incomingBuffer = new unsigned char[count];
-        UdpSocket1->readDatagram( reinterpret_cast<char *>(incomingBuffer), count, &RemoteAddress, &RemotePort);
-    }
-    if (count<=0)
-        return;
-
-    QString str="";
-    for(int i=0; i<=count; i++){
-        if(isalnum(incomingBuffer[i]))
-            str = str + QString("%1").arg(char(incomingBuffer[i]));
-        else
-            str = str +"{" + QString("%1").arg(incomingBuffer[i],2,16,QChar('0')) + "}";
-    }
-    ui->textEdit_RAW->append("MBED-->UDP-->PC (" + str + ")");
-    QString adress=RemoteAddress.toString();
-    ui->textEdit_RAW->append(" adr " + adress);
-    ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString().right((RemoteAddress.toString().length())-7));
-    ui->lineEdit_DEVICEPORT->setText(QString().number(RemotePort,10));
-
-    for(int i=0;i<count; i++){
-        switch (estadoProtocoloUdp) {
-        case START:
-            if (incomingBuffer[i]=='U'){
-                    estadoProtocoloUdp=HEADER_1;
-                    rxDataUdp.cheksum=0;
-            }
-            break;
-        case HEADER_1:
-            if (incomingBuffer[i]=='N')
-                    estadoProtocoloUdp=HEADER_2;
-            else{
-                    i--;
-                    estadoProtocoloUdp=START;
-            }
-            break;
-        case HEADER_2:
-            if (incomingBuffer[i]=='E')
-                    estadoProtocoloUdp=HEADER_3;
-            else{
-                    i--;
-                    estadoProtocoloUdp=START;
-            }
-            break;
-        case HEADER_3:
-            if (incomingBuffer[i]=='R')
-                    estadoProtocoloUdp=NBYTES;
-            else{
-                    i--;
-                    estadoProtocoloUdp=START;
-            }
-            break;
-        case NBYTES:
-            rxDataUdp.nBytes=incomingBuffer[i];
-            estadoProtocoloUdp=TOKEN;
-            break;
-        case TOKEN:
-            if (incomingBuffer[i]==':'){
-                    estadoProtocoloUdp=PAYLOAD;
-                    rxDataUdp.cheksum='U'^'N'^'E'^'R'^ rxDataUdp.nBytes^':';
-                    rxDataUdp.payLoad[0]=rxDataUdp.nBytes;
-                    rxDataUdp.index=1;
-            }
-            else{
-                    i--;
-                    estadoProtocoloUdp=START;
-            }
-            break;
-        case PAYLOAD:
-            if (rxDataUdp.nBytes>1){
-                    rxDataUdp.payLoad[rxDataUdp.index++]=incomingBuffer[i];
-                    rxDataUdp.cheksum^=incomingBuffer[i];
-            }
-            rxDataUdp.nBytes--;
-            if(rxDataUdp.nBytes==0){
-                    estadoProtocoloUdp=START;
-                    if(rxDataUdp.cheksum==incomingBuffer[i]){
-                    decodeData(&rxDataUdp.payLoad[0],UDP);
-                    }else{
-                    ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
-                    }
-            }
-            break;
-
-        default:
-            estadoProtocoloUdp=START;
-            break;
-        }
-    }
-    delete [] incomingBuffer;
-
-}*/
-
 void MainWindow::sendDataUDP()
 {
     // --- Verificar que el socket esté realmente BIND (abierto para recibir) ---
@@ -643,6 +547,36 @@ void MainWindow::sendDataUDP()
         dato[indice++] = w.i8[0];
         break;
     }
+    case MODIFYKP:  // MODIFYKP = 0xB1
+        dato[indice++] = MODIFYKP;
+
+        w.i32 = QInputDialog::getInt(this, "Factor KP", "KP:", 0, 0, 1000, 1, &ok);
+        if (!ok) return;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    case MODIFYKD:  // MODIFYKD = 0xB2
+        dato[indice++] = MODIFYKD;
+
+        w.i32 = QInputDialog::getInt(this, "Factor KD", "KD:", 0, 0, 1000, 1, &ok);
+        if (!ok) return;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    case MODIFYKI:  // MODIFYKI = 0xB3
+        dato[indice++] = MODIFYKI;
+
+        w.i32 = QInputDialog::getInt(this, "Factor KI", "KI:", 0, 0, 1000, 1, &ok);
+        if (!ok) return;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
 
         // Comandos simples (sólo ID)
     case GETALIVE:          // 0xF0
@@ -699,8 +633,6 @@ void MainWindow::sendDataUDP()
     }
 }
 
-
-
 void MainWindow::sendDataSerial(){
     uint8_t cmdId;
     _udat   w;
@@ -745,6 +677,36 @@ void MainWindow::sendDataSerial(){
         dato[indice++] = w.i8[0];
         dato[NBYTES]= 0x03;
         break;
+    case MODIFYKP:  // MODIFYKP = 0xB1
+        dato[indice++] = MODIFYKP;
+
+        w.i32 = QInputDialog::getInt(this, "Factor KP", "KP:", 0, 0, 1000, 1, &ok);
+        if (!ok) return;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    case MODIFYKD:  // MODIFYKD = 0xB2
+        dato[indice++] = MODIFYKD;
+
+        w.i32 = QInputDialog::getInt(this, "Factor KD", "KD:", 0, 0, 1000, 1, &ok);
+        if (!ok) return;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    case MODIFYKI:  // MODIFYKI = 0xB3
+        dato[indice++] = MODIFYKI;
+
+        w.i32 = QInputDialog::getInt(this, "Factor KI", "KI:", 0, 0, 1000, 1, &ok);
+        if (!ok) return;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
     case GETALIVE:
     case GETADCVALUES: //GETADCVALUES=0xA5
     case GETMPU6050VALUES:  //GETMPU6050VALUES=0xA6
@@ -756,8 +718,6 @@ void MainWindow::sendDataSerial(){
     case GETANALOGSENSORS://ANALOGSENSORS=0xA0
     case SENDALLSENSORS: //SENDALLSENSORS=0xA9
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
-    case BOXCATEGORY:   // BOXCATEGORY=0xB3
-    case GETALLBOXES:
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -791,7 +751,7 @@ void MainWindow::sendDataSerial(){
 
 void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     int32_t length = sizeof(*datosRx)/sizeof(datosRx[0]);
-    QString str, strOut;
+    QString str;
     _udat w;
     qreal t;
 
@@ -933,40 +893,6 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         ui->textEdit_PROCCES->append(str);
         break;
 
-    case BOXCATEGORY:
-        str = "Tipo de Caja: ";
-        switch (datosRx[2]) {
-        case CATEGORY_A:
-            str += "A";
-            break;
-        case CATEGORY_B:
-            str += "B";
-            break;
-        case CATEGORY_C:
-            str += "C";
-            break;
-        default:
-            str += "Desconocido";
-            break;
-        }
-        ui->textEdit_PROCCES->append(str);
-        //ui->label_tipoCaja->setText(str);  // opcional, si tenés un label para mostrarlo
-        break;
-
-    case SERVOAPATEO: // SERVOAPATEO = 0xB4,
-        str = "Servo A pateó";
-              ui->textEdit_PROCCES->append(str);
-        break;
-
-    case SERVOBPATEO: // SERVOBPATEO = 0xB5,
-        str = "Servo B pateó";
-              ui->textEdit_PROCCES->append(str);
-        break;
-
-    case SERVOCPATEO: // SERVOCPATEO = 0xB6,
-        str = "Servo C pateó";
-              ui->textEdit_PROCCES->append(str);
-        break;
     case GETADCVALUES: { //GETADCVALUES=0xA5
         w.ui8[0] = datosRx[2];  // ADC1
         w.ui8[1] = datosRx[3];
@@ -1102,6 +1028,24 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     }
 
+    case MODIFYKP://     MODIFYKP=0xB1,
+        if(datosRx[2]==ACK){
+            str="KP ha sido modificado con exito!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFYKD://     MODIFYKD=0xB2,
+        if(datosRx[2]==ACK){
+            str="KD ha sido modificado con exito!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFYKI://     MODIFYKI=0xB3,
+        if(datosRx[2]==ACK){
+            str="KI ha sido modificado con exito!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
     case SETMOTORSPEED://     SETMOTORSPEED=0xA1,
         if(datosRx[2]==0x0D)
             str= "Test Motores ACK";
