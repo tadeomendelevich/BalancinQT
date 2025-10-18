@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKP", 0xB1);
     ui->comboBox_CMD->addItem("MODIFYKD", 0xB2);
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
+    ui->comboBox_CMD->addItem("BALANCE", 0xB4);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -589,6 +590,7 @@ void MainWindow::sendDataUDP()
     case GETSWITCHES:       // ¡revisar si no choca con 0xA5!
     case GETFIRMWARE:       // 0xF1
     case GETANALOGSENSORS:  // 0xA0
+    case BALANCE: //BALANCE=0xB4
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -718,6 +720,7 @@ void MainWindow::sendDataSerial(){
     case GETANALOGSENSORS://ANALOGSENSORS=0xA0
     case SENDALLSENSORS: //SENDALLSENSORS=0xA9
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
+    case BALANCE: //BALANCE=0xB4
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo

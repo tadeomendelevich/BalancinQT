@@ -111,6 +111,7 @@ private:
         MODIFYKP = 0xB1,
         MODIFYKD = 0xB2,
         MODIFYKI = 0xB3,
+        BALANCE = 0xB4,
         OTHERS
     }_eCmd;
 
