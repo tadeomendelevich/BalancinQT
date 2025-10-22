@@ -381,8 +381,11 @@ void MainWindow::OnUdpRxData()
         QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
         const QByteArray payload = dgram.data();
 
-        ui->lineEdit_IP_REMOTA->setText(dgram.senderAddress().toString());
-        ui->lineEdit_DEVICEPORT->setText(QString::number(dgram.senderPort()));
+        RemoteAddress = dgram.senderAddress();
+        RemotePort = static_cast<quint16>(dgram.senderPort());
+
+        ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString());
+        ui->lineEdit_DEVICEPORT->setText(QString::number(RemotePort));
 
         QString str;
         str.reserve(payload.size() * 4);
@@ -392,7 +395,6 @@ void MainWindow::OnUdpRxData()
             else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
         }
         ui->textEdit_RAW->append("MBED-->UDP-->PC (" + str + ")");
-        ui->textEdit_RAW->append(" adr " + RemoteAddress.toString());
 
         parsearDatosUdp(payload, UDP);
     }
@@ -431,20 +433,11 @@ void MainWindow::sendDataUDP()
 {
     if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
         QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
-            return;
-    }
-
-    const QString ip = ui->lineEdit_IP_REMOTA->text().trimmed();
-    QHostAddress dest;
-    if (!dest.setAddress(ip)) {
-        QMessageBox::warning(this, "UDP", "IP remota inválida.");
         return;
     }
 
-    bool okp = false;
-    const quint16 port = ui->lineEdit_DEVICEPORT->text().toUShort(&okp);
-    if (!okp || port == 0) {
-        QMessageBox::warning(this, "UDP", "Falta/incorrecto el PORT del dispositivo.");
+    if (RemoteAddress.isNull() || RemotePort == 0) {
+        QMessageBox::warning(this, "UDP", "Aún no se recibieron datos desde el dispositivo.");
         return;
     }
 
@@ -559,8 +552,8 @@ void MainWindow::sendDataUDP()
     const qint64 sent = UdpSocket1->writeDatagram(
         reinterpret_cast<const char *>(dato),
         totalLen,
-        dest,
-        port
+        RemoteAddress,
+        RemotePort
     );
 
     // Log
@@ -571,7 +564,7 @@ void MainWindow::sendDataUDP()
         if (isalnum(b)) str += QChar(b);
         else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
     }
-    str += "  " + dest.toString() + "  " + QString::number(port);
+    str += "  " + RemoteAddress.toString() + "  " + QString::number(RemotePort);
     ui->textEdit_RAW->append("PC--UDP-->MBED ( " + str + " )");
 
     if (sent != totalLen) {
