@@ -73,6 +73,8 @@ private:
     QTimer  *timer1;
 
     QUdpSocket *UdpSocket1;
+    QHostAddress RemoteAddress;
+    quint16 RemotePort = 0;
 
     typedef enum{
         START,
