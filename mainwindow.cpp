@@ -364,9 +364,17 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         );
 
     if (!okBind) {
+        const QString errorString = UdpSocket1->errorString();
         QMessageBox::critical(this, tr("SERVER PORT"),
-                              tr("Can't bind UDP port %1: %2")
-                                  .arg(localPort).arg(UdpSocket1->errorString()));
+                              tr("Can't bind UDP port %1.\n\n"
+                                 "<b>Posibles causas:</b><br>"
+                                 "<ul>"
+                                 "<li>Otro programa está usando el puerto.</li>"
+                                 "<li>El firewall está bloqueando la conexión.</li>"
+                                 "<li>No hay una red activa.</li>"
+                                 "</ul>"
+                                 "<b>Error de sistema:</b> %2")
+                                  .arg(localPort).arg(errorString));
         return;
     }
 
@@ -394,6 +402,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
 void MainWindow::OnUdpRxData()
 {
     while (UdpSocket1->hasPendingDatagrams()) {
+        estadoProtocoloUdp = START; // Reiniciar state machine por cada datagrama
         QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
         const QByteArray payload = dgram.data();
         RemoteAddress = dgram.senderAddress();
