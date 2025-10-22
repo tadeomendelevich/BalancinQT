@@ -39,8 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
 
-    estadoProtocolo=START;
-    estadoProtocoloUdp = START;
+    estadoProtocolo = START;
     rxData.timeOut=0;
     ui->pushButton_UDP->setEnabled(false);
     ui->pushButton_ALIVE->setEnabled(false);
@@ -372,22 +371,6 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
 
     ui->pushButton_OPENUDP->setText("Close UDP");
     ui->pushButton_UDP->setEnabled(true);
-
-    // Cargar destino si ya está ingresado en la UI
-    if (clientAddress.isNull()) {
-        clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text().trimmed());
-    }
-    if (puertoremoto == 0) {
-        bool okp = false;
-        puertoremoto = ui->lineEdit_DEVICEPORT->text().toInt(&okp);
-        if (!okp) puertoremoto = 0;
-    }
-
-    // (Opcional) ping de descubrimiento si ya tengo IP/puerto remoto
-    if (!clientAddress.isNull() && puertoremoto > 0) {
-        static const char pingByte = 'r';
-        UdpSocket1->writeDatagram(&pingByte, 1, clientAddress, static_cast<quint16>(puertoremoto));
-    }
 }
 
 
@@ -396,18 +379,10 @@ void MainWindow::OnUdpRxData()
     while (UdpSocket1->hasPendingDatagrams()) {
         QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
         const QByteArray payload = dgram.data();
-        RemoteAddress = dgram.senderAddress();
-        RemotePort    = dgram.senderPort();
 
-        // Aprender/actualizar IP/puerto destino (para respuestas)
-        clientAddress = RemoteAddress;
-        puertoremoto  = RemotePort;
+        ui->lineEdit_IP_REMOTA->setText(dgram.senderAddress().toString());
+        ui->lineEdit_DEVICEPORT->setText(QString::number(dgram.senderPort()));
 
-        // Refrescar UI con lo recibido
-        ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString());
-        ui->lineEdit_DEVICEPORT->setText(QString::number(RemotePort));
-
-        // Log amigable
         QString str;
         str.reserve(payload.size() * 4);
         for (int i = 0; i < payload.size(); ++i) {
@@ -418,93 +393,60 @@ void MainWindow::OnUdpRxData()
         ui->textEdit_RAW->append("MBED-->UDP-->PC (" + str + ")");
         ui->textEdit_RAW->append(" adr " + RemoteAddress.toString());
 
-        // ---------- Parser de protocolo UNER ----------
-        // Evita OOB: usar índice < payload.size()
-        for (int i = 0; i < payload.size(); ++i) {
-            unsigned char ch = static_cast<unsigned char>(payload.at(i));
-            switch (estadoProtocoloUdp) {
-            case START:
-                if (ch == 'U') { estadoProtocoloUdp = HEADER_1; rxDataUdp.cheksum = 0; }
-                break;
-            case HEADER_1:
-                if (ch == 'N') estadoProtocoloUdp = HEADER_2;
-                else { i--; estadoProtocoloUdp = START; }
-                break;
-            case HEADER_2:
-                if (ch == 'E') estadoProtocoloUdp = HEADER_3;
-                else { i--; estadoProtocoloUdp = START; }
-                break;
-            case HEADER_3:
-                if (ch == 'R') estadoProtocoloUdp = NBYTES;
-                else { i--; estadoProtocoloUdp = START; }
-                break;
-            case NBYTES:
-                rxDataUdp.nBytes = ch;
-                estadoProtocoloUdp = TOKEN;
-                break;
-            case TOKEN:
-                if (ch == ':') {
-                    estadoProtocoloUdp = PAYLOAD;
-                    rxDataUdp.cheksum  = 'U' ^ 'N' ^ 'E' ^ 'R' ^ rxDataUdp.nBytes ^ ':';
-                    rxDataUdp.payLoad[0] = rxDataUdp.nBytes;
-                    rxDataUdp.index = 1;
-                } else {
-                    i--; estadoProtocoloUdp = START;
-                }
-                break;
-            case PAYLOAD:
-                if (rxDataUdp.nBytes > 1) {
-                    rxDataUdp.payLoad[rxDataUdp.index++] = ch;
-                    rxDataUdp.cheksum ^= ch;
-                }
-                rxDataUdp.nBytes--;
-                if (rxDataUdp.nBytes == 0) {
-                    estadoProtocoloUdp = START;
-                    // 'ch' es el checksum recibido en el último byte del paquete
-                    if (rxDataUdp.cheksum == ch) {
-                        decodeData(&rxDataUdp.payLoad[0], UDP);
-                    } else {
-                        ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
-                    }
-                }
-                break;
-            default:
-                estadoProtocoloUdp = START;
-                break;
-            } // switch
-        } // for payload
-    } // while
+        parsearDatosUdp(payload, UDP);
+    }
+}
+
+void MainWindow::parsearDatosUdp(const QByteArray &datos, uint8_t source)
+{
+    const int minSize = 7;
+    if (datos.size() < minSize || !datos.startsWith("UNER")) {
+        return;
+    }
+
+    const int nBytes = static_cast<unsigned char>(datos.at(4));
+    const int totalLen = 6 + nBytes;
+
+    if (datos.size() != totalLen) {
+        return;
+    }
+
+    unsigned char checksum = 0;
+    for (int i = 0; i < totalLen - 1; ++i) {
+        checksum ^= static_cast<unsigned char>(datos.at(i));
+    }
+
+    if (checksum == static_cast<unsigned char>(datos.at(totalLen - 1))) {
+        uint8_t buffer[256];
+        buffer[0] = nBytes;
+        memcpy(buffer + 1, datos.constData() + 6, nBytes - 1);
+        decodeData(buffer, source);
+    } else {
+        ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
+    }
 }
 
 void MainWindow::sendDataUDP()
 {
-    // --- Verificar que el socket esté realmente BIND (abierto para recibir) ---
     if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
         QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
             return;
     }
 
-    // --- Cargar/validar destino ---
-    QHostAddress dest = clientAddress;
-    if (dest.isNull()) {
-        const QString ip = ui->lineEdit_IP_REMOTA->text().trimmed();
-        if (!dest.setAddress(ip)) {
-            QMessageBox::warning(this, "UDP", "IP remota inválida.");
-                return;
-        }
-        clientAddress = dest; // recordar para próximos envíos
+    const QString ip = ui->lineEdit_IP_REMOTA->text().trimmed();
+    QHostAddress dest;
+    if (!dest.setAddress(ip)) {
+        QMessageBox::warning(this, "UDP", "IP remota inválida.");
+        return;
     }
 
-    if (puertoremoto <= 0) {
-        bool okp = false;
-        puertoremoto = ui->lineEdit_DEVICEPORT->text().toUShort(&okp);
-        if (!okp || puertoremoto == 0) {
-            QMessageBox::warning(this, "UDP", "Falta/incorrecto el PORT del dispositivo.");
-            return;
-        }
+    bool okp = false;
+    const quint16 port = ui->lineEdit_DEVICEPORT->text().toUShort(&okp);
+    if (!okp || port == 0) {
+        QMessageBox::warning(this, "UDP", "Falta/incorrecto el PORT del dispositivo.");
+        return;
     }
 
-    // --- Armado de trama ---
     _udat w;
     uint8_t cmdId = static_cast<uint8_t>(ui->comboBox_CMD->currentData().toInt());
     unsigned char dato[256];
@@ -615,9 +557,9 @@ void MainWindow::sendDataUDP()
     const qint64 sent = UdpSocket1->writeDatagram(
         reinterpret_cast<const char *>(dato),
         totalLen,
-        clientAddress,
-        static_cast<quint16>(puertoremoto)
-        );
+        dest,
+        port
+    );
 
     // Log
     QString str;
@@ -627,7 +569,7 @@ void MainWindow::sendDataUDP()
         if (isalnum(b)) str += QChar(b);
         else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
     }
-    str += "  " + clientAddress.toString() + "  " + QString::number(puertoremoto);
+    str += "  " + dest.toString() + "  " + QString::number(port);
     ui->textEdit_RAW->append("PC--UDP-->MBED ( " + str + " )");
 
     if (sent != totalLen) {

@@ -55,6 +55,8 @@ private slots:
 
     void OnUdpRxData();
 
+    void parsearDatosUdp(const QByteArray &datos, uint8_t source);
+
     void on_pushButton_clicked();
 
     void on_pushButton_released();
@@ -71,10 +73,6 @@ private:
     QTimer  *timer1;
 
     QUdpSocket *UdpSocket1;
-    QHostAddress RemoteAddress;
-    quint16 RemotePort;
-    QHostAddress clientAddress;
-    int puertoremoto = 0;
 
     typedef enum{
         START,
@@ -86,7 +84,7 @@ private:
         PAYLOAD
     }_eProtocolo;
 
-    _eProtocolo estadoProtocolo,estadoProtocoloUdp;
+    _eProtocolo estadoProtocolo;
 
     typedef enum{
         UDP=0,
