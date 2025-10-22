@@ -38,9 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKD", 0xB2);
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
-    ui->comboBox_CMD->addItem("GETPIDVALUES", 0xB5);
 
-    estadoProtocolo = START;
+    estadoProtocolo=START;
+    estadoProtocoloUdp = START;
     rxData.timeOut=0;
     ui->pushButton_UDP->setEnabled(false);
     ui->pushButton_ALIVE->setEnabled(false);
@@ -141,7 +141,7 @@ MainWindow::MainWindow(QWidget *parent)
     adcChartView->setChart(adcChart);
     adcChartView->setRenderHint(QPainter::Antialiasing);
 
-    /*// Configuro el positionWidget:
+    // Configuro el positionWidget:
     positionChartView = ui->positionWidget;
     positionChart     = new QChart();
     positionChartView->setChart(positionChart);
@@ -178,7 +178,7 @@ MainWindow::MainWindow(QWidget *parent)
     borderSeries->setColor(Qt::lightGray);
     positionChart->addSeries(borderSeries);
     borderSeries->attachAxis(posAxisX);
-    borderSeries->attachAxis(posAxisY);*/
+    borderSeries->attachAxis(posAxisY);
 }
 
 MainWindow::~MainWindow()
@@ -372,6 +372,22 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
 
     ui->pushButton_OPENUDP->setText("Close UDP");
     ui->pushButton_UDP->setEnabled(true);
+
+    // Cargar destino si ya está ingresado en la UI
+    if (clientAddress.isNull()) {
+        clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text().trimmed());
+    }
+    if (puertoremoto == 0) {
+        bool okp = false;
+        puertoremoto = ui->lineEdit_DEVICEPORT->text().toInt(&okp);
+        if (!okp) puertoremoto = 0;
+    }
+
+    // (Opcional) ping de descubrimiento si ya tengo IP/puerto remoto
+    if (!clientAddress.isNull() && puertoremoto > 0) {
+        static const char pingByte = 'r';
+        UdpSocket1->writeDatagram(&pingByte, 1, clientAddress, static_cast<quint16>(puertoremoto));
+    }
 }
 
 
@@ -380,13 +396,18 @@ void MainWindow::OnUdpRxData()
     while (UdpSocket1->hasPendingDatagrams()) {
         QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
         const QByteArray payload = dgram.data();
-
         RemoteAddress = dgram.senderAddress();
-        RemotePort = static_cast<quint16>(dgram.senderPort());
+        RemotePort    = dgram.senderPort();
 
+        // Aprender/actualizar IP/puerto destino (para respuestas)
+        clientAddress = RemoteAddress;
+        puertoremoto  = RemotePort;
+
+        // Refrescar UI con lo recibido
         ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString());
         ui->lineEdit_DEVICEPORT->setText(QString::number(RemotePort));
 
+        // Log amigable
         QString str;
         str.reserve(payload.size() * 4);
         for (int i = 0; i < payload.size(); ++i) {
@@ -395,52 +416,95 @@ void MainWindow::OnUdpRxData()
             else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
         }
         ui->textEdit_RAW->append("MBED-->UDP-->PC (" + str + ")");
+        ui->textEdit_RAW->append(" adr " + RemoteAddress.toString());
 
-        parsearDatosUdp(payload, UDP);
-    }
-}
-
-void MainWindow::parsearDatosUdp(const QByteArray &datos, uint8_t source)
-{
-    const int minSize = 7;
-    if (datos.size() < minSize || !datos.startsWith("UNER")) {
-        return;
-    }
-
-    const int nBytes = static_cast<unsigned char>(datos.at(4));
-    const int totalLen = 6 + nBytes;
-
-    if (datos.size() != totalLen) {
-        return;
-    }
-
-    unsigned char checksum = 0;
-    for (int i = 0; i < totalLen - 1; ++i) {
-        checksum ^= static_cast<unsigned char>(datos.at(i));
-    }
-
-    if (checksum == static_cast<unsigned char>(datos.at(totalLen - 1))) {
-        uint8_t buffer[256];
-        buffer[0] = nBytes;
-        memcpy(buffer + 1, datos.constData() + 6, nBytes - 1);
-        decodeData(buffer, source);
-    } else {
-        ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
-    }
+        // ---------- Parser de protocolo UNER ----------
+        // Evita OOB: usar índice < payload.size()
+        for (int i = 0; i < payload.size(); ++i) {
+            unsigned char ch = static_cast<unsigned char>(payload.at(i));
+            switch (estadoProtocoloUdp) {
+            case START:
+                if (ch == 'U') { estadoProtocoloUdp = HEADER_1; rxDataUdp.cheksum = 0; }
+                break;
+            case HEADER_1:
+                if (ch == 'N') estadoProtocoloUdp = HEADER_2;
+                else { i--; estadoProtocoloUdp = START; }
+                break;
+            case HEADER_2:
+                if (ch == 'E') estadoProtocoloUdp = HEADER_3;
+                else { i--; estadoProtocoloUdp = START; }
+                break;
+            case HEADER_3:
+                if (ch == 'R') estadoProtocoloUdp = NBYTES;
+                else { i--; estadoProtocoloUdp = START; }
+                break;
+            case NBYTES:
+                rxDataUdp.nBytes = ch;
+                estadoProtocoloUdp = TOKEN;
+                break;
+            case TOKEN:
+                if (ch == ':') {
+                    estadoProtocoloUdp = PAYLOAD;
+                    rxDataUdp.cheksum  = 'U' ^ 'N' ^ 'E' ^ 'R' ^ rxDataUdp.nBytes ^ ':';
+                    rxDataUdp.payLoad[0] = rxDataUdp.nBytes;
+                    rxDataUdp.index = 1;
+                } else {
+                    i--; estadoProtocoloUdp = START;
+                }
+                break;
+            case PAYLOAD:
+                if (rxDataUdp.nBytes > 1) {
+                    rxDataUdp.payLoad[rxDataUdp.index++] = ch;
+                    rxDataUdp.cheksum ^= ch;
+                }
+                rxDataUdp.nBytes--;
+                if (rxDataUdp.nBytes == 0) {
+                    estadoProtocoloUdp = START;
+                    // 'ch' es el checksum recibido en el último byte del paquete
+                    if (rxDataUdp.cheksum == ch) {
+                        decodeData(&rxDataUdp.payLoad[0], UDP);
+                    } else {
+                        ui->textEdit_RAW->append(" CHK DISTINTO!!!!! ");
+                    }
+                }
+                break;
+            default:
+                estadoProtocoloUdp = START;
+                break;
+            } // switch
+        } // for payload
+    } // while
 }
 
 void MainWindow::sendDataUDP()
 {
+    // --- Verificar que el socket esté realmente BIND (abierto para recibir) ---
     if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
         QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
-        return;
+            return;
     }
 
-    if (RemoteAddress.isNull() || RemotePort == 0) {
-        QMessageBox::warning(this, "UDP", "Aún no se recibieron datos desde el dispositivo.");
-        return;
+    // --- Cargar/validar destino ---
+    QHostAddress dest = clientAddress;
+    if (dest.isNull()) {
+        const QString ip = ui->lineEdit_IP_REMOTA->text().trimmed();
+        if (!dest.setAddress(ip)) {
+            QMessageBox::warning(this, "UDP", "IP remota inválida.");
+                return;
+        }
+        clientAddress = dest; // recordar para próximos envíos
     }
 
+    if (puertoremoto <= 0) {
+        bool okp = false;
+        puertoremoto = ui->lineEdit_DEVICEPORT->text().toUShort(&okp);
+        if (!okp || puertoremoto == 0) {
+            QMessageBox::warning(this, "UDP", "Falta/incorrecto el PORT del dispositivo.");
+            return;
+        }
+    }
+
+    // --- Armado de trama ---
     _udat w;
     uint8_t cmdId = static_cast<uint8_t>(ui->comboBox_CMD->currentData().toInt());
     unsigned char dato[256];
@@ -527,7 +591,6 @@ void MainWindow::sendDataUDP()
     case GETFIRMWARE:       // 0xF1
     case GETANALOGSENSORS:  // 0xA0
     case BALANCE: //BALANCE=0xB4
-    case GETPIDVALUES: //GETPIDVALUES=0xB5
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -552,9 +615,9 @@ void MainWindow::sendDataUDP()
     const qint64 sent = UdpSocket1->writeDatagram(
         reinterpret_cast<const char *>(dato),
         totalLen,
-        RemoteAddress,
-        RemotePort
-    );
+        clientAddress,
+        static_cast<quint16>(puertoremoto)
+        );
 
     // Log
     QString str;
@@ -564,7 +627,7 @@ void MainWindow::sendDataUDP()
         if (isalnum(b)) str += QChar(b);
         else str += "{" + QString("%1").arg(b, 2, 16, QChar('0')) + "}";
     }
-    str += "  " + RemoteAddress.toString() + "  " + QString::number(RemotePort);
+    str += "  " + clientAddress.toString() + "  " + QString::number(puertoremoto);
     ui->textEdit_RAW->append("PC--UDP-->MBED ( " + str + " )");
 
     if (sent != totalLen) {
@@ -658,7 +721,6 @@ void MainWindow::sendDataSerial(){
     case SENDALLSENSORS: //SENDALLSENSORS=0xA9
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
     case BALANCE: //BALANCE=0xB4
-    case GETPIDVALUES: //GETPIDVALUES=0xB5
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -708,6 +770,86 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     ui->textEdit_RAW->append("*(MBED-S->PC)->decodeData (" + str + ")");
 
     switch (datosRx[1]) {
+        /*case GETANALOGSENSORS://     ANALOGSENSORS=0xA0,
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        strOut = "LEFT IR: " + str;
+        ui->textEdit_PROCCES->append(strOut);
+        ui->label_LIR->setText(str);
+        w.ui8[0] = datosRx[4];
+        w.ui8[1] = datosRx[5];
+        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        strOut = "CENTER IR: " + str;
+        ui->textEdit_PROCCES->append(strOut);
+        ui->label_CIR->setText(str);
+        w.ui8[0] = datosRx[6];
+        w.ui8[1] = datosRx[7];
+        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
+        strOut = "RIGHT IR: " + str;
+        ui->label_RIR->setText(str);
+        ui->textEdit_PROCCES->append(strOut);
+        break;
+    case SETSERVOANGLE://     SERVOANGLE=0xA2,
+        if(datosRx[2]==0x0D)
+            str= "Servo moviendose. Esperando posición Final!!!";
+                else{
+                if(datosRx[2]==0x0A)
+                    str= "Servo en posición Final!!!";
+            }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case GETDISTANCE://     GETDISTANCE=0xA3,
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        w.ui8[2] = datosRx[4];
+        w.ui8[3] = datosRx[5];
+        str = QString().number(w.ui32/58);
+        ui->label_DISTANCE->setText(str+ "cm");
+        ui->textEdit_PROCCES->append("DISTANCIA: "+QString().number(w.ui32/58)+ "cm");
+        break;
+    case GETSPEED://     GETSPEED=0xA4,
+        str = "VM1: ";
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        w.ui8[2] = datosRx[4];
+        w.ui8[3] = datosRx[5];
+        strOut = QString("%1").arg(w.i32, 4, 10, QChar('0'));
+        ui->label_LENC->setText(strOut);
+        str = str + QString("%1").arg(w.i32, 4, 10, QChar('0')) + " - VM2: ";
+        w.ui8[0] = datosRx[6];
+        w.ui8[1] = datosRx[7];
+        w.ui8[2] = datosRx[8];
+        w.ui8[3] = datosRx[9];
+        strOut = QString("%1").arg(w.i32, 4, 10, QChar('0'));
+        ui->label_RENC->setText(strOut);
+        str = str + QString("%1").arg(w.i32, 4, 10, QChar('0'));
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case GETSWITCHES: //GETSWITCHES=0xA5
+        str = "SW3: ";
+        if(datosRx[2] & 0x08)
+            str = str + "HIGH";
+        else
+            str = str + "LOW";
+        str = str + " - SW2: ";
+        if(datosRx[2] & 0x04)
+            str = str + "HIGH";
+        else
+            str = str + "LOW";
+        str = str + " - SW1: ";
+        if(datosRx[2] & 0x02)
+            str = str + "HIGH";
+        else
+            str = str + "LOW";
+        str = str + " - SW0: ";
+        if(datosRx[2] & 0x01)
+            str = str + "HIGH";
+        else
+            str = str + "LOW";
+        ui->textEdit_PROCCES->append(str);
+        break;*/
+
     case GETALIVE://     GETALIVE=0xF0,
         if(datosRx[2]==ACK){
             if(source) {
@@ -889,61 +1031,29 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     }
 
-    case MODIFYKP: { //     MODIFYKP=0xB1,
-        // KP
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        qint16 kpValue = w.i16[0];
-        QString strKpValue = QString::number(kpValue);
-        ui->label_KP->setText(strKpValue);
+    case MODIFYKP://     MODIFYKP=0xB1,
+        if(datosRx[2]==ACK){
+            str="KP ha sido modificado con exito!";
+        }
+        ui->textEdit_PROCCES->append(str);
         break;
-    }
-    case MODIFYKD: { //     MODIFYKD=0xB2,
-        // KD
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        qint16 kdValue = w.i16[0];
-        QString strKdValue = QString::number(kdValue);
-        ui->label_KD->setText(strKdValue);
+    case MODIFYKD://     MODIFYKD=0xB2,
+        if(datosRx[2]==ACK){
+            str="KD ha sido modificado con exito!";
+        }
+        ui->textEdit_PROCCES->append(str);
         break;
-    }
-    case MODIFYKI: { //     MODIFYKI=0xB3,
-        // KI
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        qint16 kiValue = w.i16[0];
-        QString strKiValue = QString::number(kiValue);
-        ui->label_KI->setText(strKiValue);
+    case MODIFYKI://     MODIFYKI=0xB3,
+        if(datosRx[2]==ACK){
+            str="KI ha sido modificado con exito!";
+        }
+        ui->textEdit_PROCCES->append(str);
         break;
-    }
     case SETMOTORSPEED://     SETMOTORSPEED=0xA1,
         if(datosRx[2]==0x0D)
             str= "Test Motores ACK";
         ui->textEdit_PROCCES->append(str);
         break;
-    case GETPIDVALUES:{ //GETPIDVALUES=0xB5
-        // KP
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        qint16 kpValue = w.i16[0];
-        QString strKpValue = QString::number(kpValue);
-        ui->label_KP->setText(strKpValue);
-
-        // KD
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        qint16 kdValue = w.i16[0];
-        QString strKdValue = QString::number(kdValue);
-        ui->label_KD->setText(strKdValue);
-
-        // KI
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        qint16 kiValue = w.i16[0];
-        QString strKiValue = QString::number(kiValue);
-        ui->label_KI->setText(strKiValue);
-        break;
-    }
     case SENDALLSENSORS: { //SENDALLSENSORS=0xA9
         if (!mpuStarted) {
             mpuStarted = true;
