@@ -110,6 +110,7 @@ private:
         MODIFYKD = 0xB2,
         MODIFYKI = 0xB3,
         BALANCE = 0xB4,
+        GETPIDVALUES= 0xB5,
         OTHERS
     }_eCmd;
 

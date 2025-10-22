@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKD", 0xB2);
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
+    ui->comboBox_CMD->addItem("GETPIDVALUES", 0xB5);
 
     estadoProtocolo = START;
     rxData.timeOut=0;
@@ -140,7 +141,7 @@ MainWindow::MainWindow(QWidget *parent)
     adcChartView->setChart(adcChart);
     adcChartView->setRenderHint(QPainter::Antialiasing);
 
-    // Configuro el positionWidget:
+    /*// Configuro el positionWidget:
     positionChartView = ui->positionWidget;
     positionChart     = new QChart();
     positionChartView->setChart(positionChart);
@@ -177,7 +178,7 @@ MainWindow::MainWindow(QWidget *parent)
     borderSeries->setColor(Qt::lightGray);
     positionChart->addSeries(borderSeries);
     borderSeries->attachAxis(posAxisX);
-    borderSeries->attachAxis(posAxisY);
+    borderSeries->attachAxis(posAxisY);*/
 }
 
 MainWindow::~MainWindow()
@@ -533,6 +534,7 @@ void MainWindow::sendDataUDP()
     case GETFIRMWARE:       // 0xF1
     case GETANALOGSENSORS:  // 0xA0
     case BALANCE: //BALANCE=0xB4
+    case GETPIDVALUES: //GETPIDVALUES=0xB5
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -663,6 +665,7 @@ void MainWindow::sendDataSerial(){
     case SENDALLSENSORS: //SENDALLSENSORS=0xA9
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
     case BALANCE: //BALANCE=0xB4
+    case GETPIDVALUES: //GETPIDVALUES=0xB5
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -712,86 +715,6 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     ui->textEdit_RAW->append("*(MBED-S->PC)->decodeData (" + str + ")");
 
     switch (datosRx[1]) {
-        /*case GETANALOGSENSORS://     ANALOGSENSORS=0xA0,
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        strOut = "LEFT IR: " + str;
-        ui->textEdit_PROCCES->append(strOut);
-        ui->label_LIR->setText(str);
-        w.ui8[0] = datosRx[4];
-        w.ui8[1] = datosRx[5];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        strOut = "CENTER IR: " + str;
-        ui->textEdit_PROCCES->append(strOut);
-        ui->label_CIR->setText(str);
-        w.ui8[0] = datosRx[6];
-        w.ui8[1] = datosRx[7];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        strOut = "RIGHT IR: " + str;
-        ui->label_RIR->setText(str);
-        ui->textEdit_PROCCES->append(strOut);
-        break;
-    case SETSERVOANGLE://     SERVOANGLE=0xA2,
-        if(datosRx[2]==0x0D)
-            str= "Servo moviendose. Esperando posición Final!!!";
-                else{
-                if(datosRx[2]==0x0A)
-                    str= "Servo en posición Final!!!";
-            }
-        ui->textEdit_PROCCES->append(str);
-        break;
-    case GETDISTANCE://     GETDISTANCE=0xA3,
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        w.ui8[2] = datosRx[4];
-        w.ui8[3] = datosRx[5];
-        str = QString().number(w.ui32/58);
-        ui->label_DISTANCE->setText(str+ "cm");
-        ui->textEdit_PROCCES->append("DISTANCIA: "+QString().number(w.ui32/58)+ "cm");
-        break;
-    case GETSPEED://     GETSPEED=0xA4,
-        str = "VM1: ";
-        w.ui8[0] = datosRx[2];
-        w.ui8[1] = datosRx[3];
-        w.ui8[2] = datosRx[4];
-        w.ui8[3] = datosRx[5];
-        strOut = QString("%1").arg(w.i32, 4, 10, QChar('0'));
-        ui->label_LENC->setText(strOut);
-        str = str + QString("%1").arg(w.i32, 4, 10, QChar('0')) + " - VM2: ";
-        w.ui8[0] = datosRx[6];
-        w.ui8[1] = datosRx[7];
-        w.ui8[2] = datosRx[8];
-        w.ui8[3] = datosRx[9];
-        strOut = QString("%1").arg(w.i32, 4, 10, QChar('0'));
-        ui->label_RENC->setText(strOut);
-        str = str + QString("%1").arg(w.i32, 4, 10, QChar('0'));
-        ui->textEdit_PROCCES->append(str);
-        break;
-    case GETSWITCHES: //GETSWITCHES=0xA5
-        str = "SW3: ";
-        if(datosRx[2] & 0x08)
-            str = str + "HIGH";
-        else
-            str = str + "LOW";
-        str = str + " - SW2: ";
-        if(datosRx[2] & 0x04)
-            str = str + "HIGH";
-        else
-            str = str + "LOW";
-        str = str + " - SW1: ";
-        if(datosRx[2] & 0x02)
-            str = str + "HIGH";
-        else
-            str = str + "LOW";
-        str = str + " - SW0: ";
-        if(datosRx[2] & 0x01)
-            str = str + "HIGH";
-        else
-            str = str + "LOW";
-        ui->textEdit_PROCCES->append(str);
-        break;*/
-
     case GETALIVE://     GETALIVE=0xF0,
         if(datosRx[2]==ACK){
             if(source) {
@@ -973,29 +896,61 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     }
 
-    case MODIFYKP://     MODIFYKP=0xB1,
-        if(datosRx[2]==ACK){
-            str="KP ha sido modificado con exito!";
-        }
-        ui->textEdit_PROCCES->append(str);
+    case MODIFYKP: { //     MODIFYKP=0xB1,
+        // KP
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        qint16 kpValue = w.i16[0];
+        QString strKpValue = QString::number(kpValue);
+        ui->label_KP->setText(strKpValue);
         break;
-    case MODIFYKD://     MODIFYKD=0xB2,
-        if(datosRx[2]==ACK){
-            str="KD ha sido modificado con exito!";
-        }
-        ui->textEdit_PROCCES->append(str);
+    }
+    case MODIFYKD: { //     MODIFYKD=0xB2,
+        // KD
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        qint16 kdValue = w.i16[0];
+        QString strKdValue = QString::number(kdValue);
+        ui->label_KD->setText(strKdValue);
         break;
-    case MODIFYKI://     MODIFYKI=0xB3,
-        if(datosRx[2]==ACK){
-            str="KI ha sido modificado con exito!";
-        }
-        ui->textEdit_PROCCES->append(str);
+    }
+    case MODIFYKI: { //     MODIFYKI=0xB3,
+        // KI
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        qint16 kiValue = w.i16[0];
+        QString strKiValue = QString::number(kiValue);
+        ui->label_KI->setText(strKiValue);
         break;
+    }
     case SETMOTORSPEED://     SETMOTORSPEED=0xA1,
         if(datosRx[2]==0x0D)
             str= "Test Motores ACK";
         ui->textEdit_PROCCES->append(str);
         break;
+    case GETPIDVALUES:{ //GETPIDVALUES=0xB5
+        // KP
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        qint16 kpValue = w.i16[0];
+        QString strKpValue = QString::number(kpValue);
+        ui->label_KP->setText(strKpValue);
+
+        // KD
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        qint16 kdValue = w.i16[0];
+        QString strKdValue = QString::number(kdValue);
+        ui->label_KD->setText(strKdValue);
+
+        // KI
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        qint16 kiValue = w.i16[0];
+        QString strKiValue = QString::number(kiValue);
+        ui->label_KI->setText(strKiValue);
+        break;
+    }
     case SENDALLSENSORS: { //SENDALLSENSORS=0xA9
         if (!mpuStarted) {
             mpuStarted = true;
