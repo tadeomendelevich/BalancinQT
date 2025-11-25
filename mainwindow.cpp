@@ -516,6 +516,12 @@ void MainWindow::sendDataUDP()
         double kp_val = QInputDialog::getDouble(this, "Factor KP", "KP:", 0.0, 0.0, 1000.0, 2, &ok);
         if (!ok) return;
         w.f32 = (float)kp_val;
+        // Rueda 1
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        // Rueda 2
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -528,6 +534,12 @@ void MainWindow::sendDataUDP()
         double kd_val = QInputDialog::getDouble(this, "Factor KD", "KD:", 0.0, 0.0, 1000.0, 2, &ok);
         if (!ok) return;
         w.f32 = (float)kd_val;
+        // Rueda 1
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        // Rueda 2
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -540,6 +552,12 @@ void MainWindow::sendDataUDP()
         double ki_val = QInputDialog::getDouble(this, "Factor KI", "KI:", 0.0, 0.0, 1000.0, 2, &ok);
         if (!ok) return;
         w.f32 = (float)ki_val;
+        // Rueda 1
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        // Rueda 2
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -653,6 +671,12 @@ void MainWindow::sendDataSerial(){
         double kp_val = QInputDialog::getDouble(this, "Factor KP", "KP:", 0.0, 0.0, 1000.0, 2, &ok);
         if (!ok) return;
         w.f32 = (float)kp_val;
+        // Rueda 1
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        // Rueda 2
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -665,6 +689,12 @@ void MainWindow::sendDataSerial(){
         double kd_val = QInputDialog::getDouble(this, "Factor KD", "KD:", 0.0, 0.0, 1000.0, 2, &ok);
         if (!ok) return;
         w.f32 = (float)kd_val;
+        // Rueda 1
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        // Rueda 2
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -677,6 +707,12 @@ void MainWindow::sendDataSerial(){
         double ki_val = QInputDialog::getDouble(this, "Factor KI", "KI:", 0.0, 0.0, 1000.0, 2, &ok);
         if (!ok) return;
         w.f32 = (float)ki_val;
+        // Rueda 1
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        // Rueda 2
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -920,87 +956,11 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     }
 
-    case MODIFYKP: { //    MODIFYKP=0xB1,
-        w.ui8[0] = datosRx[2];  // KP VALUE - Byte 0
-        w.ui8[1] = datosRx[3];  // KP VALUE - Byte 1
-        w.ui8[2] = datosRx[4];  // KP VALUE - Byte 2
-        w.ui8[3] = datosRx[5];  // KP VALUE - Byte 3
-        float KP_Value = w.f32; // <--- CORREGIDO (sin [0])
-        QString strKP = QString::number(KP_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KP->setText(strKP);
-
-        w.ui8[0] = datosRx[6];  // KD VALUE - Byte 0
-        w.ui8[1] = datosRx[7];  // KD VALUE - Byte 1
-        w.ui8[2] = datosRx[8];  // KD VALUE - Byte 2
-        w.ui8[3] = datosRx[9];  // KD VALUE - Byte 3
-        float KD_Value = w.f32; // <--- CORREGIDO (sin [0])
-        QString strKD = QString::number(KD_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KD->setText(strKD);
-
-        w.ui8[0] = datosRx[10]; // KI VALUE - Byte 0
-        w.ui8[1] = datosRx[11]; // KI VALUE - Byte 1
-        w.ui8[2] = datosRx[12]; // KI VALUE - Byte 2
-        w.ui8[3] = datosRx[13]; // KI VALUE - Byte 3
-        float KI_Value = w.f32; // <--- CORREGIDO (sin [0])
-        QString strKI = QString::number(KI_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KI->setText(strKI);
-        ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
+    case MODIFYKP: //    MODIFYKP=0xB1,
+    case MODIFYKD: //    MODIFYKD=0xB2,
+    case MODIFYKI: //    MODIFYKI=0xB3,
+        decodeAndDisplayPID(datosRx);
         break;
-    }
-    case MODIFYKD: { //    MODIFYKD=0xB2,
-        w.ui8[0] = datosRx[2];  // KP VALUE - Byte 0
-        w.ui8[1] = datosRx[3];  // KP VALUE - Byte 1
-        w.ui8[2] = datosRx[4];  // KP VALUE - Byte 2
-        w.ui8[3] = datosRx[5];  // KP VALUE - Byte 3
-        float KP_Value = w.f32; // <--- CORREGIDO
-        QString strKP = QString::number(KP_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KP->setText(strKP);
-
-        w.ui8[0] = datosRx[6];  // KD VALUE - Byte 0
-        w.ui8[1] = datosRx[7];  // KD VALUE - Byte 1
-        w.ui8[2] = datosRx[8];  // KD VALUE - Byte 2
-        w.ui8[3] = datosRx[9];  // KD VALUE - Byte 3
-        float KD_Value = w.f32; // <--- CORREGIDO
-        QString strKD = QString::number(KD_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KD->setText(strKD);
-
-        w.ui8[0] = datosRx[10]; // KI VALUE - Byte 0
-        w.ui8[1] = datosRx[11]; // KI VALUE - Byte 1
-        w.ui8[2] = datosRx[12]; // KI VALUE - Byte 2
-        w.ui8[3] = datosRx[13]; // KI VALUE - Byte 3
-        float KI_Value = w.f32; // <--- CORREGIDO
-        QString strKI = QString::number(KI_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KI->setText(strKI);
-        ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
-        break;
-    }
-    case MODIFYKI: { //    MODIFYKI=0xB3,
-        w.ui8[0] = datosRx[2];  // KP VALUE - Byte 0
-        w.ui8[1] = datosRx[3];  // KP VALUE - Byte 1
-        w.ui8[2] = datosRx[4];  // KP VALUE - Byte 2
-        w.ui8[3] = datosRx[5];  // KP VALUE - Byte 3
-        float KP_Value = w.f32; // <--- CORREGIDO
-        QString strKP = QString::number(KP_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KP->setText(strKP);
-
-        w.ui8[0] = datosRx[6];  // KD VALUE - Byte 0
-        w.ui8[1] = datosRx[7];  // KD VALUE - Byte 1
-        w.ui8[2] = datosRx[8];  // KD VALUE - Byte 2
-        w.ui8[3] = datosRx[9];  // KD VALUE - Byte 3
-        float KD_Value = w.f32; // <--- CORREGIDO
-        QString strKD = QString::number(KD_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KD->setText(strKD);
-
-        w.ui8[0] = datosRx[10]; // KI VALUE - Byte 0
-        w.ui8[1] = datosRx[11]; // KI VALUE - Byte 1
-        w.ui8[2] = datosRx[12]; // KI VALUE - Byte 2
-        w.ui8[3] = datosRx[13]; // KI VALUE - Byte 3
-        float KI_Value = w.f32; // <--- CORREGIDO
-        QString strKI = QString::number(KI_Value, 'f', 2); // Muestra con 2 decimales
-        ui->label_KI->setText(strKI);
-        ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
-        break;
-    }
     case SETMOTORSPEED://     SETMOTORSPEED=0xA1,
         if(datosRx[2]==0x0D)
             str= "Test Motores ACK";
@@ -1210,4 +1170,33 @@ void MainWindow::updatePosition()
 
 void MainWindow::on_pushButton_released() {
     // Acción vacía o algo temporal
+}
+
+void MainWindow::decodeAndDisplayPID(uint8_t *datosRx) {
+    _udat w;
+    // KP
+    w.ui8[0] = datosRx[2]; w.ui8[1] = datosRx[3]; w.ui8[2] = datosRx[4]; w.ui8[3] = datosRx[5];
+    float KP_Value1 = w.f32;
+    w.ui8[0] = datosRx[6]; w.ui8[1] = datosRx[7]; w.ui8[2] = datosRx[8]; w.ui8[3] = datosRx[9];
+    float KP_Value2 = w.f32;
+    QString strKP = QString::number(KP_Value1, 'f', 2) + " / " + QString::number(KP_Value2, 'f', 2);
+    ui->label_KP->setText(strKP);
+
+    // KD
+    w.ui8[0] = datosRx[10]; w.ui8[1] = datosRx[11]; w.ui8[2] = datosRx[12]; w.ui8[3] = datosRx[13];
+    float KD_Value1 = w.f32;
+    w.ui8[0] = datosRx[14]; w.ui8[1] = datosRx[15]; w.ui8[2] = datosRx[16]; w.ui8[3] = datosRx[17];
+    float KD_Value2 = w.f32;
+    QString strKD = QString::number(KD_Value1, 'f', 2) + " / " + QString::number(KD_Value2, 'f', 2);
+    ui->label_KD->setText(strKD);
+
+    // KI
+    w.ui8[0] = datosRx[18]; w.ui8[1] = datosRx[19]; w.ui8[2] = datosRx[20]; w.ui8[3] = datosRx[21];
+    float KI_Value1 = w.f32;
+    w.ui8[0] = datosRx[22]; w.ui8[1] = datosRx[23]; w.ui8[2] = datosRx[24]; w.ui8[3] = datosRx[25];
+    float KI_Value2 = w.f32;
+    QString strKI = QString::number(KI_Value1, 'f', 2) + " / " + QString::number(KI_Value2, 'f', 2);
+    ui->label_KI->setText(strKI);
+
+    ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
 }
