@@ -63,6 +63,8 @@ private slots:
 
     void updatePosition();
 
+    void decodeAndDisplayPID(uint8_t *datosRx);
+
 private:
     Ui::MainWindow *ui;
     QSerialPort *serial;
