@@ -112,6 +112,7 @@ private:
         MODIFYKD = 0xB2,
         MODIFYKI = 0xB3,
         BALANCE = 0xB4,
+        RESETMASSCENTER = 0xB7,
         OTHERS
     }_eCmd;
 
