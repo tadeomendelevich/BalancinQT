@@ -142,7 +142,7 @@ MainWindow::MainWindow(QWidget *parent)
     adcChartView->setChart(adcChart);
     adcChartView->setRenderHint(QPainter::Antialiasing);
 
-    QTimer::singleShot(100, this, &MainWindow::on_pushButton_OPENUDP_clicked);
+    QTimer::singleShot(1, this, &MainWindow::on_pushButton_OPENUDP_clicked);
 }
 
 MainWindow::~MainWindow()
