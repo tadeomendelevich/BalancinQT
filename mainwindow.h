@@ -63,6 +63,8 @@ private slots:
 
     void updatePosition();
 
+    void sendUdpCommand(uint8_t cmd);
+
 private:
     Ui::MainWindow *ui;
     QSerialPort *serial;

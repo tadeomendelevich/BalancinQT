@@ -761,6 +761,11 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
             str= "ALIVE BLUEPILL VIA *SERIE*  NO ACK!!!";
         }
         ui->textEdit_PROCCES->append(str);
+
+        // Si es por UDP, respondemos para completar el "handshake"
+        if(source == UDP){
+            sendUdpCommand(GETALIVE);
+        }
         break;
     case GETFIRMWARE://     GETFIRMWARE=0xF1
         str = "FIRMWARE:";
@@ -1217,6 +1222,49 @@ void MainWindow::updatePosition()
     }
 }
 
+void MainWindow::sendUdpCommand(uint8_t cmd)
+{
+    // --- Verificar que el socket esté realmente BIND (abierto para recibir) ---
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) return;
+
+    // --- Cargar/validar destino ---
+    if (clientAddress.isNull() || puertoremoto <= 0) return;
+
+    // --- Armado de trama ---
+    unsigned char dato[256];
+    int indice = 0;
+
+    // Encabezado "UNER" + NBYTES placeholder + ':'
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    const int idxNbytes = indice;        // posición del campo NBYTES
+    dato[indice++] = 0x00;               // se completa al final
+    dato[indice++] = ':';                // token
+    const int payloadStart = indice;     // inicio del payload
+
+    dato[indice++] = cmd;
+
+    // Longitud NBYTES = (cmd + datos) + 1 (checksum)
+    const int payloadSinChk = indice - payloadStart;
+    const unsigned char nbytes = static_cast<unsigned char>(payloadSinChk + 1);
+    dato[idxNbytes] = nbytes;
+
+    // Checksum: 'U'^'N'^'E'^'R'^NBYTES^':' ^ payload (sin el checksum)
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    // Envío: 4 + 1 + 1 + nbytes
+    const int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(
+        reinterpret_cast<const char *>(dato),
+        totalLen,
+        clientAddress,
+        static_cast<quint16>(puertoremoto)
+        );
+}
 
 void MainWindow::on_pushButton_released() {
     // Acción vacía o algo temporal
