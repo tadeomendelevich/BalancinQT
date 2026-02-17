@@ -1245,6 +1245,9 @@ void MainWindow::sendUdpCommand(uint8_t cmd)
     const int payloadStart = indice;     // inicio del payload
 
     dato[indice++] = cmd;
+    if (cmd == GETALIVE) {
+        dato[indice++] = ACK;
+    }
 
     // Longitud NBYTES = (cmd + datos) + 1 (checksum)
     const int payloadSinChk = indice - payloadStart;
