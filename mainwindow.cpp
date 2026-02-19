@@ -151,6 +151,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::openSerialPorts(){
     const SettingsDialog::Settings p = settingPorts->settings();
+
+    // Validar si el puerto es válido o está vacío
+    if(p.name.isEmpty()) {
+        QMessageBox::warning(this, tr("Advertencia"), tr("No se ha seleccionado ningún puerto. Por favor ve a Device -> Scan Ports y selecciona uno."));
+        // Intentar abrir el diálogo automáticamente si no hay configuración
+        settingPorts->show();
+        return;
+    }
+
     serial->setPortName(p.name);
     serial->setBaudRate(p.baudRate);
     serial->setDataBits(p.dataBits);
