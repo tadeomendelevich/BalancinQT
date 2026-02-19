@@ -134,6 +134,30 @@ private:
 
     _sDatos rxData, rxDataUdp;
 
+    // Estructura para almacenar los datos de telemetría CSV
+    struct TelemetryData {
+        uint32_t t_ms;       // Tiempo en ms
+        uint32_t dt_us;      // Tiempo entre ciclos (µs)
+        float accel_roll;    // Ángulo acelerómetro (grados)
+        float gyro_y;        // Velocidad angular (grados/s)
+        float roll_filt;     // Ángulo filtrado (grados)
+        float error;         // Error actual
+        float p;             // Término P
+        float i;             // Término I
+        float d;             // Término D
+        float output;        // Salida PID
+        float pwm_cmd;       // PWM calculado
+        float pwm_sat;       // PWM saturado
+        uint8_t sat_flag;    // Bandera saturación
+        int16_t mR;          // Velocidad Motor Derecho
+        int16_t mL;          // Velocidad Motor Izquierdo
+    };
+
+    TelemetryData telemetryData;
+    QByteArray csvBuffer; // Buffer para acumular datos CSV incompletos
+
+    void processCsvLine(const QByteArray &line);
+
     typedef union {
         double  d32;
         float f32;

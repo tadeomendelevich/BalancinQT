@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtNetwork/QNetworkDatagram>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -196,9 +197,24 @@ void MainWindow::dataRecived(){
 
     serial->read((char *)incomingBuffer,count);
 
+    // --- PROCESAMIENTO CSV ---
+    csvBuffer.append((char *)incomingBuffer, count);
+    while (csvBuffer.contains('\n')) {
+        int idx = csvBuffer.indexOf('\n');
+        QByteArray line = csvBuffer.left(idx).trimmed(); // Extraer línea sin \n
+        csvBuffer = csvBuffer.mid(idx + 1);              // Avanzar buffer
+
+        if (!line.isEmpty()) {
+            processCsvLine(line);
+        }
+    }
+    // Limpieza de seguridad si el buffer crece demasiado (por ej. si solo llega binario)
+    if (csvBuffer.size() > 4096) csvBuffer.clear();
+    // -------------------------
+
     QString str="";
 
-    for(int i=0; i<=count; i++){
+    for(int i=0; i<count; i++){
         if(isalnum(incomingBuffer[i]))
             str = str + QString("%1").arg((char)incomingBuffer[i]);
         else
@@ -1218,4 +1234,74 @@ void MainWindow::updatePosition()
 
 void MainWindow::on_pushButton_released() {
     // Acción vacía o algo temporal
+}
+
+void MainWindow::processCsvLine(const QByteArray &line)
+{
+    // Convertir a string
+    QString strLine = QString::fromUtf8(line);
+
+    // Ignorar Headers
+    if (strLine.startsWith("t_ms") || strLine.startsWith("Time")) {
+         return;
+    }
+
+    // Separar por comas
+    QStringList parts = strLine.split(',');
+
+    // Verificar cantidad de columnas (15)
+    if (parts.size() < 15) {
+        return; // Línea incompleta o formato incorrecto
+    }
+
+    bool ok;
+    // 0. t_ms
+    telemetryData.t_ms = parts[0].toUInt(&ok);
+    if(!ok) return;
+
+    // 1. dt_us
+    telemetryData.dt_us = parts[1].toUInt(&ok);
+
+    // 2. accel_roll (x1000)
+    telemetryData.accel_roll = parts[2].toFloat(&ok) / 1000.0f;
+
+    // 3. gyro_y (x1000)
+    telemetryData.gyro_y = parts[3].toFloat(&ok) / 1000.0f;
+
+    // 4. roll_filt (x1000)
+    telemetryData.roll_filt = parts[4].toFloat(&ok) / 1000.0f;
+
+    // 5. error (x1000)
+    telemetryData.error = parts[5].toFloat(&ok) / 1000.0f;
+
+    // 6. p (x1000)
+    telemetryData.p = parts[6].toFloat(&ok) / 1000.0f;
+
+    // 7. i (x1000)
+    telemetryData.i = parts[7].toFloat(&ok) / 1000.0f;
+
+    // 8. d (x1000)
+    telemetryData.d = parts[8].toFloat(&ok) / 1000.0f;
+
+    // 9. output (x1000)
+    telemetryData.output = parts[9].toFloat(&ok) / 1000.0f;
+
+    // 10. pwm_cmd (x100) -> Ojo, guia dice x100
+    telemetryData.pwm_cmd = parts[10].toFloat(&ok) / 100.0f;
+
+    // 11. pwm_sat (x100) -> Ojo, guia dice x100
+    telemetryData.pwm_sat = parts[11].toFloat(&ok) / 100.0f;
+
+    // 12. sat_flag
+    telemetryData.sat_flag = (uint8_t)parts[12].toUInt(&ok);
+
+    // 13. mR
+    telemetryData.mR = (int16_t)parts[13].toInt(&ok);
+
+    // 14. mL
+    telemetryData.mL = (int16_t)parts[14].toInt(&ok);
+
+    // Debug opcional para verificar
+    // ui->textEdit_PROCCES->append("CSV: " + strLine);
+    qDebug() << "CSV Parsed: t=" << telemetryData.t_ms << " Roll=" << telemetryData.roll_filt;
 }
