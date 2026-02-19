@@ -141,7 +141,6 @@ MainWindow::MainWindow(QWidget *parent)
     adcChart->setTitle("Valores ADC");
     adcChartView->setChart(adcChart);
     adcChartView->setRenderHint(QPainter::Antialiasing);
-
 }
 
 MainWindow::~MainWindow()

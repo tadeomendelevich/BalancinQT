@@ -428,6 +428,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </item>
               <item>
                <widget class="QPushButton" name="pushButton_OPENUDP">
+                <property name="minimumSize">
+                 <size>
+                  <width>70</width>
+                  <height>30</height>
+                 </size>
+                </property>
                 <property name="text">
                  <string>Open UDP</string>
                 </property>
@@ -482,28 +488,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0">
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>true</bold>
-              <underline>true</underline>
-             </font>
-            </property>
-            <property name="text">
-             <string>Valores ADC</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QLabel" name="label_ADC_1">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -523,6 +518,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_2">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -542,6 +543,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADC_3">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -561,6 +568,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADC_4">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -581,6 +594,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <layout class="QHBoxLayout" name="horizontalLayout_4">
             <item>
              <widget class="QLabel" name="label_ADCVALUE_1">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -601,6 +620,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADCVALUE_2">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -621,6 +646,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADCVALUE_3">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -641,6 +672,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADCVALUE_4">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -664,6 +701,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <layout class="QHBoxLayout" name="horizontalLayout_7">
             <item>
              <widget class="QLabel" name="label_ADC_5">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -680,6 +723,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADC_6">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -696,6 +745,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADC_7">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -712,6 +767,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QLabel" name="label_ADC_8">
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
