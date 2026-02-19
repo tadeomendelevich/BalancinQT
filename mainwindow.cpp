@@ -765,11 +765,11 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case GETALIVE://     GETALIVE=0xF0,
         if(datosRx[2]==ACK){
             if(source) {
-                    contadorAlive++;
-                    str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
+                contadorAlive++;
+                str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
             } else {
-                    contadorAlive++;
-                    str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
+                contadorAlive++;
+                str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
             }
         } else {
             str= "ALIVE BLUEPILL VIA *SERIE*  NO ACK!!!";
@@ -1243,7 +1243,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // Ignorar Headers
     if (strLine.startsWith("t_ms") || strLine.startsWith("Time")) {
-         return;
+        return;
     }
 
     // Separar por comas
@@ -1304,4 +1304,24 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Debug opcional para verificar
     // ui->textEdit_PROCCES->append("CSV: " + strLine);
     qDebug() << "CSV Parsed: t=" << telemetryData.t_ms << " Roll=" << telemetryData.roll_filt;
+
+    // --- GRÁFICOS ---
+    // Usamos el tiempo recibido (convertido a segundos)
+    double t_sec = telemetryData.t_ms / 1000.0;
+
+    // Graficamos Aceleración (accel_roll) en el chart de aceleración
+    // Nota: Aunque se llame "accel_roll", lo ponemos en seriesAx como ejemplo
+    seriesAx->append(t_sec, telemetryData.accel_roll);
+
+    // Graficamos Giroscopio (gyro_y) en el chart de giroscopio
+    seriesGy->append(t_sec, telemetryData.gyro_y);
+
+    // Actualizamos el eje X para que "corra" con el tiempo
+    // Mantenemos una ventana de 10 segundos
+    accAxisX->setRange(t_sec - 10.0, t_sec);
+    gyroAxisX->setRange(t_sec - 10.0, t_sec);
+
+    // Opcional: Auto-escala en Y (puedes ajustar o quitar esto si prefieres rango fijo)
+    // Para simplificar, aquí dejamos que el usuario use los rangos fijos definidos en el constructor
+    // o llamamos a una función de auto-escala si se desea.
 }
