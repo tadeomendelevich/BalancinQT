@@ -1304,4 +1304,24 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Debug opcional para verificar
     // ui->textEdit_PROCCES->append("CSV: " + strLine);
     qDebug() << "CSV Parsed: t=" << telemetryData.t_ms << " Roll=" << telemetryData.roll_filt;
+
+    // --- GRÁFICOS ---
+    // Usamos el tiempo recibido (convertido a segundos)
+    double t_sec = telemetryData.t_ms / 1000.0;
+
+    // Graficamos Aceleración (accel_roll) en el chart de aceleración
+    // Nota: Aunque se llame "accel_roll", lo ponemos en seriesAx como ejemplo
+    seriesAx->append(t_sec, telemetryData.accel_roll);
+
+    // Graficamos Giroscopio (gyro_y) en el chart de giroscopio
+    seriesGy->append(t_sec, telemetryData.gyro_y);
+
+    // Actualizamos el eje X para que "corra" con el tiempo
+    // Mantenemos una ventana de 10 segundos
+    accAxisX->setRange(t_sec - 10.0, t_sec);
+    gyroAxisX->setRange(t_sec - 10.0, t_sec);
+
+    // Opcional: Auto-escala en Y (puedes ajustar o quitar esto si prefieres rango fijo)
+    // Para simplificar, aquí dejamos que el usuario use los rangos fijos definidos en el constructor
+    // o llamamos a una función de auto-escala si se desea.
 }
