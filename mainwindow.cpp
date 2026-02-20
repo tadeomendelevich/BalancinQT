@@ -457,6 +457,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     if (UdpSocket1->state() != QAbstractSocket::UnconnectedState) {
         UdpSocket1->close();
         ui->pushButton_OPENUDP->setText("Open UDP");
+        ui->pushButton_OPENUDP->setStyleSheet("background-color: #f0f0f0; color: black;"); // Estilo "Claro/Inactivo"
         ui->pushButton_UDP->setEnabled(false);
         ui->lineEdit_IP_REMOTA->clear();
         ui->lineEdit_DEVICEPORT->clear();
@@ -479,6 +480,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     }
 
     ui->pushButton_OPENUDP->setText("Close UDP");
+    ui->pushButton_OPENUDP->setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;"); // Estilo "Activo/Verde"
     ui->pushButton_UDP->setEnabled(true);
 
     // Cargar destino si ya está ingresado en la UI
@@ -1599,6 +1601,30 @@ void MainWindow::toggleRecording()
     } else {
         // Detener grabación
         if (csvLogFile.isOpen()) {
+            QFileInfo fileInfo(csvLogFile);
+            QString baseName = fileInfo.absolutePath() + "/" + fileInfo.completeBaseName();
+
+            // Guardar screenshots de los gráficos
+            QPixmap p;
+
+            // IMU
+            p = ui->tabWidget_Graficas->widget(0)->grab(); // Tab IMU
+            p.save(baseName + "_IMU.png");
+
+            // PID
+            p = ui->tabWidget_Graficas->widget(1)->grab(); // Tab PID
+            p.save(baseName + "_PID.png");
+
+            // Motors
+            p = ui->tabWidget_Graficas->widget(2)->grab(); // Tab Motors
+            p.save(baseName + "_MOTORS.png");
+
+            // System
+            p = ui->tabWidget_Graficas->widget(3)->grab(); // Tab System
+            p.save(baseName + "_SYSTEM.png");
+
+            ui->textEdit_PROCCES->append("Gráficos guardados como imágenes PNG.");
+
             csvLogFile.close();
         }
         isRecording = false;
