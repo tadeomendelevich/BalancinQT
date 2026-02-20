@@ -105,158 +105,112 @@ QComboBox::drop-down {
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_10">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_9">
-        <item>
-         <widget class="QLabel" name="label_10">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>14</pointsize>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>GRAFICA ACELERACION</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QChartView" name="accelerationWidget" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>300</width>
-            <height>200</height>
-           </size>
-          </property>
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_14">
+       <widget class="QTabWidget" name="tabWidget_Graficas">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="tab_IMU">
+         <attribute name="title">
+          <string>IMU &amp; Ángulos</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_TabIMU">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_11">
-            <item>
-             <widget class="QLabel" name="label_inclination_X">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>50</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>14</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>EJE X</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_inclination_Xvalue">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>50</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>14</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0 º</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QLabel" name="label_10">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>ACELERACIÓN</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_12">
-            <item>
-             <widget class="QLabel" name="label_inclination_Y">
-              <property name="font">
-               <font>
-                <pointsize>14</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>EJE Y</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_inclination_Yvalue">
-              <property name="font">
-               <font>
-                <pointsize>14</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0 º</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QChartView" name="accelerationWidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>200</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_11">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>GIROSCOPIO</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QChartView" name="gyroscopeWidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>200</height>
+             </size>
+            </property>
+           </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_11">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>14</pointsize>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>GRAFICA GIROSCOPIO</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QChartView" name="gyroscopeWidget" native="true">
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
+        </widget>
+        <widget class="QWidget" name="tab_PID">
+         <attribute name="title">
+          <string>PID Control</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_TabPID">
+          <item>
+           <widget class="QChartView" name="pidWidget" native="true"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_Motors">
+         <attribute name="title">
+          <string>Motores &amp; PWM</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_TabMotors">
+          <item>
+           <widget class="QChartView" name="motorsWidget" native="true"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_System">
+         <attribute name="title">
+          <string>Sistema</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_TabSystem">
+          <item>
+           <widget class="QChartView" name="systemWidget" native="true"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -395,6 +349,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <widget class="QPushButton" name="pushButton_UDP">
               <property name="text">
                <string>Send UDP</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_RECORD">
+              <property name="text">
+               <string>RECORD</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton:checked { background-color: red; border: 2px solid white; }</string>
               </property>
              </widget>
             </item>
