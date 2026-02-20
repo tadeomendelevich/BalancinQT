@@ -43,7 +43,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKD", 0xB2);
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
-    ui->comboBox_CMD->addItem("RESETMASSCENTER", 0xB7);
+    ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
+    ui->comboBox_CMD->addItem("ACTIVAR LOG CSV", 0xB9);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -691,6 +692,7 @@ void MainWindow::sendDataUDP()
     case GETANALOGSENSORS:  // 0xA0
     case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
+    case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -828,6 +830,7 @@ void MainWindow::sendDataSerial(){
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
     case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
+    case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -1282,6 +1285,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case RESETMASSCENTER:
         if(datosRx[2]==ACK){
             str="Se ha reestablecido el punto de balance correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case ACTIVATE_CSV_LOG:
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el estado de la bandera de CSV_LOG correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;

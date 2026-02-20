@@ -114,6 +114,7 @@ private:
         MODIFYKI = 0xB3,
         BALANCE = 0xB4,
         RESETMASSCENTER = 0xB7,
+        ACTIVATE_CSV_LOG = 0xB9,
         OTHERS
     }_eCmd;
 
