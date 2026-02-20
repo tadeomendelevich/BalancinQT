@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
     ui->comboBox_CMD->addItem("RESETMASSCENTER", 0xB7);
+    ui->comboBox_CMD->addItem("ACTIVATE_CSV_LOG", 0xB9);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -168,8 +169,8 @@ void MainWindow::openSerialPorts(){
     // Validar si el puerto es válido o está vacío
     if(p.name.isEmpty()) {
         QMessageBox::warning(this, tr("Advertencia"), tr("No se ha seleccionado ningún puerto. Por favor ve a Device -> Scan Ports y selecciona uno."));
-        // Intentar abrir el diálogo automáticamente si no hay configuración
-        settingPorts->show();
+            // Intentar abrir el diálogo automáticamente si no hay configuración
+            settingPorts->show();
         return;
     }
 
@@ -585,7 +586,7 @@ void MainWindow::sendDataUDP()
         break;
     }
 
-        // Comandos simples (sólo ID)
+    // Comandos simples (sólo ID)
     case GETALIVE:          // 0xF0
     case GETANGLE:          // 0xA7
     case GETADCVALUES:      // 0xA5
@@ -593,11 +594,12 @@ void MainWindow::sendDataUDP()
     case SENDALLSENSORS:    // 0xA9
     case GETDISTANCE:       // 0xA3
     case GETSPEED:          // 0xA4
-    case GETSWITCHES:       // ¡revisar si no choca con 0xA5!
+    case GETSWITCHES:       // 0xA5
     case GETFIRMWARE:       // 0xF1
     case GETANALOGSENSORS:  // 0xA0
-    case BALANCE: //BALANCE=0xB4
+    case BALANCE:           // BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
+    case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -735,6 +737,7 @@ void MainWindow::sendDataSerial(){
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
     case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
+    case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -787,11 +790,11 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case GETALIVE://     GETALIVE=0xF0,
         if(datosRx[2]==ACK){
             if(source) {
-                    contadorAlive++;
-                    str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
+                contadorAlive++;
+                str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
             } else {
-                    contadorAlive++;
-                    str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
+                contadorAlive++;
+                str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
             }
         } else {
             str= "ALIVE BLUEPILL VIA *SERIE*  NO ACK!!!";
@@ -1155,12 +1158,10 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         QString strPitch = QString::number(pitch) + " \u00B0";
         ui->label_inclination_Yvalue->setText(strPitch);
 
-
         for (int i = 0; i < 8; ++i) {   // --- actualizo barras sin borrar/append, usando replace() ---
             uint16_t v = qMin<uint16_t>(adcValues[i], 4000);
             adcBarSet->replace(i, v);
         }
-
 
         adcChart->update();     // --- fuerzo repaint si hace falta ---
 
@@ -1189,6 +1190,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case RESETMASSCENTER:
         if(datosRx[2]==ACK){
             str="Se ha reestablecido el punto de balance correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case ACTIVATE_CSV_LOG:
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el estado de la bandera de CSV_LOG correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;
@@ -1265,7 +1272,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // Ignorar Headers
     if (strLine.startsWith("t_ms") || strLine.startsWith("Time")) {
-         return;
+        return;
     }
 
     // Separar por comas
