@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QInputDialog>
 #include <QTimer>
+#include <QFile>
 #include "settingsdialog.h"
 
 #include <QtCharts/QChartView>
