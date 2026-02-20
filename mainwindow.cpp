@@ -63,23 +63,38 @@ MainWindow::MainWindow(QWidget *parent)
     gyroChartView->setRenderHint(QPainter::Antialiasing);
 
     // 3) Crea las series
-    seriesAx = new QLineSeries(); seriesAx->setName("Acc X");
-    seriesAy = new QLineSeries(); seriesAy->setName("Acc Y");
-    seriesAz = new QLineSeries(); seriesAz->setName("Acc Z");
+    seriesAx = new QLineSeries(); seriesAx->setName("Aceleración Roll");
+    seriesAx->setColor(Qt::red);
+    seriesAy = new QLineSeries(); seriesAy->setName("Acc Y (reservado)");
+    seriesAy->setColor(Qt::gray);
+    seriesAz = new QLineSeries(); seriesAz->setName("Acc Z (reservado)");
+    seriesAz->setColor(Qt::lightGray);
 
-    seriesGx = new QLineSeries(); seriesGx->setName("Gyr X");
-    seriesGy = new QLineSeries(); seriesGy->setName("Gyr Y");
-    seriesGz = new QLineSeries(); seriesGz->setName("Gyr Z");
+    seriesGx = new QLineSeries(); seriesGx->setName("Giroscopio Y");
+    seriesGx->setColor(Qt::blue);
+    seriesGy = new QLineSeries(); seriesGy->setName("Gyr Y (reservado)"); // Usaremos seriesGx para Gyro Y según el CSV
+    seriesGy->setColor(Qt::gray);
+    seriesGz = new QLineSeries(); seriesGz->setName("Gyr Z (reservado)");
+    seriesGz->setColor(Qt::lightGray);
 
     // 4) Añade sólo las series de aceleración al accChart
     accChart->addSeries(seriesAx);
-    accChart->addSeries(seriesAy);
-    accChart->addSeries(seriesAz);
+    // accChart->addSeries(seriesAy); // Solo mostramos la relevante por ahora para claridad
+    // accChart->addSeries(seriesAz);
+    accChart->legend()->setVisible(true);
+    accChart->legend()->setAlignment(Qt::AlignBottom);
 
     //    y las de giroscopio al gyroChart
-    gyroChart->addSeries(seriesGx);
+    // El CSV trae gyro_y, usaremos la serie "seriesGx" (o renombramos variables, pero para minimizar cambios usamos seriesGx como principal)
+    // Corrección: El código anterior usaba seriesGy para gyro_y. Mantengamos eso.
+    seriesGy->setName("Giroscopio Y");
+    seriesGy->setColor(Qt::blue);
+
+    // gyroChart->addSeries(seriesGx);
     gyroChart->addSeries(seriesGy);
-    gyroChart->addSeries(seriesGz);
+    // gyroChart->addSeries(seriesGz);
+    gyroChart->legend()->setVisible(true);
+    gyroChart->legend()->setAlignment(Qt::AlignBottom);
 
     // 5) Crea ejes para cada chart
     accAxisX = new QValueAxis(); accAxisX->setTitleText("Tiempo (s)");
@@ -100,14 +115,12 @@ MainWindow::MainWindow(QWidget *parent)
     gyroChart->addAxis(gyroAxisY, Qt::AlignLeft);
 
     // 7) Asocia series a sus ejes
-    for (auto *s : {seriesAx, seriesAy, seriesAz}) {
-        s->attachAxis(accAxisX);
-        s->attachAxis(accAxisY);
-    }
-    for (auto *s : {seriesGx, seriesGy, seriesGz}) {
-        s->attachAxis(gyroAxisX);
-        s->attachAxis(gyroAxisY);
-    }
+    // Solo asociamos las que agregamos al gráfico
+    seriesAx->attachAxis(accAxisX);
+    seriesAx->attachAxis(accAxisY);
+
+    seriesGy->attachAxis(gyroAxisX);
+    seriesGy->attachAxis(gyroAxisY);
 
     // 7) Iniciar el tiempo
     elapsedSec = 0;
@@ -1334,10 +1347,40 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // Actualizamos el eje X para que "corra" con el tiempo
     // Mantenemos una ventana de 10 segundos
-    accAxisX->setRange(t_sec - 10.0, t_sec);
-    gyroAxisX->setRange(t_sec - 10.0, t_sec);
+    double minX = t_sec - 10.0;
+    double maxX = t_sec;
+    accAxisX->setRange(minX, maxX);
+    gyroAxisX->setRange(minX, maxX);
 
-    // Opcional: Auto-escala en Y (puedes ajustar o quitar esto si prefieres rango fijo)
-    // Para simplificar, aquí dejamos que el usuario use los rangos fijos definidos en el constructor
-    // o llamamos a una función de auto-escala si se desea.
+    // --- AUTO-ESCALA EJE Y (Aceleración) ---
+    qreal minAcc = 1000.0, maxAcc = -1000.0;
+    // Iteramos sobre los puntos visibles para encontrar min/max
+    const QList<QPointF> pointsAx = seriesAx->points();
+    if (!pointsAx.isEmpty()) {
+        for (const QPointF &p : pointsAx) {
+            if (p.x() >= minX) { // Solo consideramos los puntos dentro de la ventana de tiempo
+                if (p.y() < minAcc) minAcc = p.y();
+                if (p.y() > maxAcc) maxAcc = p.y();
+            }
+        }
+        // Agregamos un margen del 10%
+        qreal marginAcc = (maxAcc - minAcc) * 0.1;
+        if (marginAcc == 0) marginAcc = 1.0; // Evitar rango nulo
+        accAxisY->setRange(minAcc - marginAcc, maxAcc + marginAcc);
+    }
+
+    // --- AUTO-ESCALA EJE Y (Giroscopio) ---
+    qreal minGyro = 10000.0, maxGyro = -10000.0;
+    const QList<QPointF> pointsGy = seriesGy->points();
+    if (!pointsGy.isEmpty()) {
+        for (const QPointF &p : pointsGy) {
+            if (p.x() >= minX) {
+                if (p.y() < minGyro) minGyro = p.y();
+                if (p.y() > maxGyro) maxGyro = p.y();
+            }
+        }
+        qreal marginGyro = (maxGyro - minGyro) * 0.1;
+        if (marginGyro == 0) marginGyro = 10.0;
+        gyroAxisY->setRange(minGyro - marginGyro, maxGyro + marginGyro);
+    }
 }
