@@ -182,6 +182,42 @@ QComboBox::drop-down {
            </layout>
           </item>
           <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_LogDir">
+            <item>
+             <widget class="QLabel" name="label_LogDir">
+              <property name="text">
+               <string>Log Dir:</string>
+              </property>
+              <property name="font">
+               <font>
+                <bold>true</bold>
+               </font>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_LogDir">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnSelectLogDir">
+              <property name="maximumSize">
+               <size>
+                <width>30</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
            <widget class="QLabel" name="label_10">
             <property name="maximumSize">
              <size>

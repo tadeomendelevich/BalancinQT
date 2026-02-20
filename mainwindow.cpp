@@ -6,6 +6,8 @@
 #include <QDir>
 #include <QTextStream>
 #include <QFileInfo>
+#include <QFileDialog>
+#include <QStandardPaths>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -31,6 +33,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(UdpSocket1,&QUdpSocket::readyRead,this,&MainWindow::OnUdpRxData);
     connect(ui->pushButton_UDP,&QPushButton::clicked,this,&MainWindow::sendDataUDP);
     connect(ui->pushButton_RECORD, &QPushButton::clicked, this, &MainWindow::toggleRecording);
+    connect(ui->btnSelectLogDir, &QPushButton::clicked, this, &MainWindow::selectSaveDirectory);
+
+    // Configurar directorio por defecto (Documents/logs)
+    defaultSaveDirectory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/BalancinLogs";
+    // Si no existe, usar la carpeta de la app
+    if(defaultSaveDirectory.isEmpty()) {
+        defaultSaveDirectory = "logs";
+    }
+    // Crear la carpeta si no existe para que se vea bien
+    QDir().mkpath(defaultSaveDirectory);
+    ui->lineEdit_LogDir->setText(defaultSaveDirectory);
 
     ui->comboBox_CMD->addItem("ALIVE", 0xF0);
     ui->comboBox_CMD->addItem("FIRMWARE", 0xF1);
@@ -1563,10 +1576,10 @@ void MainWindow::toggleRecording()
         QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
         QString filename = "telemetry_" + timestamp + ".csv";
 
-        // Crear carpeta logs explícitamente en el directorio de la aplicación
-        QDir().mkpath("logs");
+        // Crear carpeta logs explícitamente (si no existe)
+        QDir().mkpath(defaultSaveDirectory);
 
-        csvLogFile.setFileName("logs/" + filename);
+        csvLogFile.setFileName(defaultSaveDirectory + "/" + filename);
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&csvLogFile);
             // Escribir encabezado de acuerdo a la estructura TelemetryData
@@ -1592,5 +1605,16 @@ void MainWindow::toggleRecording()
         ui->pushButton_RECORD->setText("RECORD");
         ui->pushButton_RECORD->setChecked(false);
         ui->textEdit_PROCCES->append("Grabación detenida.");
+    }
+}
+
+void MainWindow::selectSaveDirectory()
+{
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Seleccionar Carpeta de Logs"),
+                                                    defaultSaveDirectory,
+                                                    QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!dir.isEmpty()) {
+        defaultSaveDirectory = dir;
+        ui->lineEdit_LogDir->setText(defaultSaveDirectory);
     }
 }

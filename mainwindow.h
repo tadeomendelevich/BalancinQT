@@ -248,7 +248,9 @@ private:
     // GRABACIÓN DE CSV
     QFile csvLogFile;
     bool isRecording = false;
+    QString defaultSaveDirectory;
 
     void toggleRecording();
+    void selectSaveDirectory();
 };
 #endif // MAINWINDOW_H
