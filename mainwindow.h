@@ -113,8 +113,6 @@ private:
         MODIFYKI = 0xB3,
         BALANCE = 0xB4,
         RESETMASSCENTER = 0xB7,
-        CMD_LOG_DATA    = 0xB8,
-        ACTIVATE_CSV_LOG = 0xB9,
         OTHERS
     }_eCmd;
 
@@ -222,5 +220,33 @@ private:
 
     int16_t roll = 0;   // eje x
     int16_t pitch = 0;  // eje y
+
+    // --- NUEVOS GRÁFICOS PARA TABS ---
+
+    // PID Chart
+    QChartView *pidChartView;
+    QChart *pidChart;
+    QLineSeries *seriesP, *seriesI, *seriesD, *seriesOutput, *seriesError;
+    QValueAxis *pidAxisX, *pidAxisY;
+
+    QLineSeries *seriesRollFilt; // Para el chart IMU
+
+    // Motors Chart
+    QChartView *motorsChartView;
+    QChart *motorsChart;
+    QLineSeries *seriesPwmCmd, *seriesPwmSat, *seriesMR, *seriesML;
+    QValueAxis *motorsAxisX, *motorsAxisY;
+
+    // System Chart
+    QChartView *systemChartView;
+    QChart *systemChart;
+    QLineSeries *seriesDt, *seriesSatFlag;
+    QValueAxis *systemAxisX, *systemAxisY;
+
+    // GRABACIÓN DE CSV
+    QFile csvLogFile;
+    bool isRecording = false;
+
+    void toggleRecording();
 };
 #endif // MAINWINDOW_H

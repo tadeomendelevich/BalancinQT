@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 #include <QtNetwork/QNetworkDatagram>
 #include <QDebug>
+#include <QDateTime>
+#include <QDir>
+#include <QTextStream>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timer1,&QTimer::timeout,this,&MainWindow::timeOut);
     connect(UdpSocket1,&QUdpSocket::readyRead,this,&MainWindow::OnUdpRxData);
     connect(ui->pushButton_UDP,&QPushButton::clicked,this,&MainWindow::sendDataUDP);
+    connect(ui->pushButton_RECORD, &QPushButton::clicked, this, &MainWindow::toggleRecording);
 
     ui->comboBox_CMD->addItem("ALIVE", 0xF0);
     ui->comboBox_CMD->addItem("FIRMWARE", 0xF1);
@@ -40,7 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
     ui->comboBox_CMD->addItem("RESETMASSCENTER", 0xB7);
-    ui->comboBox_CMD->addItem("ACTIVATE_CSV_LOG", 0xB9);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -63,24 +66,24 @@ MainWindow::MainWindow(QWidget *parent)
     gyroChartView->setRenderHint(QPainter::Antialiasing);
 
     // 3) Crea las series
-    seriesAx = new QLineSeries(); seriesAx->setName("Aceleración Roll");
-    seriesAx->setColor(Qt::red);
-    seriesAy = new QLineSeries(); seriesAy->setName("Acc Y (reservado)");
-    seriesAy->setColor(Qt::gray);
-    seriesAz = new QLineSeries(); seriesAz->setName("Acc Z (reservado)");
-    seriesAz->setColor(Qt::lightGray);
+    seriesAx = new QLineSeries(); seriesAx->setName("Aceleración Roll (Raw)");
+    seriesAx->setColor(Qt::lightGray); // Cambiamos a gris para que el filtrado resalte mas
+
+    seriesRollFilt = new QLineSeries(); seriesRollFilt->setName("Roll Filtrado (Fusion)");
+    seriesRollFilt->setColor(Qt::red); // Rojo para el dato principal
 
     seriesGx = new QLineSeries(); seriesGx->setName("Giroscopio Y");
     seriesGx->setColor(Qt::blue);
-    seriesGy = new QLineSeries(); seriesGy->setName("Gyr Y (reservado)"); // Usaremos seriesGx para Gyro Y según el CSV
+
+    seriesGy = new QLineSeries(); seriesGy->setName("Gyr Y (reservado)");
     seriesGy->setColor(Qt::gray);
     seriesGz = new QLineSeries(); seriesGz->setName("Gyr Z (reservado)");
     seriesGz->setColor(Qt::lightGray);
 
     // 4) Añade sólo las series de aceleración al accChart
     accChart->addSeries(seriesAx);
-    // accChart->addSeries(seriesAy); // Solo mostramos la relevante por ahora para claridad
-    // accChart->addSeries(seriesAz);
+    accChart->addSeries(seriesRollFilt); // Agregamos el filtrado
+
     accChart->legend()->setVisible(true);
     accChart->legend()->setAlignment(Qt::AlignBottom);
 
@@ -118,9 +121,98 @@ MainWindow::MainWindow(QWidget *parent)
     // Solo asociamos las que agregamos al gráfico
     seriesAx->attachAxis(accAxisX);
     seriesAx->attachAxis(accAxisY);
+    seriesRollFilt->attachAxis(accAxisX); // Attach Roll Filt
+    seriesRollFilt->attachAxis(accAxisY);
 
     seriesGy->attachAxis(gyroAxisX);
     seriesGy->attachAxis(gyroAxisY);
+
+    // --- TAB 2: PID ---
+    pidChartView = ui->pidWidget;
+    pidChart = new QChart();
+    pidChartView->setChart(pidChart);
+    pidChartView->setRenderHint(QPainter::Antialiasing);
+    pidChart->setTitle("PID Control");
+
+    seriesP = new QLineSeries(); seriesP->setName("Proporcional"); seriesP->setColor(Qt::red);
+    seriesI = new QLineSeries(); seriesI->setName("Integral"); seriesI->setColor(Qt::green);
+    seriesD = new QLineSeries(); seriesD->setName("Derivativo"); seriesD->setColor(Qt::blue);
+    seriesOutput = new QLineSeries(); seriesOutput->setName("Output"); seriesOutput->setColor(Qt::black);
+    seriesError = new QLineSeries(); seriesError->setName("Error"); seriesError->setColor(Qt::magenta);
+
+    pidChart->addSeries(seriesP);
+    pidChart->addSeries(seriesI);
+    pidChart->addSeries(seriesD);
+    pidChart->addSeries(seriesOutput);
+    pidChart->addSeries(seriesError);
+
+    pidAxisX = new QValueAxis(); pidAxisX->setTitleText("Tiempo (s)");
+    pidAxisY = new QValueAxis(); pidAxisY->setTitleText("Valor");
+    pidChart->addAxis(pidAxisX, Qt::AlignBottom);
+    pidChart->addAxis(pidAxisY, Qt::AlignLeft);
+
+    for (auto *s : {seriesP, seriesI, seriesD, seriesOutput, seriesError}) {
+        s->attachAxis(pidAxisX);
+        s->attachAxis(pidAxisY);
+    }
+    pidChart->legend()->setVisible(true);
+    pidChart->legend()->setAlignment(Qt::AlignBottom);
+
+
+    // --- TAB 3: MOTORES ---
+    motorsChartView = ui->motorsWidget;
+    motorsChart = new QChart();
+    motorsChartView->setChart(motorsChart);
+    motorsChartView->setRenderHint(QPainter::Antialiasing);
+    motorsChart->setTitle("Motores & PWM");
+
+    seriesPwmCmd = new QLineSeries(); seriesPwmCmd->setName("PWM Cmd"); seriesPwmCmd->setColor(Qt::darkGreen);
+    seriesPwmSat = new QLineSeries(); seriesPwmSat->setName("PWM Sat"); seriesPwmSat->setColor(Qt::darkRed);
+    seriesMR = new QLineSeries(); seriesMR->setName("Motor Der"); seriesMR->setColor(Qt::blue);
+    seriesML = new QLineSeries(); seriesML->setName("Motor Izq"); seriesML->setColor(Qt::cyan);
+
+    motorsChart->addSeries(seriesPwmCmd);
+    motorsChart->addSeries(seriesPwmSat);
+    motorsChart->addSeries(seriesMR);
+    motorsChart->addSeries(seriesML);
+
+    motorsAxisX = new QValueAxis(); motorsAxisX->setTitleText("Tiempo (s)");
+    motorsAxisY = new QValueAxis(); motorsAxisY->setTitleText("Valor");
+    motorsChart->addAxis(motorsAxisX, Qt::AlignBottom);
+    motorsChart->addAxis(motorsAxisY, Qt::AlignLeft);
+
+    for (auto *s : {seriesPwmCmd, seriesPwmSat, seriesMR, seriesML}) {
+        s->attachAxis(motorsAxisX);
+        s->attachAxis(motorsAxisY);
+    }
+    motorsChart->legend()->setVisible(true);
+    motorsChart->legend()->setAlignment(Qt::AlignBottom);
+
+    // --- TAB 4: SISTEMA ---
+    systemChartView = ui->systemWidget;
+    systemChart = new QChart();
+    systemChartView->setChart(systemChart);
+    systemChartView->setRenderHint(QPainter::Antialiasing);
+    systemChart->setTitle("Sistema (Timing & Flags)");
+
+    seriesDt = new QLineSeries(); seriesDt->setName("Delta Time (us)"); seriesDt->setColor(Qt::darkBlue);
+    seriesSatFlag = new QLineSeries(); seriesSatFlag->setName("Sat Flag"); seriesSatFlag->setColor(Qt::red);
+
+    systemChart->addSeries(seriesDt);
+    systemChart->addSeries(seriesSatFlag);
+
+    systemAxisX = new QValueAxis(); systemAxisX->setTitleText("Tiempo (s)");
+    systemAxisY = new QValueAxis(); systemAxisY->setTitleText("Valor");
+    systemChart->addAxis(systemAxisX, Qt::AlignBottom);
+    systemChart->addAxis(systemAxisY, Qt::AlignLeft);
+
+    seriesDt->attachAxis(systemAxisX);
+    seriesDt->attachAxis(systemAxisY);
+    seriesSatFlag->attachAxis(systemAxisX);
+    seriesSatFlag->attachAxis(systemAxisY);
+
+    systemChart->legend()->setVisible(true);
+    systemChart->legend()->setAlignment(Qt::AlignBottom);
 
     // 7) Iniciar el tiempo
     elapsedSec = 0;
@@ -169,8 +261,8 @@ void MainWindow::openSerialPorts(){
     // Validar si el puerto es válido o está vacío
     if(p.name.isEmpty()) {
         QMessageBox::warning(this, tr("Advertencia"), tr("No se ha seleccionado ningún puerto. Por favor ve a Device -> Scan Ports y selecciona uno."));
-            // Intentar abrir el diálogo automáticamente si no hay configuración
-            settingPorts->show();
+        // Intentar abrir el diálogo automáticamente si no hay configuración
+        settingPorts->show();
         return;
     }
 
@@ -586,7 +678,7 @@ void MainWindow::sendDataUDP()
         break;
     }
 
-    // Comandos simples (sólo ID)
+        // Comandos simples (sólo ID)
     case GETALIVE:          // 0xF0
     case GETANGLE:          // 0xA7
     case GETADCVALUES:      // 0xA5
@@ -594,12 +686,11 @@ void MainWindow::sendDataUDP()
     case SENDALLSENSORS:    // 0xA9
     case GETDISTANCE:       // 0xA3
     case GETSPEED:          // 0xA4
-    case GETSWITCHES:       // 0xA5
+    case GETSWITCHES:       // ¡revisar si no choca con 0xA5!
     case GETFIRMWARE:       // 0xF1
     case GETANALOGSENSORS:  // 0xA0
-    case BALANCE:           // BALANCE=0xB4
+    case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
-    case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -737,7 +828,6 @@ void MainWindow::sendDataSerial(){
     case STOPALLSENSORS: //STOPALLSENSORS=0xAA
     case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
-    case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -790,11 +880,11 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case GETALIVE://     GETALIVE=0xF0,
         if(datosRx[2]==ACK){
             if(source) {
-                contadorAlive++;
-                str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
+                    contadorAlive++;
+                    str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
             } else {
-                contadorAlive++;
-                str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
+                    contadorAlive++;
+                    str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
             }
         } else {
             str= "ALIVE BLUEPILL VIA *SERIE*  NO ACK!!!";
@@ -1158,10 +1248,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         QString strPitch = QString::number(pitch) + " \u00B0";
         ui->label_inclination_Yvalue->setText(strPitch);
 
+
         for (int i = 0; i < 8; ++i) {   // --- actualizo barras sin borrar/append, usando replace() ---
             uint16_t v = qMin<uint16_t>(adcValues[i], 4000);
             adcBarSet->replace(i, v);
         }
+
 
         adcChart->update();     // --- fuerzo repaint si hace falta ---
 
@@ -1190,12 +1282,6 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case RESETMASSCENTER:
         if(datosRx[2]==ACK){
             str="Se ha reestablecido el punto de balance correctamente!";
-        }
-        ui->textEdit_PROCCES->append(str);
-        break;
-    case ACTIVATE_CSV_LOG:
-        if(datosRx[2]==ACK){
-            str="Se ha cambiado el estado de la bandera de CSV_LOG correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;
@@ -1272,7 +1358,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // Ignorar Headers
     if (strLine.startsWith("t_ms") || strLine.startsWith("Time")) {
-        return;
+         return;
     }
 
     // Separar por comas
@@ -1382,5 +1468,118 @@ void MainWindow::processCsvLine(const QByteArray &line)
         qreal marginGyro = (maxGyro - minGyro) * 0.1;
         if (marginGyro == 0) marginGyro = 10.0;
         gyroAxisY->setRange(minGyro - marginGyro, maxGyro + marginGyro);
+    }
+
+    seriesRollFilt->append(t_sec, telemetryData.roll_filt);
+
+    // --- GRÁFICOS TAB 2: PID ---
+    seriesP->append(t_sec, telemetryData.p);
+    seriesI->append(t_sec, telemetryData.i);
+    seriesD->append(t_sec, telemetryData.d);
+    seriesOutput->append(t_sec, telemetryData.output);
+    seriesError->append(t_sec, telemetryData.error);
+
+    pidAxisX->setRange(minX, maxX);
+
+    // Auto-escala PID
+    qreal minPid = 1000000.0, maxPid = -1000000.0;
+    // Chequeamos todos los series del PID
+    QList<QLineSeries*> pidSeriesList = {seriesP, seriesI, seriesD, seriesOutput, seriesError};
+    for(auto *s : pidSeriesList) {
+        const QList<QPointF> points = s->points();
+        if(!points.isEmpty()) {
+            for(const QPointF &p : points) {
+                if(p.x() >= minX) {
+                    if(p.y() < minPid) minPid = p.y();
+                    if(p.y() > maxPid) maxPid = p.y();
+                }
+            }
+        }
+    }
+    // Si encontramos valores válidos
+    if (minPid != 1000000.0 && maxPid != -1000000.0) {
+        qreal margin = (maxPid - minPid) * 0.1;
+        if(margin == 0) margin = 0.5;
+        pidAxisY->setRange(minPid - margin, maxPid + margin);
+    } else {
+        pidAxisY->setRange(-1, 1); // Default pequeño si no hay datos
+    }
+
+    // --- GRÁFICOS TAB 3: MOTORES ---
+    // PWM y Motores (mR, mL) suelen tener escalas similares (-100 a 100)
+    seriesPwmCmd->append(t_sec, telemetryData.pwm_cmd);
+    seriesPwmSat->append(t_sec, telemetryData.pwm_sat);
+    seriesMR->append(t_sec, telemetryData.mR);
+    seriesML->append(t_sec, telemetryData.mL);
+
+    motorsAxisX->setRange(minX, maxX);
+    motorsAxisY->setRange(-110, 110);
+
+    // --- GRÁFICOS TAB 4: SISTEMA ---
+    seriesDt->append(t_sec, telemetryData.dt_us);
+    // Sat flag es 0 o 1. Lo escalamos para que sea visible en el grafico de dt (que es ~20000)
+    // O mejor, usamos ejes separados. Para simplicidad, lo mostramos como 0 o 20000
+    double flagVal = (telemetryData.sat_flag > 0) ? 20000.0 : 0.0;
+    seriesSatFlag->append(t_sec, flagVal);
+
+    systemAxisX->setRange(minX, maxX);
+    systemAxisY->setRange(0, 35000); // dt_us suele andar en 20000-30000
+
+    // --- GRABACIÓN (LOGGING) ---
+    if (isRecording && csvLogFile.isOpen()) {
+        QTextStream stream(&csvLogFile);
+        stream << telemetryData.t_ms << ","
+               << telemetryData.dt_us << ","
+               << telemetryData.accel_roll << ","
+               << telemetryData.gyro_y << ","
+               << telemetryData.roll_filt << ","
+               << telemetryData.error << ","
+               << telemetryData.p << ","
+               << telemetryData.i << ","
+               << telemetryData.d << ","
+               << telemetryData.output << ","
+               << telemetryData.pwm_cmd << ","
+               << telemetryData.pwm_sat << ","
+               << telemetryData.sat_flag << ","
+               << telemetryData.mR << ","
+               << telemetryData.mL << "\n";
+    }
+}
+
+void MainWindow::toggleRecording()
+{
+    if (!isRecording) {
+        // Iniciar grabación
+        QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+        QString filename = "telemetry_" + timestamp + ".csv";
+
+        QDir dir("logs");
+        if (!dir.exists()) {
+            dir.mkpath(".");
+        }
+
+        csvLogFile.setFileName("logs/" + filename);
+        if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream stream(&csvLogFile);
+            // Escribir encabezado de acuerdo a la estructura TelemetryData
+            stream << "t_ms,dt_us,accel_roll,gyro_y,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat_flag,mR,mL\n";
+
+            isRecording = true;
+            ui->pushButton_RECORD->setText("STOP");
+            ui->pushButton_RECORD->setChecked(true);
+            ui->textEdit_PROCCES->append("Grabando en: " + filename);
+        } else {
+            ui->textEdit_PROCCES->append("Error al crear archivo de log.");
+            ui->pushButton_RECORD->setChecked(false);
+        }
+    } else {
+        // Detener grabación
+        if (csvLogFile.isOpen()) {
+            csvLogFile.close();
+        }
+        isRecording = false;
+        ui->pushButton_RECORD->setText("RECORD");
+        ui->pushButton_RECORD->setChecked(false);
+        ui->textEdit_PROCCES->append("Grabación detenida.");
     }
 }
