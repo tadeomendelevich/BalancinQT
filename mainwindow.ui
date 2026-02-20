@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1196</width>
+    <width>1297</width>
     <height>928</height>
    </rect>
   </property>
@@ -118,51 +118,51 @@ QComboBox::drop-down {
            <layout class="QHBoxLayout" name="horizontalLayout_Angles">
             <item>
              <widget class="QLabel" name="label_inclination_X">
-              <property name="text">
-               <string>Roll:</string>
-              </property>
               <property name="font">
                <font>
-                <bold>true</bold>
                 <pointsize>12</pointsize>
+                <bold>true</bold>
                </font>
+              </property>
+              <property name="text">
+               <string>Roll:</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_inclination_Xvalue">
-              <property name="text">
-               <string>0.00</string>
-              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
                </font>
+              </property>
+              <property name="text">
+               <string>0.00</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_inclination_Y">
-              <property name="text">
-               <string>Pitch:</string>
-              </property>
               <property name="font">
                <font>
-                <bold>true</bold>
                 <pointsize>12</pointsize>
+                <bold>true</bold>
                </font>
+              </property>
+              <property name="text">
+               <string>Pitch:</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="label_inclination_Yvalue">
-              <property name="text">
-               <string>0.00</string>
-              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
                </font>
+              </property>
+              <property name="text">
+               <string>0.00</string>
               </property>
              </widget>
             </item>
@@ -185,13 +185,13 @@ QComboBox::drop-down {
            <layout class="QHBoxLayout" name="horizontalLayout_LogDir">
             <item>
              <widget class="QLabel" name="label_LogDir">
-              <property name="text">
-               <string>Log Dir:</string>
-              </property>
               <property name="font">
                <font>
                 <bold>true</bold>
                </font>
+              </property>
+              <property name="text">
+               <string>Log Dir:</string>
               </property>
              </widget>
             </item>
@@ -413,6 +413,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <bold>true</bold>
          </font>
         </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #8B0000;
+    color: white;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #A00000;
+}
+QPushButton:pressed {
+    background-color: #600000;
+}</string>
+        </property>
         <property name="html">
          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -457,14 +470,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QPushButton" name="pushButton_RECORD">
+              <property name="styleSheet">
+               <string notr="true">QPushButton:checked { background-color: red; border: 2px solid white; }</string>
+              </property>
               <property name="text">
                <string>RECORD</string>
               </property>
               <property name="checkable">
                <bool>true</bool>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton:checked { background-color: red; border: 2px solid white; }</string>
               </property>
              </widget>
             </item>
@@ -503,6 +516,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <width>70</width>
                   <height>30</height>
                  </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton {
+    background-color: #8B0000;
+    color: white;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #A00000;
+}
+QPushButton:pressed {
+    background-color: #600000;
+}</string>
                 </property>
                 <property name="text">
                  <string>Open UDP</string>
@@ -1294,7 +1320,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1196</width>
+     <width>1297</width>
      <height>21</height>
     </rect>
    </property>
