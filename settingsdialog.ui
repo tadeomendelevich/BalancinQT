@@ -14,83 +14,86 @@
    <string>Serial Ports</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QDialog
-{
-background-color:
-qlineargradient(spread:reflect, x1:0.5, y1:0, x2:0, y2:0,
-stop:0 rgba(91, 204, 233, 100), stop:1 rgba(32, 80, 96,
-100));
+   <string notr="true">#centralwidget {
+    background-color: black;
+    background-image: url(:/img/logoUNERsolo.png);
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
-
-QPushButton
-{
-color: white;
-background-color: #27a9e3;
-border-width: 2px;
-border-radius: 12px;
-height:25px;
+/* QMenu con verde militar degradado */
+QMenu {
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #556b2f, stop:1 #3a5f0b);
+    color: white;
+    font-weight: bold;
+    border: 1px solid #6b8e23;
 }
 
-QPushButton:hover { background-color: lime; }
-
-QLabel
-{
-color: white; 
-border: 2px solid #27a9e3;
-border-radius: 10px;
-padding: 2px;
-
+/* Botones */
+QPushButton {
+    color: white;
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #6b8e23, stop:1 #3a5f0b);
+    border: 2px solid #2e4600;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-weight: bold;
 }
+QPushButton:hover {
+    background-color: #4b6e1f;
+}
+
+/* Labels */
+QLabel {
+    color: #d0ffcc;
+    border: 1px solid #4a6620;
+    background-color: rgba(50, 80, 30, 0.3);
+    border-radius: 6px;
+    padding: 4px;
+}
+
+/* QTextEdit */
 QTextEdit {
- border: 2px solid #27a9e3;
- border-radius: 30px;
- background-color: rgba(0,0,0,0);
-
- }
-
-QTextEdit#textEdit_RAW{
-	font-family: &quot;Verdana&quot;;
-	font-size: 16px ;
-	font-style: bold;
-	pading:25px;
-   color:white;
+    border: 2px solid #4a6620;
+    border-radius: 10px;
+    background-color: rgba(30, 50, 20, 0.3);
+    color: #e6ffe6;
+    padding: 6px;
+    font-family: Consolas;
 }
 
-QTextEdit#textEdit_PROCCES{
-    font-family: &quot;Verdana&quot;;
-	font-size: 24px ;
-	font-style: bold;
-	pading:25px;
-   color:white;
+/* Personalizados */
+QTextEdit#textEdit_RAW {
+    font-size: 14px;
+    font-style: italic;
+}
+QTextEdit#textEdit_PROCCES {
+    font-size: 18px;
+    font-style: italic;
 }
 
-QComboBox{
-color: white;
-background-color: #27a9e3;
-border-width: 2px;
-border-radius: 12px;
-height:25px;
+/* ComboBox */
+QComboBox {
+    color: white;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 #6b8e23, stop:1 #3a5f0b);
+    border: 2px solid #2e4600;
+    border-radius: 10px;
+    padding: 3px;
 }
-
-QComboBox:on { /* shift the text when the popup opens */
+QComboBox:on {
     padding-top: 3px;
     padding-left: 4px;
 }
-
 QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
     width: 15px;
-
-    border-left-width: 1px;
-    border-left-color: darkgray;
-    border-left-style: solid; /* just a single line */
-    border-top-right-radius: 6px; /* same radius as the QComboBox */
+    border-left: 1px solid #2e4600;
+    border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
 }
-
-
 </string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">

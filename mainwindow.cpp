@@ -36,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnSelectLogDir, &QPushButton::clicked, this, &MainWindow::selectSaveDirectory);
 
     // Configurar directorio por defecto (Documents/logs)
-    defaultSaveDirectory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/BalancinLogs";
+    defaultSaveDirectory = "C:/Users/tadeo/Desktop/Balancin_logs";
     // Si no existe, usar la carpeta de la app
     if(defaultSaveDirectory.isEmpty()) {
         defaultSaveDirectory = "logs";
@@ -440,7 +440,14 @@ void MainWindow::timeOut(){
 void MainWindow::on_pushButton_ALIVE_clicked()
 {
     ui->comboBox_CMD->setCurrentIndex(0);
-    sendDataSerial();
+
+    if (serial->isOpen()) {
+        sendDataSerial();
+    } else if (UdpSocket1->state() == QAbstractSocket::BoundState && !clientAddress.isNull() && puertoremoto > 0) {
+        sendDataUDP();
+    } else {
+        ui->textEdit_PROCCES->append("ALIVE: Sin conexión disponible (Serial ni UDP).");
+    }
 }
 
 
