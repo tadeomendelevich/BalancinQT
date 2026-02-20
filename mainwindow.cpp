@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QVBoxLayout>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -87,6 +88,9 @@ MainWindow::MainWindow(QWidget *parent)
     seriesRollFilt = new QLineSeries(); seriesRollFilt->setName("Roll Filtrado (Fusion)");
     seriesRollFilt->setColor(Qt::red); // Rojo para el dato principal
 
+    seriesPitch = new QLineSeries(); seriesPitch->setName("Pitch");
+    seriesPitch->setColor(Qt::magenta);
+
     seriesGx = new QLineSeries(); seriesGx->setName("Giroscopio Y");
     seriesGx->setColor(Qt::blue);
 
@@ -98,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 4) Añade sólo las series de aceleración al accChart
     accChart->addSeries(seriesAx);
     accChart->addSeries(seriesRollFilt); // Agregamos el filtrado
+    accChart->addSeries(seriesPitch);
 
     accChart->legend()->setVisible(true);
     accChart->legend()->setAlignment(Qt::AlignBottom);
@@ -138,6 +143,8 @@ MainWindow::MainWindow(QWidget *parent)
     seriesAx->attachAxis(accAxisY);
     seriesRollFilt->attachAxis(accAxisX); // Attach Roll Filt
     seriesRollFilt->attachAxis(accAxisY);
+    seriesPitch->attachAxis(accAxisX);
+    seriesPitch->attachAxis(accAxisY);
 
     seriesGy->attachAxis(gyroAxisX);
     seriesGy->attachAxis(gyroAxisY);
@@ -228,6 +235,67 @@ MainWindow::MainWindow(QWidget *parent)
 
     systemChart->legend()->setVisible(true);
     systemChart->legend()->setAlignment(Qt::AlignBottom);
+
+    // --- TAB 5: SENSORES RAW (NUEVO) ---
+    QWidget *tabRawSensors = new QWidget();
+    QVBoxLayout *layoutRaw = new QVBoxLayout(tabRawSensors);
+
+    // Chart Acelerómetro Raw
+    rawSensorsAccChartView = new QChartView();
+    rawSensorsAccChart = new QChart();
+    rawSensorsAccChartView->setChart(rawSensorsAccChart);
+    rawSensorsAccChartView->setRenderHint(QPainter::Antialiasing);
+    rawSensorsAccChart->setTitle("Acelerómetro Raw (X, Y, Z)");
+
+    seriesRawAx = new QLineSeries(); seriesRawAx->setName("Ax"); seriesRawAx->setColor(Qt::red);
+    seriesRawAy = new QLineSeries(); seriesRawAy->setName("Ay"); seriesRawAy->setColor(Qt::green);
+    seriesRawAz = new QLineSeries(); seriesRawAz->setName("Az"); seriesRawAz->setColor(Qt::blue);
+
+    rawSensorsAccChart->addSeries(seriesRawAx);
+    rawSensorsAccChart->addSeries(seriesRawAy);
+    rawSensorsAccChart->addSeries(seriesRawAz);
+
+    rawSensorsAccAxisX = new QValueAxis(); rawSensorsAccAxisX->setTitleText("Tiempo (s)");
+    rawSensorsAccAxisY = new QValueAxis(); rawSensorsAccAxisY->setTitleText("m/s²");
+    rawSensorsAccChart->addAxis(rawSensorsAccAxisX, Qt::AlignBottom);
+    rawSensorsAccChart->addAxis(rawSensorsAccAxisY, Qt::AlignLeft);
+
+    for (auto *s : {seriesRawAx, seriesRawAy, seriesRawAz}) {
+        s->attachAxis(rawSensorsAccAxisX);
+        s->attachAxis(rawSensorsAccAxisY);
+    }
+
+    // Chart Giroscopio Raw
+    rawSensorsGyroChartView = new QChartView();
+    rawSensorsGyroChart = new QChart();
+    rawSensorsGyroChartView->setChart(rawSensorsGyroChart);
+    rawSensorsGyroChartView->setRenderHint(QPainter::Antialiasing);
+    rawSensorsGyroChart->setTitle("Giroscopio Raw (X, Y, Z)");
+
+    seriesRawGx = new QLineSeries(); seriesRawGx->setName("Gx"); seriesRawGx->setColor(Qt::red);
+    seriesRawGy = new QLineSeries(); seriesRawGy->setName("Gy"); seriesRawGy->setColor(Qt::green);
+    seriesRawGz = new QLineSeries(); seriesRawGz->setName("Gz"); seriesRawGz->setColor(Qt::blue);
+
+    rawSensorsGyroChart->addSeries(seriesRawGx);
+    rawSensorsGyroChart->addSeries(seriesRawGy);
+    rawSensorsGyroChart->addSeries(seriesRawGz);
+
+    rawSensorsGyroAxisX = new QValueAxis(); rawSensorsGyroAxisX->setTitleText("Tiempo (s)");
+    rawSensorsGyroAxisY = new QValueAxis(); rawSensorsGyroAxisY->setTitleText("deg/s");
+    rawSensorsGyroChart->addAxis(rawSensorsGyroAxisX, Qt::AlignBottom);
+    rawSensorsGyroChart->addAxis(rawSensorsGyroAxisY, Qt::AlignLeft);
+
+    for (auto *s : {seriesRawGx, seriesRawGy, seriesRawGz}) {
+        s->attachAxis(rawSensorsGyroAxisX);
+        s->attachAxis(rawSensorsGyroAxisY);
+    }
+
+    // Agregar charts al layout
+    layoutRaw->addWidget(rawSensorsAccChartView);
+    layoutRaw->addWidget(rawSensorsGyroChartView);
+
+    // Agregar tab al widget principal
+    ui->tabWidget_Graficas->addTab(tabRawSensors, "Sensores Raw");
 
     // 7) Iniciar el tiempo
     elapsedSec = 0;
@@ -1335,11 +1403,13 @@ void MainWindow::updatePlot() {
     // 1) Desplaza la ventana de tiempo en ambos ejes X
     accAxisX->setRange(elapsedSec - 10.0, elapsedSec);
     gyroAxisX->setRange(elapsedSec - 10.0, elapsedSec);
+    rawSensorsAccAxisX->setRange(elapsedSec - 10.0, elapsedSec);
+    rawSensorsGyroAxisX->setRange(elapsedSec - 10.0, elapsedSec);
 
     // 2) Calcula mínimo y máximo sólo para las series de aceleración
     qreal minAcc = std::numeric_limits<qreal>::max();
     qreal maxAcc = std::numeric_limits<qreal>::lowest();
-    for (auto *s : {seriesAx, seriesAy, seriesAz}) {
+    for (auto *s : {seriesAx, seriesAy, seriesAz, seriesRollFilt, seriesPitch}) {
         for (const QPointF &p : s->points()) {
             minAcc = qMin(minAcc, p.y());
             maxAcc = qMax(maxAcc, p.y());
@@ -1396,8 +1466,8 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Separar por comas
     QStringList parts = strLine.split(',');
 
-    // Verificar cantidad de columnas (15)
-    if (parts.size() < 15) {
+    // Verificar cantidad de columnas (22)
+    if (parts.size() < 22) {
         return; // Línea incompleta o formato incorrecto
     }
 
@@ -1448,6 +1518,21 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // 14. mL
     telemetryData.mL = (int16_t)parts[14].toInt(&ok);
 
+    // 15. pitch
+    telemetryData.pitch = parts[15].toFloat(&ok) / 1000.0f;
+    // 16. ax
+    telemetryData.ax = parts[16].toFloat(&ok) / 100.0f;
+    // 17. ay
+    telemetryData.ay = parts[17].toFloat(&ok) / 100.0f;
+    // 18. az
+    telemetryData.az = parts[18].toFloat(&ok) / 100.0f;
+    // 19. gx
+    telemetryData.gx = parts[19].toFloat(&ok) / 100.0f;
+    // 20. gy
+    telemetryData.gy = parts[20].toFloat(&ok) / 100.0f;
+    // 21. gz
+    telemetryData.gz = parts[21].toFloat(&ok) / 100.0f;
+
     // Debug opcional para verificar
     // ui->textEdit_PROCCES->append("CSV: " + strLine);
     qDebug() << "CSV Parsed: t=" << telemetryData.t_ms << " Roll=" << telemetryData.roll_filt;
@@ -1463,12 +1548,27 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Graficamos Giroscopio (gyro_y) en el chart de giroscopio
     seriesGy->append(t_sec, telemetryData.gyro_y);
 
+    // Pitch
+    seriesPitch->append(t_sec, telemetryData.pitch);
+
+    // Raw Accel
+    seriesRawAx->append(t_sec, telemetryData.ax);
+    seriesRawAy->append(t_sec, telemetryData.ay);
+    seriesRawAz->append(t_sec, telemetryData.az);
+
+    // Raw Gyro
+    seriesRawGx->append(t_sec, telemetryData.gx);
+    seriesRawGy->append(t_sec, telemetryData.gy);
+    seriesRawGz->append(t_sec, telemetryData.gz);
+
     // Actualizamos el eje X para que "corra" con el tiempo
     // Mantenemos una ventana de 10 segundos
     double minX = t_sec - 10.0;
     double maxX = t_sec;
     accAxisX->setRange(minX, maxX);
     gyroAxisX->setRange(minX, maxX);
+    rawSensorsAccAxisX->setRange(minX, maxX);
+    rawSensorsGyroAxisX->setRange(minX, maxX);
 
     // --- AUTO-ESCALA EJE Y (Aceleración) ---
     qreal minAcc = 1000.0, maxAcc = -1000.0;
@@ -1500,6 +1600,44 @@ void MainWindow::processCsvLine(const QByteArray &line)
         qreal marginGyro = (maxGyro - minGyro) * 0.1;
         if (marginGyro == 0) marginGyro = 10.0;
         gyroAxisY->setRange(minGyro - marginGyro, maxGyro + marginGyro);
+    }
+
+    // --- AUTO-ESCALA RAW ACCEL ---
+    qreal minRA = 1000.0, maxRA = -1000.0;
+    for(auto *s : {seriesRawAx, seriesRawAy, seriesRawAz}) {
+        const QList<QPointF> pts = s->points();
+        if(!pts.isEmpty()) {
+            for(const QPointF &p : pts) {
+                if(p.x() >= minX) {
+                    if(p.y() < minRA) minRA = p.y();
+                    if(p.y() > maxRA) maxRA = p.y();
+                }
+            }
+        }
+    }
+    if (maxRA > minRA) {
+        qreal m = (maxRA - minRA) * 0.1;
+        if (m == 0) m = 1.0;
+        rawSensorsAccAxisY->setRange(minRA - m, maxRA + m);
+    }
+
+    // --- AUTO-ESCALA RAW GYRO ---
+    qreal minRG = 10000.0, maxRG = -10000.0;
+    for(auto *s : {seriesRawGx, seriesRawGy, seriesRawGz}) {
+        const QList<QPointF> pts = s->points();
+        if(!pts.isEmpty()) {
+            for(const QPointF &p : pts) {
+                if(p.x() >= minX) {
+                    if(p.y() < minRG) minRG = p.y();
+                    if(p.y() > maxRG) maxRG = p.y();
+                }
+            }
+        }
+    }
+    if (maxRG > minRG) {
+        qreal m = (maxRG - minRG) * 0.1;
+        if (m == 0) m = 10.0;
+        rawSensorsGyroAxisY->setRange(minRG - m, maxRG + m);
     }
 
     seriesRollFilt->append(t_sec, telemetryData.roll_filt);
@@ -1574,7 +1712,14 @@ void MainWindow::processCsvLine(const QByteArray &line)
                << telemetryData.pwm_sat << ","
                << telemetryData.sat_flag << ","
                << telemetryData.mR << ","
-               << telemetryData.mL << "\n";
+               << telemetryData.mL << ","
+               << telemetryData.pitch << ","
+               << telemetryData.ax << ","
+               << telemetryData.ay << ","
+               << telemetryData.az << ","
+               << telemetryData.gx << ","
+               << telemetryData.gy << ","
+               << telemetryData.gz << "\n";
     }
 }
 
@@ -1592,7 +1737,7 @@ void MainWindow::toggleRecording()
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&csvLogFile);
             // Escribir encabezado de acuerdo a la estructura TelemetryData
-            stream << "t_ms,dt_us,accel_roll,gyro_y,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat_flag,mR,mL\n";
+            stream << "t_ms,dt_us,accel_roll,gyro_y,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat_flag,mR,mL,pitch,ax,ay,az,gx,gy,gz\n";
 
             isRecording = true;
             ui->pushButton_RECORD->setText("STOP");
@@ -1629,6 +1774,12 @@ void MainWindow::toggleRecording()
             // System
             p = ui->tabWidget_Graficas->widget(3)->grab(); // Tab System
             p.save(baseName + "_SYSTEM.png");
+
+            // Raw Sensors
+            if (ui->tabWidget_Graficas->count() > 4) {
+                 p = ui->tabWidget_Graficas->widget(4)->grab(); // Tab Raw
+                 p.save(baseName + "_RAW.png");
+            }
 
             ui->textEdit_PROCCES->append("Gráficos guardados como imágenes PNG.");
 

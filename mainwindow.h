@@ -153,6 +153,13 @@ private:
         uint8_t sat_flag;    // Bandera saturación
         int16_t mR;          // Velocidad Motor Derecho
         int16_t mL;          // Velocidad Motor Izquierdo
+        float pitch;         // Pitch angle (milli-degrees -> degrees)
+        float ax;            // Accel X (m/s^2 * 100 -> m/s^2)
+        float ay;            // Accel Y
+        float az;            // Accel Z
+        float gx;            // Gyro X (deg/s * 100 -> deg/s)
+        float gy;            // Gyro Y
+        float gz;            // Gyro Z
     };
 
     TelemetryData telemetryData;
@@ -232,6 +239,18 @@ private:
     QValueAxis *pidAxisX, *pidAxisY;
 
     QLineSeries *seriesRollFilt; // Para el chart IMU
+    QLineSeries *seriesPitch;    // Para el chart IMU (Pitch)
+
+    // Raw Sensors Tab (Nuevo)
+    QChartView *rawSensorsAccChartView;
+    QChart *rawSensorsAccChart;
+    QLineSeries *seriesRawAx, *seriesRawAy, *seriesRawAz;
+    QValueAxis *rawSensorsAccAxisX, *rawSensorsAccAxisY;
+
+    QChartView *rawSensorsGyroChartView;
+    QChart *rawSensorsGyroChart;
+    QLineSeries *seriesRawGx, *seriesRawGy, *seriesRawGz;
+    QValueAxis *rawSensorsGyroAxisX, *rawSensorsGyroAxisY;
 
     // Motors Chart
     QChartView *motorsChartView;
