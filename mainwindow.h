@@ -160,6 +160,9 @@ private:
         float gx;            // Gyro X (deg/s * 100 -> deg/s)
         float gy;            // Gyro Y
         float gz;            // Gyro Z
+        uint32_t dt_ctrl_us; // Control Loop DT (µs)
+        float gyro_f;        // Low-Pass Filtered Gyro Y (grados/s)
+        float accel_roll_f;  // Low-Pass Filtered Accel Roll (grados)
     };
 
     TelemetryData telemetryData;
@@ -194,12 +197,14 @@ private:
     QChartView   *accChartView;
     QChart       *accChart;
     QLineSeries  *seriesAx, *seriesAy, *seriesAz;
+    QLineSeries  *seriesAccelRollF; // Nuevo: Roll Filtrado (Low Pass)
     QValueAxis   *accAxisX, *accAxisY;
 
     // Gyroscope
     QChartView   *gyroChartView;
     QChart       *gyroChart;
     QLineSeries  *seriesGx, *seriesGy, *seriesGz;
+    QLineSeries  *seriesGyroF;      // Nuevo: Gyro Y Filtrado
     QValueAxis   *gyroAxisX, *gyroAxisY;
 
     // Para el gráfico de barras de ADC
@@ -262,6 +267,7 @@ private:
     QChartView *systemChartView;
     QChart *systemChart;
     QLineSeries *seriesDt, *seriesSatFlag;
+    QLineSeries *seriesDtCtrl; // Nuevo: Control Loop DT
     QValueAxis *systemAxisX, *systemAxisY;
 
     // GRABACIÓN DE CSV

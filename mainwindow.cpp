@@ -88,6 +88,9 @@ MainWindow::MainWindow(QWidget *parent)
     seriesRollFilt = new QLineSeries(); seriesRollFilt->setName("Roll Filtrado (Fusion)");
     seriesRollFilt->setColor(Qt::red); // Rojo para el dato principal
 
+    seriesAccelRollF = new QLineSeries(); seriesAccelRollF->setName("Roll Filtrado (Low Pass)");
+    seriesAccelRollF->setColor(QColor(255, 165, 0)); // Naranja
+
     seriesPitch = new QLineSeries(); seriesPitch->setName("Pitch");
     seriesPitch->setColor(Qt::magenta);
 
@@ -102,6 +105,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 4) Añade sólo las series de aceleración al accChart
     accChart->addSeries(seriesAx);
     accChart->addSeries(seriesRollFilt); // Agregamos el filtrado
+    accChart->addSeries(seriesAccelRollF); // Agregamos el filtrado Low Pass
     accChart->addSeries(seriesPitch);
 
     accChart->legend()->setVisible(true);
@@ -113,8 +117,12 @@ MainWindow::MainWindow(QWidget *parent)
     seriesGy->setName("Giroscopio Y");
     seriesGy->setColor(Qt::blue);
 
+    seriesGyroF = new QLineSeries(); seriesGyroF->setName("Giro Filtrado Y");
+    seriesGyroF->setColor(Qt::cyan);
+
     // gyroChart->addSeries(seriesGx);
     gyroChart->addSeries(seriesGy);
+    gyroChart->addSeries(seriesGyroF); // Agregamos Gyro Filtrado
     // gyroChart->addSeries(seriesGz);
     gyroChart->legend()->setVisible(true);
     gyroChart->legend()->setAlignment(Qt::AlignBottom);
@@ -143,11 +151,15 @@ MainWindow::MainWindow(QWidget *parent)
     seriesAx->attachAxis(accAxisY);
     seriesRollFilt->attachAxis(accAxisX); // Attach Roll Filt
     seriesRollFilt->attachAxis(accAxisY);
+    seriesAccelRollF->attachAxis(accAxisX);
+    seriesAccelRollF->attachAxis(accAxisY);
     seriesPitch->attachAxis(accAxisX);
     seriesPitch->attachAxis(accAxisY);
 
     seriesGy->attachAxis(gyroAxisX);
     seriesGy->attachAxis(gyroAxisY);
+    seriesGyroF->attachAxis(gyroAxisX);
+    seriesGyroF->attachAxis(gyroAxisY);
 
     // --- TAB 2: PID ---
     pidChartView = ui->pidWidget;
@@ -219,8 +231,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     seriesDt = new QLineSeries(); seriesDt->setName("Delta Time (us)"); seriesDt->setColor(Qt::darkBlue);
     seriesSatFlag = new QLineSeries(); seriesSatFlag->setName("Sat Flag"); seriesSatFlag->setColor(Qt::red);
+    seriesDtCtrl = new QLineSeries(); seriesDtCtrl->setName("DT Control (us)"); seriesDtCtrl->setColor(Qt::darkGreen);
 
     systemChart->addSeries(seriesDt);
+    systemChart->addSeries(seriesDtCtrl);
     systemChart->addSeries(seriesSatFlag);
 
     systemAxisX = new QValueAxis(); systemAxisX->setTitleText("Tiempo (s)");
@@ -230,6 +244,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     seriesDt->attachAxis(systemAxisX);
     seriesDt->attachAxis(systemAxisY);
+    seriesDtCtrl->attachAxis(systemAxisX);
+    seriesDtCtrl->attachAxis(systemAxisY);
     seriesSatFlag->attachAxis(systemAxisX);
     seriesSatFlag->attachAxis(systemAxisY);
 
@@ -1409,7 +1425,7 @@ void MainWindow::updatePlot() {
     // 2) Calcula mínimo y máximo sólo para las series de aceleración
     qreal minAcc = std::numeric_limits<qreal>::max();
     qreal maxAcc = std::numeric_limits<qreal>::lowest();
-    for (auto *s : {seriesAx, seriesAy, seriesAz, seriesRollFilt, seriesPitch}) {
+    for (auto *s : {seriesAx, seriesAy, seriesAz, seriesRollFilt, seriesPitch, seriesAccelRollF}) {
         for (const QPointF &p : s->points()) {
             minAcc = qMin(minAcc, p.y());
             maxAcc = qMax(maxAcc, p.y());
@@ -1424,7 +1440,7 @@ void MainWindow::updatePlot() {
     // 4) Igual para las series de giroscopio
     qreal minGyr = std::numeric_limits<qreal>::max();
     qreal maxGyr = std::numeric_limits<qreal>::lowest();
-    for (auto *s : {seriesGx, seriesGy, seriesGz}) {
+    for (auto *s : {seriesGx, seriesGy, seriesGz, seriesGyroF}) {
         for (const QPointF &p : s->points()) {
             minGyr = qMin(minGyr, p.y());
             maxGyr = qMax(maxGyr, p.y());
@@ -1466,8 +1482,8 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Separar por comas
     QStringList parts = strLine.split(',');
 
-    // Verificar cantidad de columnas (22)
-    if (parts.size() < 22) {
+    // Verificar cantidad de columnas (25)
+    if (parts.size() < 25) {
         return; // Línea incompleta o formato incorrecto
     }
 
@@ -1533,6 +1549,15 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // 21. gz
     telemetryData.gz = parts[21].toFloat(&ok) / 100.0f;
 
+    // 22. dt_ctrl_us
+    telemetryData.dt_ctrl_us = parts[22].toUInt(&ok);
+
+    // 23. gyro_f (x1000)
+    telemetryData.gyro_f = parts[23].toFloat(&ok) / 1000.0f;
+
+    // 24. accel_roll_f (x1000)
+    telemetryData.accel_roll_f = parts[24].toFloat(&ok) / 1000.0f;
+
     // Debug opcional para verificar
     // ui->textEdit_PROCCES->append("CSV: " + strLine);
     qDebug() << "CSV Parsed: t=" << telemetryData.t_ms << " Roll=" << telemetryData.roll_filt;
@@ -1547,9 +1572,11 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // Graficamos Giroscopio (gyro_y) en el chart de giroscopio
     seriesGy->append(t_sec, telemetryData.gyro_y);
+    seriesGyroF->append(t_sec, telemetryData.gyro_f);
 
     // Pitch
     seriesPitch->append(t_sec, telemetryData.pitch);
+    seriesAccelRollF->append(t_sec, telemetryData.accel_roll_f);
 
     // Raw Accel
     seriesRawAx->append(t_sec, telemetryData.ax);
@@ -1572,16 +1599,20 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // --- AUTO-ESCALA EJE Y (Aceleración) ---
     qreal minAcc = 1000.0, maxAcc = -1000.0;
-    // Iteramos sobre los puntos visibles para encontrar min/max
-    const QList<QPointF> pointsAx = seriesAx->points();
-    if (!pointsAx.isEmpty()) {
-        for (const QPointF &p : pointsAx) {
-            if (p.x() >= minX) { // Solo consideramos los puntos dentro de la ventana de tiempo
-                if (p.y() < minAcc) minAcc = p.y();
-                if (p.y() > maxAcc) maxAcc = p.y();
+    // Consideramos Ax y AccelRollF para la escala
+    for (auto *s : {seriesAx, seriesAccelRollF}) {
+        const QList<QPointF> pts = s->points();
+        if (!pts.isEmpty()) {
+            for (const QPointF &p : pts) {
+                if (p.x() >= minX) {
+                    if (p.y() < minAcc) minAcc = p.y();
+                    if (p.y() > maxAcc) maxAcc = p.y();
+                }
             }
         }
-        // Agregamos un margen del 10%
+    }
+    // Agregamos un margen del 10%
+    if (maxAcc > minAcc) {
         qreal marginAcc = (maxAcc - minAcc) * 0.1;
         if (marginAcc == 0) marginAcc = 1.0; // Evitar rango nulo
         accAxisY->setRange(minAcc - marginAcc, maxAcc + marginAcc);
@@ -1589,14 +1620,19 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // --- AUTO-ESCALA EJE Y (Giroscopio) ---
     qreal minGyro = 10000.0, maxGyro = -10000.0;
-    const QList<QPointF> pointsGy = seriesGy->points();
-    if (!pointsGy.isEmpty()) {
-        for (const QPointF &p : pointsGy) {
-            if (p.x() >= minX) {
-                if (p.y() < minGyro) minGyro = p.y();
-                if (p.y() > maxGyro) maxGyro = p.y();
+    for (auto *s : {seriesGy, seriesGyroF}) {
+        const QList<QPointF> pts = s->points();
+        if (!pts.isEmpty()) {
+            for (const QPointF &p : pts) {
+                if (p.x() >= minX) {
+                    if (p.y() < minGyro) minGyro = p.y();
+                    if (p.y() > maxGyro) maxGyro = p.y();
+                }
             }
         }
+    }
+
+    if (maxGyro > minGyro) {
         qreal marginGyro = (maxGyro - minGyro) * 0.1;
         if (marginGyro == 0) marginGyro = 10.0;
         gyroAxisY->setRange(minGyro - marginGyro, maxGyro + marginGyro);
@@ -1687,6 +1723,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // --- GRÁFICOS TAB 4: SISTEMA ---
     seriesDt->append(t_sec, telemetryData.dt_us);
+    seriesDtCtrl->append(t_sec, telemetryData.dt_ctrl_us);
     // Sat flag es 0 o 1. Lo escalamos para que sea visible en el grafico de dt (que es ~20000)
     // O mejor, usamos ejes separados. Para simplicidad, lo mostramos como 0 o 20000
     double flagVal = (telemetryData.sat_flag > 0) ? 20000.0 : 0.0;
@@ -1719,7 +1756,10 @@ void MainWindow::processCsvLine(const QByteArray &line)
                << telemetryData.az << ","
                << telemetryData.gx << ","
                << telemetryData.gy << ","
-               << telemetryData.gz << "\n";
+               << telemetryData.gz << ","
+               << telemetryData.dt_ctrl_us << ","
+               << telemetryData.gyro_f << ","
+               << telemetryData.accel_roll_f << "\n";
     }
 }
 
@@ -1736,8 +1776,8 @@ void MainWindow::toggleRecording()
         csvLogFile.setFileName(defaultSaveDirectory + "/" + filename);
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&csvLogFile);
-            // Escribir encabezado de acuerdo a la estructura TelemetryData
-            stream << "t_ms,dt_us,accel_roll,gyro_y,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat_flag,mR,mL,pitch,ax,ay,az,gx,gy,gz\n";
+            // Escribir encabezado de acuerdo a la estructura TelemetryData (Updated for 25 columns)
+            stream << "t_ms,dt_us,accel_roll,gyro_y,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat_flag,mR,mL,pitch,ax,ay,az,gx,gy,gz,dt_ctrl_us,gyro_f,accel_roll_f\n";
 
             isRecording = true;
             ui->pushButton_RECORD->setText("STOP");
