@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QTextStream>
+#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -1553,10 +1554,8 @@ void MainWindow::toggleRecording()
         QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
         QString filename = "telemetry_" + timestamp + ".csv";
 
-        QDir dir("logs");
-        if (!dir.exists()) {
-            dir.mkpath(".");
-        }
+        // Crear carpeta logs explícitamente en el directorio de la aplicación
+        QDir().mkpath("logs");
 
         csvLogFile.setFileName("logs/" + filename);
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -1567,9 +1566,12 @@ void MainWindow::toggleRecording()
             isRecording = true;
             ui->pushButton_RECORD->setText("STOP");
             ui->pushButton_RECORD->setChecked(true);
-            ui->textEdit_PROCCES->append("Grabando en: " + filename);
+
+            // Mostrar ruta absoluta para que el usuario sepa dónde está
+            QFileInfo fileInfo(csvLogFile);
+            ui->textEdit_PROCCES->append("Grabando en: " + fileInfo.absoluteFilePath());
         } else {
-            ui->textEdit_PROCCES->append("Error al crear archivo de log.");
+            ui->textEdit_PROCCES->append("Error al crear archivo de log: " + csvLogFile.errorString());
             ui->pushButton_RECORD->setChecked(false);
         }
     } else {
