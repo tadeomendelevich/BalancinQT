@@ -1800,34 +1800,6 @@ void MainWindow::toggleRecording()
         if (csvLogFile.isOpen()) {
             QFileInfo fileInfo(csvLogFile);
             QString baseName = fileInfo.absolutePath() + "/" + fileInfo.completeBaseName();
-
-            // Guardar screenshots de los gráficos
-            QPixmap p;
-
-            // IMU
-            p = ui->tabWidget_Graficas->widget(0)->grab(); // Tab IMU
-            p.save(baseName + "_IMU.png");
-
-            // PID
-            p = ui->tabWidget_Graficas->widget(1)->grab(); // Tab PID
-            p.save(baseName + "_PID.png");
-
-            // Motors
-            p = ui->tabWidget_Graficas->widget(2)->grab(); // Tab Motors
-            p.save(baseName + "_MOTORS.png");
-
-            // System
-            p = ui->tabWidget_Graficas->widget(3)->grab(); // Tab System
-            p.save(baseName + "_SYSTEM.png");
-
-            // Raw Sensors
-            if (ui->tabWidget_Graficas->count() > 4) {
-                 p = ui->tabWidget_Graficas->widget(4)->grab(); // Tab Raw
-                 p.save(baseName + "_RAW.png");
-            }
-
-            ui->textEdit_PROCCES->append("Gráficos guardados como imágenes PNG.");
-
             csvLogFile.close();
         }
         isRecording = false;
