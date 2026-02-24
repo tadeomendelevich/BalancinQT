@@ -1511,7 +1511,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
     telemetryData.gyro_f = parts[6].toFloat(&ok) / 1000.0f;
 
     // 7. roll_filt (x1000)
-    telemetryData.roll_filt = parts[7].toFloat(&ok) / 1000.0f;
+    telemetryData.roll_filt = parts[7].toFloat(&ok) / 10.0f;
 
     // 8. error (x1000)
     telemetryData.error = parts[8].toFloat(&ok) / 1000.0f;
