@@ -1570,6 +1570,10 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Nota: Aunque se llame "accel_roll", lo ponemos en seriesAx como ejemplo
     seriesAx->append(t_sec, telemetryData.accel_roll);
 
+    // Muestro los valores de ROLL y PITCH
+    ui->label_inclination_Xvalue->setText(QString::number(telemetryData.roll_filt, 'f', 2) + " °");
+    ui->label_inclination_Yvalue->setText(QString::number(telemetryData.pitch, 'f', 2) + " °");
+
     // Graficamos Giroscopio (gyro_y) en el chart de giroscopio
     seriesGy->append(t_sec, telemetryData.gyro_y);
     seriesGyroF->append(t_sec, telemetryData.gyro_f);
