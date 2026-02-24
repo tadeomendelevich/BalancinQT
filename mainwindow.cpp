@@ -60,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
     ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
     ui->comboBox_CMD->addItem("ACTIVAR LOG CSV", 0xB9);
+    ui->comboBox_CMD->addItem("ACTIVAR WIFI LOG", 0xBA);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -800,6 +801,7 @@ void MainWindow::sendDataUDP()
     case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
+    case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -1401,6 +1403,94 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         }
         ui->textEdit_PROCCES->append(str);
         break;
+    case WIFI_LOG_DATA: {
+        if (datosRx[0] < (sizeof(WifiLogData_t) + 1)) {
+            ui->textEdit_PROCCES->append("WIFI_LOG_DATA: Packet too short!");
+            break;
+        }
+
+        WifiLogData_t *data = reinterpret_cast<WifiLogData_t*>(&datosRx[2]);
+
+        // 1. Update UI Labels (Inclination)
+        ui->label_inclination_Xvalue->setText(QString::number(data->roll_filt, 'f', 2) + " °");
+        // Pitch is not available in this packet
+
+        // 2. Time in seconds
+        double t_sec = data->t_ms / 1000.0;
+
+        // 3. Update Charts
+        // --- IMU Chart ---
+        seriesRollFilt->append(t_sec, data->roll_filt);
+
+        // --- PID Chart ---
+        seriesOutput->append(t_sec, data->output);
+        seriesP->append(t_sec, data->p_term);
+        seriesI->append(t_sec, data->i_term);
+        seriesD->append(t_sec, data->d_term);
+        // Error is not in packet, skip or calculate if setpoint known (assume 0 for balance?)
+        // seriesError->append(t_sec, 0);
+
+        // --- Motors Chart ---
+        seriesMR->append(t_sec, data->mR);
+        seriesML->append(t_sec, data->mL);
+
+        // 4. Update Axes (X) - Rolling Window 10s
+        double minX = t_sec - 10.0;
+        double maxX = t_sec;
+        accAxisX->setRange(minX, maxX);
+        pidAxisX->setRange(minX, maxX);
+        motorsAxisX->setRange(minX, maxX);
+
+        // 5. Auto-Scale Y Axis (Simplified logic based on visible data)
+        // IMU (Accel/Roll)
+        qreal minAcc = 1000.0, maxAcc = -1000.0;
+        // Check visible points for RollFilt
+        QList<QPointF> points = seriesRollFilt->points();
+        for (const QPointF &p : points) {
+             if (p.x() >= minX) {
+                 if (p.y() < minAcc) minAcc = p.y();
+                 if (p.y() > maxAcc) maxAcc = p.y();
+             }
+        }
+        // Also check seriesAx if it has data (might be mixed usage)
+        points = seriesAx->points();
+        for (const QPointF &p : points) {
+             if (p.x() >= minX) {
+                 if (p.y() < minAcc) minAcc = p.y();
+                 if (p.y() > maxAcc) maxAcc = p.y();
+             }
+        }
+
+        if (maxAcc > minAcc) {
+            qreal margin = (maxAcc - minAcc) * 0.1;
+            if (margin == 0) margin = 1.0;
+            accAxisY->setRange(minAcc - margin, maxAcc + margin);
+        }
+
+        // PID
+        qreal minPid = 1000000.0, maxPid = -1000000.0;
+        QList<QLineSeries*> pidSeriesList = {seriesP, seriesI, seriesD, seriesOutput};
+        for(auto *s : pidSeriesList) {
+            points = s->points();
+            for(const QPointF &p : points) {
+                if(p.x() >= minX) {
+                    if(p.y() < minPid) minPid = p.y();
+                    if(p.y() > maxPid) maxPid = p.y();
+                }
+            }
+        }
+        if (minPid != 1000000.0 && maxPid != -1000000.0) {
+             qreal margin = (maxPid - minPid) * 0.1;
+             if(margin == 0) margin = 0.5;
+             pidAxisY->setRange(minPid - margin, maxPid + margin);
+        }
+
+        // Motors (Fixed range usually fine, or auto)
+        // Fixed -110 to 110 usually works for pwm/motor speed -100 to 100
+        motorsAxisY->setRange(-110, 110);
+
+        break;
+    }
     default:
         str = str + "Comando DESCONOCIDO!!!!";
         ui->textEdit_PROCCES->append(str);
