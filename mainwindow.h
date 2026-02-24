@@ -115,6 +115,8 @@ private:
         BALANCE = 0xB4,
         RESETMASSCENTER = 0xB7,
         ACTIVATE_CSV_LOG = 0xB9,
+        ACTIVATE_WIFI_LOG = 0xBA,
+        WIFI_LOG_DATA = 0xBB,
         OTHERS
     }_eCmd;
 
@@ -125,6 +127,19 @@ private:
         CATEGORY_B = 2,
         CATEGORY_C = 3
     };
+
+    #pragma pack(push, 1)
+    struct WifiLogData_t {
+        uint32_t t_ms;        // Tiempo en ms desde el inicio
+        float    roll_filt;   // Ángulo de inclinación filtrado (grados)
+        float    output;      // Salida del PID (antes de ganancia motor)
+        float    p_term;      // Término Proporcional
+        float    i_term;      // Término Integral
+        float    d_term;      // Término Derivativo
+        int16_t  mR;          // Velocidad Motor Derecho (-100 a 100)
+        int16_t  mL;          // Velocidad Motor Izquierdo (-100 a 100)
+    };
+    #pragma pack(pop)
 
     typedef struct{
         uint8_t timeOut;
