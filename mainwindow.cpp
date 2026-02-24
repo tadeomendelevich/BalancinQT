@@ -1495,68 +1495,69 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // 1. dt_us
     telemetryData.dt_us = parts[1].toUInt(&ok);
 
-    // 2. accel_roll (x1000)
-    telemetryData.accel_roll = parts[2].toFloat(&ok) / 1000.0f;
+    // 2. dt_ctrl_us
+    telemetryData.dt_ctrl_us = parts[2].toUInt(&ok);
 
-    // 3. gyro_y (x1000)
-    telemetryData.gyro_y = parts[3].toFloat(&ok) / 1000.0f;
+    // 3. accel_roll (x1000)
+    telemetryData.accel_roll = parts[3].toFloat(&ok) / 1000.0f;
 
-    // 4. roll_filt (x1000)
-    telemetryData.roll_filt = parts[4].toFloat(&ok) / 1000.0f;
+    // 4. accel_roll_f (x1000)
+    telemetryData.accel_roll_f = parts[4].toFloat(&ok) / 1000.0f;
 
-    // 5. error (x1000)
-    telemetryData.error = parts[5].toFloat(&ok) / 1000.0f;
+    // 5. gyro_y (x1000)
+    telemetryData.gyro_y = parts[5].toFloat(&ok) / 1000.0f;
 
-    // 6. p (x1000)
-    telemetryData.p = parts[6].toFloat(&ok) / 1000.0f;
+    // 6. gyro_f (x1000)
+    telemetryData.gyro_f = parts[6].toFloat(&ok) / 1000.0f;
 
-    // 7. i (x1000)
-    telemetryData.i = parts[7].toFloat(&ok) / 1000.0f;
+    // 7. roll_filt (x1000)
+    telemetryData.roll_filt = parts[7].toFloat(&ok) / 1000.0f;
 
-    // 8. d (x1000)
-    telemetryData.d = parts[8].toFloat(&ok) / 1000.0f;
+    // 8. error (x1000)
+    telemetryData.error = parts[8].toFloat(&ok) / 1000.0f;
 
-    // 9. output (x1000)
-    telemetryData.output = parts[9].toFloat(&ok) / 1000.0f;
+    // 9. p (x1000)
+    telemetryData.p = parts[9].toFloat(&ok) / 1000.0f;
 
-    // 10. pwm_cmd (x100) -> Ojo, guia dice x100
-    telemetryData.pwm_cmd = parts[10].toFloat(&ok) / 100.0f;
+    // 10. i (x1000)
+    telemetryData.i = parts[10].toFloat(&ok) / 1000.0f;
 
-    // 11. pwm_sat (x100) -> Ojo, guia dice x100
-    telemetryData.pwm_sat = parts[11].toFloat(&ok) / 100.0f;
+    // 11. d (x1000)
+    telemetryData.d = parts[11].toFloat(&ok) / 1000.0f;
 
-    // 12. sat_flag
-    telemetryData.sat_flag = (uint8_t)parts[12].toUInt(&ok);
+    // 12. output (x1000)
+    telemetryData.output = parts[12].toFloat(&ok) / 1000.0f;
 
-    // 13. mR
-    telemetryData.mR = (int16_t)parts[13].toInt(&ok);
+    // 13. pwm_cmd (x100) -> Ojo, guia dice x100
+    telemetryData.pwm_cmd = parts[13].toFloat(&ok) / 100.0f;
 
-    // 14. mL
-    telemetryData.mL = (int16_t)parts[14].toInt(&ok);
+    // 14. pwm_sat (x100) -> Ojo, guia dice x100
+    telemetryData.pwm_sat = parts[14].toFloat(&ok) / 100.0f;
 
-    // 15. pitch
-    telemetryData.pitch = parts[15].toFloat(&ok) / 1000.0f;
-    // 16. ax
-    telemetryData.ax = parts[16].toFloat(&ok) / 100.0f;
-    // 17. ay
-    telemetryData.ay = parts[17].toFloat(&ok) / 100.0f;
-    // 18. az
-    telemetryData.az = parts[18].toFloat(&ok) / 100.0f;
-    // 19. gx
-    telemetryData.gx = parts[19].toFloat(&ok) / 100.0f;
-    // 20. gy
-    telemetryData.gy = parts[20].toFloat(&ok) / 100.0f;
-    // 21. gz
-    telemetryData.gz = parts[21].toFloat(&ok) / 100.0f;
+    // 15. sat_flag
+    telemetryData.sat_flag = (uint8_t)parts[15].toUInt(&ok);
 
-    // 22. dt_ctrl_us
-    telemetryData.dt_ctrl_us = parts[22].toUInt(&ok);
+    // 16. mR
+    telemetryData.mR = (int16_t)parts[16].toInt(&ok);
 
-    // 23. gyro_f (x1000)
-    telemetryData.gyro_f = parts[23].toFloat(&ok) / 1000.0f;
+    // 17. mL
+    telemetryData.mL = (int16_t)parts[17].toInt(&ok);
 
-    // 24. accel_roll_f (x1000)
-    telemetryData.accel_roll_f = parts[24].toFloat(&ok) / 1000.0f;
+    // 18. pitch
+    telemetryData.pitch = parts[18].toFloat(&ok) / 1000.0f;
+
+    // 19. ax
+    telemetryData.ax = parts[19].toFloat(&ok) / 100.0f;
+    // 20. ay
+    telemetryData.ay = parts[20].toFloat(&ok) / 100.0f;
+    // 21. az
+    telemetryData.az = parts[21].toFloat(&ok) / 100.0f;
+    // 22. gx
+    telemetryData.gx = parts[22].toFloat(&ok) / 100.0f;
+    // 23. gy
+    telemetryData.gy = parts[23].toFloat(&ok) / 100.0f;
+    // 24. gz
+    telemetryData.gz = parts[24].toFloat(&ok) / 100.0f;
 
     // Debug opcional para verificar
     // ui->textEdit_PROCCES->append("CSV: " + strLine);
@@ -1741,8 +1742,11 @@ void MainWindow::processCsvLine(const QByteArray &line)
         QTextStream stream(&csvLogFile);
         stream << telemetryData.t_ms << ","
                << telemetryData.dt_us << ","
+               << telemetryData.dt_ctrl_us << ","
                << telemetryData.accel_roll << ","
+               << telemetryData.accel_roll_f << ","
                << telemetryData.gyro_y << ","
+               << telemetryData.gyro_f << ","
                << telemetryData.roll_filt << ","
                << telemetryData.error << ","
                << telemetryData.p << ","
@@ -1760,10 +1764,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
                << telemetryData.az << ","
                << telemetryData.gx << ","
                << telemetryData.gy << ","
-               << telemetryData.gz << ","
-               << telemetryData.dt_ctrl_us << ","
-               << telemetryData.gyro_f << ","
-               << telemetryData.accel_roll_f << "\n";
+               << telemetryData.gz << "\n";
     }
 }
 
@@ -1781,7 +1782,7 @@ void MainWindow::toggleRecording()
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&csvLogFile);
             // Escribir encabezado de acuerdo a la estructura TelemetryData (Updated for 25 columns)
-            stream << "t_ms,dt_us,accel_roll,gyro_y,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat_flag,mR,mL,pitch,ax,ay,az,gx,gy,gz,dt_ctrl_us,gyro_f,accel_roll_f\n";
+            stream << "t_ms,dt_us,dt_ctrl_us,accel_roll,accel_roll_f,gyro_y,gyro_f,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat,mR,mL,pitch,ax,ay,az,gx,gy,gz\n";
 
             isRecording = true;
             ui->pushButton_RECORD->setText("STOP");
