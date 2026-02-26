@@ -61,12 +61,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
     ui->comboBox_CMD->addItem("ACTIVAR LOG CSV", 0xB9);
     ui->comboBox_CMD->addItem("ACTIVAR WIFI LOG", 0xBA);
+    ui->comboBox_CMD->addItem("MODIFY_BETA_G", 0xBC);
+    ui->comboBox_CMD->addItem("MODIFY_BETA_A", 0xBD);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
     rxData.timeOut=0;
     ui->pushButton_UDP->setEnabled(false);
-    ui->pushButton_ALIVE->setEnabled(false);
+    ui->pushButton_BALANCE->setEnabled(false);
     ui->pushButton_SEND->setEnabled(false);
     timer1->start(100);
 
@@ -374,7 +376,7 @@ void MainWindow::openSerialPorts(){
     serial->setFlowControl(p.flowControl);
     serial->open(QSerialPort::ReadWrite);
     if (serial->isOpen()){
-        ui->pushButton_ALIVE->setEnabled(true);
+        ui->pushButton_BALANCE->setEnabled(true);
         ui->pushButton_SEND->setEnabled(true);
         ui->actionDisconnect_Device->setEnabled(true);
         estadoSerial->setStyleSheet("QLabel { color : blue; }");
@@ -522,19 +524,20 @@ void MainWindow::timeOut(){
     }
 }
 
-void MainWindow::on_pushButton_ALIVE_clicked()
+void MainWindow::on_pushButton_BALANCE_clicked()
 {
-    ui->comboBox_CMD->setCurrentIndex(0);
+    int idx = ui->comboBox_CMD->findData(BALANCE);
+    if (idx >= 0) ui->comboBox_CMD->setCurrentIndex(idx);
 
     if (serial->isOpen()) {
         sendDataSerial();
-    } else if (UdpSocket1->state() == QAbstractSocket::BoundState && !clientAddress.isNull() && puertoremoto > 0) {
+    } else if (UdpSocket1->state() == QAbstractSocket::BoundState
+               && !clientAddress.isNull() && puertoremoto > 0) {
         sendDataUDP();
     } else {
-        ui->textEdit_PROCCES->append("ALIVE: Sin conexión disponible (Serial ni UDP).");
+        ui->textEdit_PROCCES->append("BALANCE: Sin conexión disponible.");
     }
 }
-
 
 void MainWindow::on_pushButton_OPENUDP_clicked()
 {
@@ -549,8 +552,9 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     if (UdpSocket1->state() != QAbstractSocket::UnconnectedState) {
         UdpSocket1->close();
         ui->pushButton_OPENUDP->setText("Open UDP");
-        ui->pushButton_OPENUDP->setStyleSheet("background-color: #f0f0f0; color: black;"); // Estilo "Claro/Inactivo"
+        ui->pushButton_OPENUDP->setStyleSheet("background-color: #d32f2f; color: white;");
         ui->pushButton_UDP->setEnabled(false);
+        ui->pushButton_BALANCE->setEnabled(false);
         ui->lineEdit_IP_REMOTA->clear();
         ui->lineEdit_DEVICEPORT->clear();
         return;
@@ -574,6 +578,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     ui->pushButton_OPENUDP->setText("Close UDP");
     ui->pushButton_OPENUDP->setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;"); // Estilo "Activo/Verde"
     ui->pushButton_UDP->setEnabled(true);
+    ui->pushButton_BALANCE->setEnabled(true);
 
     // Cargar destino si ya está ingresado en la UI
     if (clientAddress.isNull()) {
@@ -604,6 +609,7 @@ void MainWindow::OnUdpRxData()
         // Aprender/actualizar IP/puerto destino (para respuestas)
         clientAddress = RemoteAddress;
         puertoremoto  = RemotePort;
+        ui->pushButton_BALANCE->setEnabled(true);
 
         // Refrescar UI con lo recibido
         ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString());
@@ -787,6 +793,32 @@ void MainWindow::sendDataUDP()
         break;
     }
 
+    case MODIFY_BETA_G: { // MODIFY_BETA_G = 0xBC
+        dato[indice++] = MODIFY_BETA_G;
+
+        double beta_g_val = QInputDialog::getDouble(this, "Factor BETA G", "BETA_G:", 0.0, 0.0, 10.0, 2, &ok);
+        if (!ok) return;
+        w.f32 = (float)beta_g_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+
+    case MODIFY_BETA_A: { // MODIFY_BETA_A = 0xBD
+        dato[indice++] = MODIFY_BETA_A;
+
+        double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 2, &ok);
+        if (!ok) return;
+        w.f32 = (float)beta_a_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+
         // Comandos simples (sólo ID)
     case GETALIVE:          // 0xF0
     case GETANGLE:          // 0xA7
@@ -926,6 +958,32 @@ void MainWindow::sendDataSerial(){
         dato[indice++] = w.ui8[3];
         break;
     }
+
+    case MODIFY_BETA_G: { // MODIFY_BETA_G = 0xBC
+        dato[indice++] = MODIFY_BETA_G;
+
+        double beta_g_val = QInputDialog::getDouble(this, "Factor BETA G", "BETA_G:", 0.0, 0.0, 10.0, 2, &ok);
+        if (!ok) return;
+        w.f32 = (float)beta_g_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+
+    case MODIFY_BETA_A: { // MODIFY_BETA_A = 0xBD
+        dato[indice++] = MODIFY_BETA_A;
+
+        double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 2, &ok);
+        if (!ok) return;
+        w.f32 = (float)beta_a_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
     case GETALIVE:
     case GETADCVALUES: //GETADCVALUES=0xA5
     case GETMPU6050VALUES:  //GETMPU6050VALUES=0xA6
@@ -940,6 +998,7 @@ void MainWindow::sendDataSerial(){
     case BALANCE: //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
+    case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -1403,6 +1462,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         }
         ui->textEdit_PROCCES->append(str);
         break;
+    case ACTIVATE_WIFI_LOG:
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el estado de la bandera de WIFI_LOG correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
     case WIFI_LOG_DATA: {
         if (datosRx[0] < (sizeof(WifiLogData_t) + 1)) {
             ui->textEdit_PROCCES->append("WIFI_LOG_DATA: Packet too short!");
@@ -1411,86 +1476,110 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
         WifiLogData_t *data = reinterpret_cast<WifiLogData_t*>(&datosRx[2]);
 
-        // 1. Update UI Labels (Inclination)
-        ui->label_inclination_Xvalue->setText(QString::number(data->roll_filt, 'f', 2) + " °");
-        // Pitch is not available in this packet
+        // 1. UI Labels
+        ui->label_inclination_Xvalue->setText(
+        QString::number(data->roll_filt, 'f', 2) + " °");
 
-        // 2. Time in seconds
+        // 2. Tiempo
         double t_sec = data->t_ms / 1000.0;
+        double minX  = t_sec - 10.0;
+        double maxX  = t_sec;
 
-        // 3. Update Charts
-        // --- IMU Chart ---
+        // 3. Gráficos
         seriesRollFilt->append(t_sec, data->roll_filt);
-
-        // --- PID Chart ---
-        seriesOutput->append(t_sec, data->output);
         seriesP->append(t_sec, data->p_term);
         seriesI->append(t_sec, data->i_term);
         seriesD->append(t_sec, data->d_term);
-        // Error is not in packet, skip or calculate if setpoint known (assume 0 for balance?)
-        // seriesError->append(t_sec, 0);
-
-        // --- Motors Chart ---
+        seriesOutput->append(t_sec, data->output);
         seriesMR->append(t_sec, data->mR);
         seriesML->append(t_sec, data->mL);
+        seriesDtCtrl->append(t_sec, data->dt_ctrl_us);
 
-        // 4. Update Axes (X) - Rolling Window 10s
-        double minX = t_sec - 10.0;
-        double maxX = t_sec;
+        // 4. Ejes X
         accAxisX->setRange(minX, maxX);
         pidAxisX->setRange(minX, maxX);
         motorsAxisX->setRange(minX, maxX);
+        systemAxisX->setRange(minX, maxX);  // ← NUEVO
 
-        // 5. Auto-Scale Y Axis (Simplified logic based on visible data)
-        // IMU (Accel/Roll)
+        // 5. Auto-escala IMU
         qreal minAcc = 1000.0, maxAcc = -1000.0;
-        // Check visible points for RollFilt
-        QList<QPointF> points = seriesRollFilt->points();
-        for (const QPointF &p : points) {
-             if (p.x() >= minX) {
-                 if (p.y() < minAcc) minAcc = p.y();
-                 if (p.y() > maxAcc) maxAcc = p.y();
-             }
+        for (const QPointF &p : seriesRollFilt->points()) {
+            if (p.x() >= minX) {
+                    minAcc = qMin(minAcc, p.y());
+                    maxAcc = qMax(maxAcc, p.y());
+            }
         }
-        // Also check seriesAx if it has data (might be mixed usage)
-        points = seriesAx->points();
-        for (const QPointF &p : points) {
-             if (p.x() >= minX) {
-                 if (p.y() < minAcc) minAcc = p.y();
-                 if (p.y() > maxAcc) maxAcc = p.y();
-             }
-        }
-
         if (maxAcc > minAcc) {
             qreal margin = (maxAcc - minAcc) * 0.1;
             if (margin == 0) margin = 1.0;
             accAxisY->setRange(minAcc - margin, maxAcc + margin);
         }
 
-        // PID
+        // 6. Auto-escala PID
         qreal minPid = 1000000.0, maxPid = -1000000.0;
-        QList<QLineSeries*> pidSeriesList = {seriesP, seriesI, seriesD, seriesOutput};
-        for(auto *s : pidSeriesList) {
-            points = s->points();
-            for(const QPointF &p : points) {
-                if(p.x() >= minX) {
-                    if(p.y() < minPid) minPid = p.y();
-                    if(p.y() > maxPid) maxPid = p.y();
-                }
+        for (auto *s : {seriesP, seriesI, seriesD, seriesOutput}) {
+            for (const QPointF &p : s->points()) {
+                    if (p.x() >= minX) {
+                    minPid = qMin(minPid, p.y());
+                    maxPid = qMax(maxPid, p.y());
+                    }
             }
         }
         if (minPid != 1000000.0 && maxPid != -1000000.0) {
-             qreal margin = (maxPid - minPid) * 0.1;
-             if(margin == 0) margin = 0.5;
-             pidAxisY->setRange(minPid - margin, maxPid + margin);
+            qreal margin = (maxPid - minPid) * 0.1;
+            if (margin == 0) margin = 0.5;
+            pidAxisY->setRange(minPid - margin, maxPid + margin);
         }
 
-        // Motors (Fixed range usually fine, or auto)
-        // Fixed -110 to 110 usually works for pwm/motor speed -100 to 100
+        // 7. Motores Y fijo
         motorsAxisY->setRange(-110, 110);
 
+        // 8. Sistema Y fijo
+        systemAxisY->setRange(0, 35000);  // ← NUEVO
+
+        // 9. Grabación CSV
+        if (isRecording && csvLogFile.isOpen()) {
+            QTextStream stream(&csvLogFile);
+            stream << data->t_ms    << ","   // t_ms    ✅
+               << 0                 << ","   // dt_us       ❌
+               << data->dt_ctrl_us  << ","   // dt_ctrl_us  ✅ AHORA DISPONIBLE
+               << 0                 << ","   // accel_roll  ❌
+               << 0                 << ","   // accel_roll_f❌
+               << 0                 << ","   // gyro_y      ❌
+               << 0                 << ","   // gyro_f      ❌
+               << data->roll_filt   << ","   // roll_filt   ✅
+               << 0                 << ","   // error       ❌
+               << data->p_term      << ","   // p           ✅
+               << data->i_term      << ","   // i           ✅
+               << data->d_term      << ","   // d           ✅
+               << data->output      << ","   // output      ✅
+               << 0                 << ","   // pwm_cmd     ❌
+               << 0                 << ","   // pwm_sat     ❌
+               << 0                 << ","   // sat_flag    ❌
+               << data->mR          << ","   // mR          ✅
+               << data->mL          << ","   // mL          ✅
+               << 0                 << ","   // pitch       ❌
+               << 0                 << ","   // ax          ❌
+               << 0                 << ","   // ay          ❌
+               << 0                 << ","   // az          ❌
+               << 0                 << ","   // gx          ❌
+               << 0                 << ","   // gy          ❌
+               << 0                 << "\n"; // gz          ❌
+        }
         break;
     }
+    case MODIFY_BETA_G:
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el valor de BETA_G correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_BETA_A:
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el valor de BETA_A correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
     default:
         str = str + "Comando DESCONOCIDO!!!!";
         ui->textEdit_PROCCES->append(str);

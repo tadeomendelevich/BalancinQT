@@ -36,7 +36,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_ALIVE_clicked();
+    void on_pushButton_BALANCE_clicked();
 
     void openSerialPorts();
 
@@ -117,6 +117,8 @@ private:
         ACTIVATE_CSV_LOG = 0xB9,
         ACTIVATE_WIFI_LOG = 0xBA,
         WIFI_LOG_DATA = 0xBB,
+        MODIFY_BETA_G = 0xBC,
+        MODIFY_BETA_A = 0xBD,
         OTHERS
     }_eCmd;
 
@@ -138,6 +140,7 @@ private:
         float    d_term;      // Término Derivativo
         int16_t  mR;          // Velocidad Motor Derecho (-100 a 100)
         int16_t  mL;          // Velocidad Motor Izquierdo (-100 a 100)
+        uint32_t dt_ctrl_us;
     };
     #pragma pack(pop)
 
