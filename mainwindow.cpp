@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("ACTIVAR WIFI LOG", 0xBA);
     ui->comboBox_CMD->addItem("MODIFY_BETA_G", 0xBC);
     ui->comboBox_CMD->addItem("MODIFY_BETA_A", 0xBD);
+    ui->comboBox_CMD->addItem("CHANGE_DISPLAY", 0xBE);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -759,7 +760,7 @@ void MainWindow::sendDataUDP()
     case MODIFYKP: { // MODIFYKP = 0xB1
         dato[indice++] = MODIFYKP;
 
-        double kp_val = QInputDialog::getDouble(this, "Factor KP", "KP:", 0.0, 0.0, 1000.0, 2, &ok);
+        double kp_val = QInputDialog::getDouble(this, "Factor KP", "KP:", 0.0, 0.0, 1000.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kp_val;
         dato[indice++] = w.ui8[0];
@@ -771,7 +772,7 @@ void MainWindow::sendDataUDP()
     case MODIFYKD: { // MODIFYKD = 0xB2
         dato[indice++] = MODIFYKD;
 
-        double kd_val = QInputDialog::getDouble(this, "Factor KD", "KD:", 0.0, 0.0, 1000.0, 2, &ok);
+        double kd_val = QInputDialog::getDouble(this, "Factor KD", "KD:", 0.0, 0.0, 1000.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kd_val;
         dato[indice++] = w.ui8[0];
@@ -783,7 +784,7 @@ void MainWindow::sendDataUDP()
     case MODIFYKI: { // MODIFYKI = 0xB3
         dato[indice++] = MODIFYKI;
 
-        double ki_val = QInputDialog::getDouble(this, "Factor KI", "KI:", 0.0, 0.0, 1000.0, 2, &ok);
+        double ki_val = QInputDialog::getDouble(this, "Factor KI", "KI:", 0.0, 0.0, 1000.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)ki_val;
         dato[indice++] = w.ui8[0];
@@ -796,7 +797,7 @@ void MainWindow::sendDataUDP()
     case MODIFY_BETA_G: { // MODIFY_BETA_G = 0xBC
         dato[indice++] = MODIFY_BETA_G;
 
-        double beta_g_val = QInputDialog::getDouble(this, "Factor BETA G", "BETA_G:", 0.0, 0.0, 10.0, 2, &ok);
+        double beta_g_val = QInputDialog::getDouble(this, "Factor BETA G", "BETA_G:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)beta_g_val;
         dato[indice++] = w.ui8[0];
@@ -809,7 +810,7 @@ void MainWindow::sendDataUDP()
     case MODIFY_BETA_A: { // MODIFY_BETA_A = 0xBD
         dato[indice++] = MODIFY_BETA_A;
 
-        double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 2, &ok);
+        double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)beta_a_val;
         dato[indice++] = w.ui8[0];
@@ -834,6 +835,7 @@ void MainWindow::sendDataUDP()
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
+    case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -925,7 +927,7 @@ void MainWindow::sendDataSerial(){
     case MODIFYKP: { // MODIFYKP = 0xB1
         dato[indice++] = MODIFYKP;
 
-        double kp_val = QInputDialog::getDouble(this, "Factor KP", "KP:", 0.0, 0.0, 1000.0, 2, &ok);
+        double kp_val = QInputDialog::getDouble(this, "Factor KP", "KP:", 0.0, 0.0, 1000.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kp_val;
         dato[indice++] = w.ui8[0];
@@ -937,7 +939,7 @@ void MainWindow::sendDataSerial(){
     case MODIFYKD: { // MODIFYKD = 0xB2
         dato[indice++] = MODIFYKD;
 
-        double kd_val = QInputDialog::getDouble(this, "Factor KD", "KD:", 0.0, 0.0, 1000.0, 2, &ok);
+        double kd_val = QInputDialog::getDouble(this, "Factor KD", "KD:", 0.0, 0.0, 1000.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kd_val;
         dato[indice++] = w.ui8[0];
@@ -949,7 +951,7 @@ void MainWindow::sendDataSerial(){
     case MODIFYKI: { // MODIFYKI = 0xB3
         dato[indice++] = MODIFYKI;
 
-        double ki_val = QInputDialog::getDouble(this, "Factor KI", "KI:", 0.0, 0.0, 1000.0, 2, &ok);
+        double ki_val = QInputDialog::getDouble(this, "Factor KI", "KI:", 0.0, 0.0, 1000.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)ki_val;
         dato[indice++] = w.ui8[0];
@@ -962,7 +964,7 @@ void MainWindow::sendDataSerial(){
     case MODIFY_BETA_G: { // MODIFY_BETA_G = 0xBC
         dato[indice++] = MODIFY_BETA_G;
 
-        double beta_g_val = QInputDialog::getDouble(this, "Factor BETA G", "BETA_G:", 0.0, 0.0, 10.0, 2, &ok);
+        double beta_g_val = QInputDialog::getDouble(this, "Factor BETA G", "BETA_G:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)beta_g_val;
         dato[indice++] = w.ui8[0];
@@ -975,7 +977,7 @@ void MainWindow::sendDataSerial(){
     case MODIFY_BETA_A: { // MODIFY_BETA_A = 0xBD
         dato[indice++] = MODIFY_BETA_A;
 
-        double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 2, &ok);
+        double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)beta_a_val;
         dato[indice++] = w.ui8[0];
@@ -999,6 +1001,7 @@ void MainWindow::sendDataSerial(){
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
+    case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -1230,7 +1233,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[4];  // KP VALUE - Byte 2
         w.ui8[3] = datosRx[5];  // KP VALUE - Byte 3
         float KP_Value = w.f32; // <--- CORREGIDO (sin [0])
-        QString strKP = QString::number(KP_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKP = QString::number(KP_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KP->setText(strKP);
 
         w.ui8[0] = datosRx[6];  // KD VALUE - Byte 0
@@ -1238,7 +1241,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[8];  // KD VALUE - Byte 2
         w.ui8[3] = datosRx[9];  // KD VALUE - Byte 3
         float KD_Value = w.f32; // <--- CORREGIDO (sin [0])
-        QString strKD = QString::number(KD_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKD = QString::number(KD_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KD->setText(strKD);
 
         w.ui8[0] = datosRx[10]; // KI VALUE - Byte 0
@@ -1246,7 +1249,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[12]; // KI VALUE - Byte 2
         w.ui8[3] = datosRx[13]; // KI VALUE - Byte 3
         float KI_Value = w.f32; // <--- CORREGIDO (sin [0])
-        QString strKI = QString::number(KI_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKI = QString::number(KI_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KI->setText(strKI);
         ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
         break;
@@ -1257,7 +1260,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[4];  // KP VALUE - Byte 2
         w.ui8[3] = datosRx[5];  // KP VALUE - Byte 3
         float KP_Value = w.f32; // <--- CORREGIDO
-        QString strKP = QString::number(KP_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKP = QString::number(KP_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KP->setText(strKP);
 
         w.ui8[0] = datosRx[6];  // KD VALUE - Byte 0
@@ -1265,7 +1268,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[8];  // KD VALUE - Byte 2
         w.ui8[3] = datosRx[9];  // KD VALUE - Byte 3
         float KD_Value = w.f32; // <--- CORREGIDO
-        QString strKD = QString::number(KD_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKD = QString::number(KD_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KD->setText(strKD);
 
         w.ui8[0] = datosRx[10]; // KI VALUE - Byte 0
@@ -1273,7 +1276,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[12]; // KI VALUE - Byte 2
         w.ui8[3] = datosRx[13]; // KI VALUE - Byte 3
         float KI_Value = w.f32; // <--- CORREGIDO
-        QString strKI = QString::number(KI_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKI = QString::number(KI_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KI->setText(strKI);
         ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
         break;
@@ -1284,7 +1287,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[4];  // KP VALUE - Byte 2
         w.ui8[3] = datosRx[5];  // KP VALUE - Byte 3
         float KP_Value = w.f32; // <--- CORREGIDO
-        QString strKP = QString::number(KP_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKP = QString::number(KP_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KP->setText(strKP);
 
         w.ui8[0] = datosRx[6];  // KD VALUE - Byte 0
@@ -1292,7 +1295,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[8];  // KD VALUE - Byte 2
         w.ui8[3] = datosRx[9];  // KD VALUE - Byte 3
         float KD_Value = w.f32; // <--- CORREGIDO
-        QString strKD = QString::number(KD_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKD = QString::number(KD_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KD->setText(strKD);
 
         w.ui8[0] = datosRx[10]; // KI VALUE - Byte 0
@@ -1300,7 +1303,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         w.ui8[2] = datosRx[12]; // KI VALUE - Byte 2
         w.ui8[3] = datosRx[13]; // KI VALUE - Byte 3
         float KI_Value = w.f32; // <--- CORREGIDO
-        QString strKI = QString::number(KI_Value, 'f', 2); // Muestra con 2 decimales
+        QString strKI = QString::number(KI_Value, 'f', 3); // Muestra con 3 decimales
         ui->label_KI->setText(strKI);
         ui->textEdit_PROCCES->append("Valores de PID obtenidos correctamente!");
         break;
@@ -1577,6 +1580,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case MODIFY_BETA_A:
         if(datosRx[2]==ACK){
             str="Se ha cambiado el valor de BETA_A correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el display correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;

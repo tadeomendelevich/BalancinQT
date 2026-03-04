@@ -119,6 +119,7 @@ private:
         WIFI_LOG_DATA = 0xBB,
         MODIFY_BETA_G = 0xBC,
         MODIFY_BETA_A = 0xBD,
+        CHANGE_DISPLAY = 0xBE,
         OTHERS
     }_eCmd;
 

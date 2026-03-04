@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1297</width>
+    <width>1317</width>
     <height>928</height>
    </rect>
   </property>
@@ -1045,7 +1045,7 @@ QPushButton:pressed {
                  </font>
                 </property>
                 <property name="text">
-                 <string>00</string>
+                 <string>0,000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -1060,7 +1060,7 @@ QPushButton:pressed {
                  </font>
                 </property>
                 <property name="text">
-                 <string>00</string>
+                 <string>0,000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -1075,7 +1075,7 @@ QPushButton:pressed {
                  </font>
                 </property>
                 <property name="text">
-                 <string>00</string>
+                 <string>0,000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -1320,7 +1320,7 @@ QPushButton:pressed {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1297</width>
+     <width>1317</width>
      <height>21</height>
     </rect>
    </property>
