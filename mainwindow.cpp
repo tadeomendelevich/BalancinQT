@@ -2007,3 +2007,159 @@ void MainWindow::selectSaveDirectory()
         ui->lineEdit_LogDir->setText(defaultSaveDirectory);
     }
 }
+
+void MainWindow::on_pushButton_SetKP_clicked()
+{
+    bool ok = false;
+    double val = ui->lineEdit_KP->text().toDouble(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "El valor de KP no es un número válido.");
+        return;
+    }
+
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+        return;
+    }
+
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        QMessageBox::warning(this, "UDP", "Destino IP o PUERTO no configurado.");
+        return;
+    }
+
+    _udat w;
+    w.f32 = (float)val;
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = MODIFYKP;
+    dato[indice++] = w.ui8[0];
+    dato[indice++] = w.ui8[1];
+    dato[indice++] = w.ui8[2];
+    dato[indice++] = w.ui8[3];
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+
+    ui->textEdit_PROCCES->append("Set KP (UDP): " + QString::number(val, 'f', 3));
+}
+
+void MainWindow::on_pushButton_SetKD_clicked()
+{
+    bool ok = false;
+    double val = ui->lineEdit_KD->text().toDouble(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "El valor de KD no es un número válido.");
+        return;
+    }
+
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+        return;
+    }
+
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        QMessageBox::warning(this, "UDP", "Destino IP o PUERTO no configurado.");
+        return;
+    }
+
+    _udat w;
+    w.f32 = (float)val;
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = MODIFYKD;
+    dato[indice++] = w.ui8[0];
+    dato[indice++] = w.ui8[1];
+    dato[indice++] = w.ui8[2];
+    dato[indice++] = w.ui8[3];
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+
+    ui->textEdit_PROCCES->append("Set KD (UDP): " + QString::number(val, 'f', 3));
+}
+
+void MainWindow::on_pushButton_SetKI_clicked()
+{
+    bool ok = false;
+    double val = ui->lineEdit_KI->text().toDouble(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "El valor de KI no es un número válido.");
+        return;
+    }
+
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+        return;
+    }
+
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        QMessageBox::warning(this, "UDP", "Destino IP o PUERTO no configurado.");
+        return;
+    }
+
+    _udat w;
+    w.f32 = (float)val;
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = MODIFYKI;
+    dato[indice++] = w.ui8[0];
+    dato[indice++] = w.ui8[1];
+    dato[indice++] = w.ui8[2];
+    dato[indice++] = w.ui8[3];
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+
+    ui->textEdit_PROCCES->append("Set KI (UDP): " + QString::number(val, 'f', 3));
+}
