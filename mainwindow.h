@@ -64,6 +64,12 @@ private slots:
 
     void updatePosition();
 
+    void on_pushButton_SetKP_clicked();
+
+    void on_pushButton_SetKD_clicked();
+
+    void on_pushButton_SetKI_clicked();
+
 private:
     Ui::MainWindow *ui;
     QSerialPort *serial;
