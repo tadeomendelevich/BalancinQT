@@ -2011,7 +2011,9 @@ void MainWindow::selectSaveDirectory()
 void MainWindow::on_pushButton_SetKP_clicked()
 {
     bool ok = false;
-    double val = ui->lineEdit_KP->text().toDouble(&ok);
+    QString text = ui->lineEdit_KP->text();
+    text.replace(',', '.');
+    double val = text.toDouble(&ok);
     if (!ok) {
         QMessageBox::warning(this, "Error", "El valor de KP no es un número válido.");
         return;
@@ -2063,7 +2065,9 @@ void MainWindow::on_pushButton_SetKP_clicked()
 void MainWindow::on_pushButton_SetKD_clicked()
 {
     bool ok = false;
-    double val = ui->lineEdit_KD->text().toDouble(&ok);
+    QString text = ui->lineEdit_KD->text();
+    text.replace(',', '.');
+    double val = text.toDouble(&ok);
     if (!ok) {
         QMessageBox::warning(this, "Error", "El valor de KD no es un número válido.");
         return;
@@ -2115,7 +2119,9 @@ void MainWindow::on_pushButton_SetKD_clicked()
 void MainWindow::on_pushButton_SetKI_clicked()
 {
     bool ok = false;
-    double val = ui->lineEdit_KI->text().toDouble(&ok);
+    QString text = ui->lineEdit_KI->text();
+    text.replace(',', '.');
+    double val = text.toDouble(&ok);
     if (!ok) {
         QMessageBox::warning(this, "Error", "El valor de KI no es un número válido.");
         return;
