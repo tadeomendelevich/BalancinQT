@@ -317,41 +317,6 @@ QComboBox::drop-down {
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_10">
-        <item>
-         <widget class="QLabel" name="label_12">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>14</pointsize>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>BARRAS ADC</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QChartView" name="adcBarrasWidget" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>200</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
        </layout>
       </item>
       <item>
@@ -456,8 +421,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QPushButton" name="pushButton_BALANCE">
+              <property name="styleSheet">
+               <string notr="true">background-color: red;</string>
+              </property>
               <property name="text">
                <string>BALANCE</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_FOLLOW_LINE">
+              <property name="styleSheet">
+               <string notr="true">background-color: red;</string>
+              </property>
+              <property name="text">
+               <string>Follow line</string>
               </property>
              </widget>
             </item>

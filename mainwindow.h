@@ -38,6 +38,8 @@ public:
 private slots:
     void on_pushButton_BALANCE_clicked();
 
+    void on_pushButton_FOLLOW_LINE_clicked();
+
     void openSerialPorts();
 
     void closeSerialPorts();
@@ -309,6 +311,10 @@ private:
     QFile csvLogFile;
     bool isRecording = false;
     QString defaultSaveDirectory;
+
+    // Estado de botones
+    bool isBalanceActive = false;
+    bool isFollowLineActive = false;
 
     void toggleRecording();
     void selectSaveDirectory();

@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
     rxData.timeOut=0;
     ui->pushButton_UDP->setEnabled(false);
     ui->pushButton_BALANCE->setEnabled(false);
+    ui->pushButton_FOLLOW_LINE->setEnabled(false);
     ui->pushButton_SEND->setEnabled(false);
     timer1->start(100);
 
@@ -336,8 +337,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mpuPollTimer, &QTimer::timeout, this, &MainWindow::updatePlot);
     mpuStarted    = false;
 
-    // 1) Asocia tu widget promovido
-    adcChartView = ui->adcBarrasWidget;
+    // --- TAB 6: VALORES ADC (NUEVO) ---
+    QWidget *tabAdc = new QWidget();
+    QVBoxLayout *layoutAdc = new QVBoxLayout(tabAdc);
+
+    // 1) Crear y asociar tu widget para el tab
+    adcChartView = new QChartView();
+    layoutAdc->addWidget(adcChartView);
+    ui->tabWidget_Graficas->addTab(tabAdc, "Valores ADC");
 
     // 2) CREAR chart + serie
     adcChart  = new QChart();
@@ -391,6 +398,7 @@ void MainWindow::openSerialPorts(){
     serial->open(QSerialPort::ReadWrite);
     if (serial->isOpen()){
         ui->pushButton_BALANCE->setEnabled(true);
+        ui->pushButton_FOLLOW_LINE->setEnabled(true);
         ui->pushButton_SEND->setEnabled(true);
         ui->actionDisconnect_Device->setEnabled(true);
         estadoSerial->setStyleSheet("QLabel { color : blue; }");
@@ -553,6 +561,21 @@ void MainWindow::on_pushButton_BALANCE_clicked()
     }
 }
 
+void MainWindow::on_pushButton_FOLLOW_LINE_clicked()
+{
+    int idx = ui->comboBox_CMD->findData(ACTIVATE_LINE_FOLLOWING);
+    if (idx >= 0) ui->comboBox_CMD->setCurrentIndex(idx);
+
+    if (serial->isOpen()) {
+        sendDataSerial();
+    } else if (UdpSocket1->state() == QAbstractSocket::BoundState
+               && !clientAddress.isNull() && puertoremoto > 0) {
+        sendDataUDP();
+    } else {
+        ui->textEdit_PROCCES->append("FOLLOW LINE: Sin conexión disponible.");
+    }
+}
+
 void MainWindow::on_pushButton_OPENUDP_clicked()
 {
     bool ok = false;
@@ -569,6 +592,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         ui->pushButton_OPENUDP->setStyleSheet("background-color: #d32f2f; color: white;");
         ui->pushButton_UDP->setEnabled(false);
         ui->pushButton_BALANCE->setEnabled(false);
+        ui->pushButton_FOLLOW_LINE->setEnabled(false);
         ui->lineEdit_IP_REMOTA->clear();
         ui->lineEdit_DEVICEPORT->clear();
         return;
@@ -593,6 +617,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     ui->pushButton_OPENUDP->setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;"); // Estilo "Activo/Verde"
     ui->pushButton_UDP->setEnabled(true);
     ui->pushButton_BALANCE->setEnabled(true);
+    ui->pushButton_FOLLOW_LINE->setEnabled(true);
 
     // Cargar destino si ya está ingresado en la UI
     if (clientAddress.isNull()) {
@@ -624,6 +649,7 @@ void MainWindow::OnUdpRxData()
         clientAddress = RemoteAddress;
         puertoremoto  = RemotePort;
         ui->pushButton_BALANCE->setEnabled(true);
+        ui->pushButton_FOLLOW_LINE->setEnabled(true);
 
         // Refrescar UI con lo recibido
         ui->lineEdit_IP_REMOTA->setText(RemoteAddress.toString());
@@ -1603,6 +1629,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case BALANCE:
         if(datosRx[2]==ACK){
             str="Se ha cambiado la bandera de balance correctamente!";
+            isBalanceActive = !isBalanceActive;
+            if (isBalanceActive) {
+                ui->pushButton_BALANCE->setStyleSheet("background-color: #4CAF50; color: white;"); // Verde
+            } else {
+                ui->pushButton_BALANCE->setStyleSheet("background-color: red; color: white;"); // Rojo
+            }
         }
         ui->textEdit_PROCCES->append(str);
         break;
@@ -1783,6 +1815,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     case ACTIVATE_LINE_FOLLOWING :   // ACTIVATE_LINE_FOLLOWING=0xC5
         if(datosRx[2]==ACK){
             str="Se ha modificado el valor de la bandera de seguidor de LINEA correctamente!";
+            isFollowLineActive = !isFollowLineActive;
+            if (isFollowLineActive) {
+                ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: #4CAF50; color: white;"); // Verde
+            } else {
+                ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: red; color: white;"); // Rojo
+            }
         }
         ui->textEdit_PROCCES->append(str);
         break;
