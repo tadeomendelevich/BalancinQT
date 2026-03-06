@@ -127,6 +127,12 @@ private:
         MODIFY_BETA_A = 0xBD,
         CHANGE_DISPLAY = 0xBE,
         MODIFY_KV_BRAKE = 0xBF,
+        MODIFY_KP_LINE = 0xC0,
+        MODIFY_KD_LINE = 0xC1,
+        MODIFY_KI_LINE = 0xC2,
+        MODIFY_LINE_THRES = 0xC3,
+        MODIFY_LINE_SPEED = 0xC4,
+        ACTIVATE_LINE_FOLLOWING = 0xC5,
         OTHERS
     }_eCmd;
 

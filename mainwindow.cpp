@@ -65,6 +65,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFY BETA_A", 0xBD);
     ui->comboBox_CMD->addItem("CHANGE DISPLAY", 0xBE);
     ui->comboBox_CMD->addItem("MODIFY KV_BRAKE", 0xBF);
+    ui->comboBox_CMD->addItem("MODIFY KP_LINE", 0xC0);
+    ui->comboBox_CMD->addItem("MODIFY KD_LINE", 0xC1);
+    ui->comboBox_CMD->addItem("MODIFY KI_LINE", 0xC2);
+    ui->comboBox_CMD->addItem("MODIFY LINE_THRES", 0xC3);
+    ui->comboBox_CMD->addItem("MODIFY LINE_SPEED", 0xC4);
+    ui->comboBox_CMD->addItem("ACTIVATE LINE_FOLLOWING", 0xC5);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -800,7 +806,6 @@ void MainWindow::sendDataUDP()
         dato[indice++] = w.ui8[3];
         break;
     }
-
     case MODIFY_BETA_G: { // MODIFY_BETA_G = 0xBC
         dato[indice++] = MODIFY_BETA_G;
 
@@ -813,7 +818,6 @@ void MainWindow::sendDataUDP()
         dato[indice++] = w.ui8[3];
         break;
     }
-
     case MODIFY_BETA_A: { // MODIFY_BETA_A = 0xBD
         dato[indice++] = MODIFY_BETA_A;
 
@@ -826,13 +830,72 @@ void MainWindow::sendDataUDP()
         dato[indice++] = w.ui8[3];
         break;
     }
-
     case MODIFY_KV_BRAKE: { // MODIFY_KV_BRAKE=0xBF
         dato[indice++] = MODIFY_KV_BRAKE;
 
         double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kv_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_KP_LINE: { // MODIFY_KP_LINE=0xC0
+        dato[indice++] = MODIFY_KP_LINE;
+
+        double kp_val = QInputDialog::getDouble(this, "Factor KP seguidor de linea", "KP_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)kp_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_KD_LINE: { // MODIFY_KD_LINE=0xC1
+        dato[indice++] = MODIFY_KD_LINE;
+
+        double kd_val = QInputDialog::getDouble(this, "Factor KD seguidor de linea", "KD_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)kd_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_KI_LINE: { // MODIFY_KI_LINE=0xC2
+        dato[indice++] = MODIFY_KI_LINE;
+
+        double ki_val = QInputDialog::getDouble(this, "Factor KI seguidor de linea", "KI_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)ki_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_LINE_THRES: { // MODIFY_LINE_THRES=0xC3
+        dato[indice++] = MODIFY_LINE_THRES;
+
+        double ki_val = QInputDialog::getDouble(this, "Factor KI seguidor de linea", "KI_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)ki_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_LINE_SPEED: { // MODIFY_LINE_SPEED=0xC4
+        dato[indice++] = MODIFY_LINE_SPEED;
+
+        double angle_val = QInputDialog::getDouble(this, "Angulo de seguidor de linea", "Angulo (grados):", 0.0, -100.0, 100.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)angle_val;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -853,7 +916,8 @@ void MainWindow::sendDataUDP()
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
-    case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
+    case CHANGE_DISPLAY:   // CHANGE_DISPLAY=0xBE
+    case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -978,7 +1042,6 @@ void MainWindow::sendDataSerial(){
         dato[indice++] = w.ui8[3];
         break;
     }
-
     case MODIFY_BETA_G: { // MODIFY_BETA_G = 0xBC
         dato[indice++] = MODIFY_BETA_G;
 
@@ -991,7 +1054,6 @@ void MainWindow::sendDataSerial(){
         dato[indice++] = w.ui8[3];
         break;
     }
-
     case MODIFY_BETA_A: { // MODIFY_BETA_A = 0xBD
         dato[indice++] = MODIFY_BETA_A;
 
@@ -1004,13 +1066,72 @@ void MainWindow::sendDataSerial(){
         dato[indice++] = w.ui8[3];
         break;
     }
-
     case MODIFY_KV_BRAKE: { // MODIFY_KV_BRAKE=0xBF
         dato[indice++] = MODIFY_KV_BRAKE;
 
         double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kv_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }  
+    case MODIFY_KP_LINE: { // MODIFY_KP_LINE=0xC0
+        dato[indice++] = MODIFY_KP_LINE;
+
+        double kp_val = QInputDialog::getDouble(this, "Factor KP seguidor de linea", "KP_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)kp_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_KD_LINE: { // MODIFY_KD_LINE=0xC1
+        dato[indice++] = MODIFY_KD_LINE;
+
+        double kd_val = QInputDialog::getDouble(this, "Factor KD seguidor de linea", "KD_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)kd_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_KI_LINE: { // MODIFY_KI_LINE=0xC2
+        dato[indice++] = MODIFY_KI_LINE;
+
+        double ki_val = QInputDialog::getDouble(this, "Factor KI seguidor de linea", "KI_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)ki_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_LINE_THRES: { // MODIFY_LINE_THRES=0xC3
+        dato[indice++] = MODIFY_LINE_THRES;
+
+        double ki_val = QInputDialog::getDouble(this, "Factor KI seguidor de linea", "KI_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)ki_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_LINE_SPEED: { // MODIFY_LINE_SPEED=0xC4
+        dato[indice++] = MODIFY_LINE_SPEED;
+
+        double angle_val = QInputDialog::getDouble(this, "Angulo de seguidor de linea", "Angulo (grados):", 0.0, -100.0, 100.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)angle_val;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -1033,6 +1154,7 @@ void MainWindow::sendDataSerial(){
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
     case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
+    case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -1606,25 +1728,61 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     }
     case MODIFY_BETA_G:
         if(datosRx[2]==ACK){
-            str="Se ha cambiado el valor de BETA_G correctamente!";
+            str="Se ha modificado el valor de BETA_G correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;
     case MODIFY_BETA_A:
         if(datosRx[2]==ACK){
-            str="Se ha cambiado el valor de BETA_A correctamente!";
+            str="Se ha modificado el valor de BETA_A correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;
     case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
         if(datosRx[2]==ACK){
-            str="Se ha cambiado el display correctamente!";
+            str="Se ha intercambiado el display correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;
     case MODIFY_KV_BRAKE :   // MODIFY_KV_BRAKE=0xBF
         if(datosRx[2]==ACK){
-            str="Se ha cambiado el display correctamente!";
+            str="Se ha modificado el display correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_KP_LINE :   // MODIFY_KP_LINE=0xC0
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de KP_LINE correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_KD_LINE :   // MODIFY_KD_LINE=0xC1
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de KD_LINE correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_KI_LINE :   // MODIFY_KI_LINE=0xC2
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de KI_LINE correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_LINE_THRES :   // MODIFY_LINE_THRES=0xC3
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de LINE_THRES correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_LINE_SPEED :   // MODIFY_LINE_SPEED=0xC4
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de LINE_SPEED correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case ACTIVATE_LINE_FOLLOWING :   // ACTIVATE_LINE_FOLLOWING=0xC5
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de la bandera de seguidor de LINEA correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;
