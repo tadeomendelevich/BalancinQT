@@ -54,16 +54,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MOTORES", 0xA1);
     ui->comboBox_CMD->addItem("VELOCIDAD", 0xA4);
     ui->comboBox_CMD->addItem("SENDALLSENSORS", 0xA9);
-    ui->comboBox_CMD->addItem("MODIFYKP", 0xB1);
-    ui->comboBox_CMD->addItem("MODIFYKD", 0xB2);
-    ui->comboBox_CMD->addItem("MODIFYKI", 0xB3);
+    ui->comboBox_CMD->addItem("MODIFY KP", 0xB1);
+    ui->comboBox_CMD->addItem("MODIFY KD", 0xB2);
+    ui->comboBox_CMD->addItem("MODIFY KI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
     ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
     ui->comboBox_CMD->addItem("ACTIVAR LOG CSV", 0xB9);
     ui->comboBox_CMD->addItem("ACTIVAR WIFI LOG", 0xBA);
-    ui->comboBox_CMD->addItem("MODIFY_BETA_G", 0xBC);
-    ui->comboBox_CMD->addItem("MODIFY_BETA_A", 0xBD);
-    ui->comboBox_CMD->addItem("CHANGE_DISPLAY", 0xBE);
+    ui->comboBox_CMD->addItem("MODIFY BETA_G", 0xBC);
+    ui->comboBox_CMD->addItem("MODIFY BETA_A", 0xBD);
+    ui->comboBox_CMD->addItem("CHANGE DISPLAY", 0xBE);
+    ui->comboBox_CMD->addItem("MODIFY KV_BRAKE", 0xBF);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -820,7 +821,18 @@ void MainWindow::sendDataUDP()
         break;
     }
 
-        // Comandos simples (sólo ID)
+    case MODIFY_KV_BRAKE: { // MODIFY_KV_BRAKE=0xBF
+        dato[indice++] = MODIFY_KV_BRAKE;
+
+        double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)kv_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
     case GETALIVE:          // 0xF0
     case GETANGLE:          // 0xA7
     case GETADCVALUES:      // 0xA5
@@ -980,6 +992,19 @@ void MainWindow::sendDataSerial(){
         double beta_a_val = QInputDialog::getDouble(this, "Factor BETA A", "BETA_A:", 0.0, 0.0, 10.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)beta_a_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+
+    case MODIFY_KV_BRAKE: { // MODIFY_KV_BRAKE=0xBF
+        dato[indice++] = MODIFY_KV_BRAKE;
+
+        double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 10.0, 3, &ok);
+        if (!ok) return;
+        w.f32 = (float)kv_val;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -1490,6 +1515,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
         // 3. Gráficos
         seriesRollFilt->append(t_sec, data->roll_filt);
+        seriesDynSp->append(t_sec, telemetryData.dyn_sp);
         seriesP->append(t_sec, data->p_term);
         seriesI->append(t_sec, data->i_term);
         seriesD->append(t_sec, data->d_term);
@@ -1543,14 +1569,15 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         // 9. Grabación CSV
         if (isRecording && csvLogFile.isOpen()) {
             QTextStream stream(&csvLogFile);
-            stream << data->t_ms    << ","   // t_ms    ✅
+            stream << data->t_ms    << ","   // t_ms        ✅
                << 0                 << ","   // dt_us       ❌
-               << data->dt_ctrl_us  << ","   // dt_ctrl_us  ✅ AHORA DISPONIBLE
+               << data->dt_ctrl_us  << ","   // dt_ctrl_us  ✅
                << 0                 << ","   // accel_roll  ❌
                << 0                 << ","   // accel_roll_f❌
                << 0                 << ","   // gyro_y      ❌
                << 0                 << ","   // gyro_f      ❌
                << data->roll_filt   << ","   // roll_filt   ✅
+               << data->dyn_sp      << ","   // dyn_sp      ✅
                << 0                 << ","   // error       ❌
                << data->p_term      << ","   // p           ✅
                << data->i_term      << ","   // i           ✅
@@ -1584,6 +1611,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         ui->textEdit_PROCCES->append(str);
         break;
     case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
+        if(datosRx[2]==ACK){
+            str="Se ha cambiado el display correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MODIFY_KV_BRAKE :   // MODIFY_KV_BRAKE=0xBF
         if(datosRx[2]==ACK){
             str="Se ha cambiado el display correctamente!";
         }
@@ -1670,8 +1703,8 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // Separar por comas
     QStringList parts = strLine.split(',');
 
-    // Verificar cantidad de columnas (25)
-    if (parts.size() < 25) {
+    // Verificar cantidad de columnas (26)
+    if (parts.size() < 26) {
         return; // Línea incompleta o formato incorrecto
     }
 
@@ -1701,50 +1734,53 @@ void MainWindow::processCsvLine(const QByteArray &line)
     // 7. roll_filt (x1000)
     telemetryData.roll_filt = parts[7].toFloat(&ok) / 10.0f;
 
-    // 8. error (x1000)
+    // 8. dyn_sp (x1000)  ← NUEVO
+    telemetryData.dyn_sp = parts[8].toFloat(&ok) / 1000.0f;
+
+    // 9. error (x1000)
     telemetryData.error = parts[8].toFloat(&ok) / 1000.0f;
 
-    // 9. p (x1000)
+    // 10. p (x1000)
     telemetryData.p = parts[9].toFloat(&ok) / 1000.0f;
 
-    // 10. i (x1000)
+    // 11. i (x1000)
     telemetryData.i = parts[10].toFloat(&ok) / 1000.0f;
 
-    // 11. d (x1000)
+    // 12. d (x1000)
     telemetryData.d = parts[11].toFloat(&ok) / 1000.0f;
 
-    // 12. output (x1000)
+    // 13. output (x1000)
     telemetryData.output = parts[12].toFloat(&ok) / 1000.0f;
 
-    // 13. pwm_cmd (x100) -> Ojo, guia dice x100
+    // 14. pwm_cmd (x100) -> Ojo, guia dice x100
     telemetryData.pwm_cmd = parts[13].toFloat(&ok) / 100.0f;
 
-    // 14. pwm_sat (x100) -> Ojo, guia dice x100
+    // 15. pwm_sat (x100) -> Ojo, guia dice x100
     telemetryData.pwm_sat = parts[14].toFloat(&ok) / 100.0f;
 
-    // 15. sat_flag
+    // 16. sat_flag
     telemetryData.sat_flag = (uint8_t)parts[15].toUInt(&ok);
 
-    // 16. mR
+    // 17. mR
     telemetryData.mR = (int16_t)parts[16].toInt(&ok);
 
-    // 17. mL
+    // 18. mL
     telemetryData.mL = (int16_t)parts[17].toInt(&ok);
 
-    // 18. pitch
+    // 19. pitch
     telemetryData.pitch = parts[18].toFloat(&ok) / 1000.0f;
 
-    // 19. ax
+    // 20. ax
     telemetryData.ax = parts[19].toFloat(&ok) / 100.0f;
-    // 20. ay
+    // 21. ay
     telemetryData.ay = parts[20].toFloat(&ok) / 100.0f;
-    // 21. az
+    // 22. az
     telemetryData.az = parts[21].toFloat(&ok) / 100.0f;
-    // 22. gx
+    // 23. gx
     telemetryData.gx = parts[22].toFloat(&ok) / 100.0f;
-    // 23. gy
+    // 24. gy
     telemetryData.gy = parts[23].toFloat(&ok) / 100.0f;
-    // 24. gz
+    // 25. gz
     telemetryData.gz = parts[24].toFloat(&ok) / 100.0f;
 
     // Debug opcional para verificar
@@ -1870,6 +1906,14 @@ void MainWindow::processCsvLine(const QByteArray &line)
     }
 
     seriesRollFilt->append(t_sec, telemetryData.roll_filt);
+
+    seriesDynSp = new QLineSeries();
+    seriesDynSp->setName("Setpoint Dinámico");
+    seriesDynSp->setColor(QColor(0, 200, 0));  // verde
+
+    accChart->addSeries(seriesDynSp);
+    seriesDynSp->attachAxis(accAxisX);
+    seriesDynSp->attachAxis(accAxisY);
 
     // --- GRÁFICOS TAB 2: PID ---
     seriesP->append(t_sec, telemetryData.p);
@@ -2060,6 +2104,8 @@ void MainWindow::on_pushButton_SetKP_clicked()
     UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
 
     ui->textEdit_PROCCES->append("Set KP (UDP): " + QString::number(val, 'f', 3));
+    ui->lineEdit_KP->clear();   // Limpio y dejo pronto
+    ui->lineEdit_KP->setPlaceholderText("Nuevo KP");
 }
 
 void MainWindow::on_pushButton_SetKD_clicked()
@@ -2114,6 +2160,8 @@ void MainWindow::on_pushButton_SetKD_clicked()
     UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
 
     ui->textEdit_PROCCES->append("Set KD (UDP): " + QString::number(val, 'f', 3));
+    ui->lineEdit_KD->clear();   // Limpio y dejo pronto
+    ui->lineEdit_KD->setPlaceholderText("Nuevo KD");
 }
 
 void MainWindow::on_pushButton_SetKI_clicked()
@@ -2168,4 +2216,6 @@ void MainWindow::on_pushButton_SetKI_clicked()
     UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
 
     ui->textEdit_PROCCES->append("Set KI (UDP): " + QString::number(val, 'f', 3));
+    ui->lineEdit_KI->clear();   // Limpio y dejo pronto
+    ui->lineEdit_KI->setPlaceholderText("Nuevo KI");
 }

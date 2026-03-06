@@ -126,6 +126,7 @@ private:
         MODIFY_BETA_G = 0xBC,
         MODIFY_BETA_A = 0xBD,
         CHANGE_DISPLAY = 0xBE,
+        MODIFY_KV_BRAKE = 0xBF,
         OTHERS
     }_eCmd;
 
@@ -148,6 +149,7 @@ private:
         int16_t  mR;          // Velocidad Motor Derecho (-100 a 100)
         int16_t  mL;          // Velocidad Motor Izquierdo (-100 a 100)
         uint32_t dt_ctrl_us;
+        float    dyn_sp;
     };
     #pragma pack(pop)
 
@@ -168,6 +170,7 @@ private:
         float accel_roll;    // Ángulo acelerómetro (grados)
         float gyro_y;        // Velocidad angular (grados/s)
         float roll_filt;     // Ángulo filtrado (grados)
+        float dyn_sp;        // Dynamic setpoint de equilibrio
         float error;         // Error actual
         float p;             // Término P
         float i;             // Término I
@@ -250,6 +253,7 @@ private:
     QLineSeries    *borderSeries;
     QValueAxis    *posAxisX;
     QValueAxis    *posAxisY;
+    QLineSeries *seriesDynSp;
 
     // Raw MPU readings, actualizados en decodeData()
     qint16    lastAx = 0;
