@@ -99,6 +99,9 @@ MainWindow::MainWindow(QWidget *parent)
     seriesPitch = new QLineSeries(); seriesPitch->setName("Pitch");
     seriesPitch->setColor(Qt::magenta);
 
+    seriesDynSp = new QLineSeries(); seriesDynSp->setName("Setpoint Dinámico");
+    seriesDynSp->setColor(QColor(0, 200, 0));  // Verde
+
     seriesGx = new QLineSeries(); seriesGx->setName("Giroscopio Y");
     seriesGx->setColor(Qt::blue);
 
@@ -112,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent)
     accChart->addSeries(seriesRollFilt); // Agregamos el filtrado
     accChart->addSeries(seriesAccelRollF); // Agregamos el filtrado Low Pass
     accChart->addSeries(seriesPitch);
+    accChart->addSeries(seriesDynSp); // Agregamos Setpoint Dinámico
 
     accChart->legend()->setVisible(true);
     accChart->legend()->setAlignment(Qt::AlignBottom);
@@ -160,6 +164,8 @@ MainWindow::MainWindow(QWidget *parent)
     seriesAccelRollF->attachAxis(accAxisY);
     seriesPitch->attachAxis(accAxisX);
     seriesPitch->attachAxis(accAxisY);
+    seriesDynSp->attachAxis(accAxisX);
+    seriesDynSp->attachAxis(accAxisY);
 
     seriesGy->attachAxis(gyroAxisX);
     seriesGy->attachAxis(gyroAxisY);
@@ -1515,7 +1521,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
         // 3. Gráficos
         seriesRollFilt->append(t_sec, data->roll_filt);
-        seriesDynSp->append(t_sec, telemetryData.dyn_sp);
+        seriesDynSp->append(t_sec, data->dyn_sp);
         seriesP->append(t_sec, data->p_term);
         seriesI->append(t_sec, data->i_term);
         seriesD->append(t_sec, data->d_term);
@@ -1732,56 +1738,56 @@ void MainWindow::processCsvLine(const QByteArray &line)
     telemetryData.gyro_f = parts[6].toFloat(&ok) / 1000.0f;
 
     // 7. roll_filt (x1000)
-    telemetryData.roll_filt = parts[7].toFloat(&ok) / 10.0f;
+    telemetryData.roll_filt = parts[7].toFloat(&ok) / 1000.0f;
 
     // 8. dyn_sp (x1000)  ← NUEVO
     telemetryData.dyn_sp = parts[8].toFloat(&ok) / 1000.0f;
 
     // 9. error (x1000)
-    telemetryData.error = parts[8].toFloat(&ok) / 1000.0f;
+    telemetryData.error = parts[9].toFloat(&ok) / 1000.0f;
 
     // 10. p (x1000)
-    telemetryData.p = parts[9].toFloat(&ok) / 1000.0f;
+    telemetryData.p = parts[10].toFloat(&ok) / 1000.0f;
 
     // 11. i (x1000)
-    telemetryData.i = parts[10].toFloat(&ok) / 1000.0f;
+    telemetryData.i = parts[11].toFloat(&ok) / 1000.0f;
 
     // 12. d (x1000)
-    telemetryData.d = parts[11].toFloat(&ok) / 1000.0f;
+    telemetryData.d = parts[12].toFloat(&ok) / 1000.0f;
 
     // 13. output (x1000)
-    telemetryData.output = parts[12].toFloat(&ok) / 1000.0f;
+    telemetryData.output = parts[13].toFloat(&ok) / 1000.0f;
 
     // 14. pwm_cmd (x100) -> Ojo, guia dice x100
-    telemetryData.pwm_cmd = parts[13].toFloat(&ok) / 100.0f;
+    telemetryData.pwm_cmd = parts[14].toFloat(&ok) / 100.0f;
 
     // 15. pwm_sat (x100) -> Ojo, guia dice x100
-    telemetryData.pwm_sat = parts[14].toFloat(&ok) / 100.0f;
+    telemetryData.pwm_sat = parts[15].toFloat(&ok) / 100.0f;
 
     // 16. sat_flag
-    telemetryData.sat_flag = (uint8_t)parts[15].toUInt(&ok);
+    telemetryData.sat_flag = (uint8_t)parts[16].toUInt(&ok);
 
     // 17. mR
-    telemetryData.mR = (int16_t)parts[16].toInt(&ok);
+    telemetryData.mR = (int16_t)parts[17].toInt(&ok);
 
     // 18. mL
-    telemetryData.mL = (int16_t)parts[17].toInt(&ok);
+    telemetryData.mL = (int16_t)parts[18].toInt(&ok);
 
     // 19. pitch
-    telemetryData.pitch = parts[18].toFloat(&ok) / 1000.0f;
+    telemetryData.pitch = parts[19].toFloat(&ok) / 1000.0f;
 
     // 20. ax
-    telemetryData.ax = parts[19].toFloat(&ok) / 100.0f;
+    telemetryData.ax = parts[20].toFloat(&ok) / 100.0f;
     // 21. ay
-    telemetryData.ay = parts[20].toFloat(&ok) / 100.0f;
+    telemetryData.ay = parts[21].toFloat(&ok) / 100.0f;
     // 22. az
-    telemetryData.az = parts[21].toFloat(&ok) / 100.0f;
+    telemetryData.az = parts[22].toFloat(&ok) / 100.0f;
     // 23. gx
-    telemetryData.gx = parts[22].toFloat(&ok) / 100.0f;
+    telemetryData.gx = parts[23].toFloat(&ok) / 100.0f;
     // 24. gy
-    telemetryData.gy = parts[23].toFloat(&ok) / 100.0f;
+    telemetryData.gy = parts[24].toFloat(&ok) / 100.0f;
     // 25. gz
-    telemetryData.gz = parts[24].toFloat(&ok) / 100.0f;
+    telemetryData.gz = parts[25].toFloat(&ok) / 100.0f;
 
     // Debug opcional para verificar
     // ui->textEdit_PROCCES->append("CSV: " + strLine);
@@ -1906,14 +1912,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
     }
 
     seriesRollFilt->append(t_sec, telemetryData.roll_filt);
-
-    seriesDynSp = new QLineSeries();
-    seriesDynSp->setName("Setpoint Dinámico");
-    seriesDynSp->setColor(QColor(0, 200, 0));  // verde
-
-    accChart->addSeries(seriesDynSp);
-    seriesDynSp->attachAxis(accAxisX);
-    seriesDynSp->attachAxis(accAxisY);
+    seriesDynSp->append(t_sec, telemetryData.dyn_sp);
 
     // --- GRÁFICOS TAB 2: PID ---
     seriesP->append(t_sec, telemetryData.p);
@@ -1980,6 +1979,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
                << telemetryData.gyro_y << ","
                << telemetryData.gyro_f << ","
                << telemetryData.roll_filt << ","
+               << telemetryData.dyn_sp << ","
                << telemetryData.error << ","
                << telemetryData.p << ","
                << telemetryData.i << ","
@@ -2013,8 +2013,8 @@ void MainWindow::toggleRecording()
         csvLogFile.setFileName(defaultSaveDirectory + "/" + filename);
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&csvLogFile);
-            // Escribir encabezado de acuerdo a la estructura TelemetryData (Updated for 25 columns)
-            stream << "t_ms,dt_us,dt_ctrl_us,accel_roll,accel_roll_f,gyro_y,gyro_f,roll_filt,error,p,i,d,output,pwm_cmd,pwm_sat,sat,mR,mL,pitch,ax,ay,az,gx,gy,gz\n";
+            // Escribir encabezado de acuerdo a la estructura TelemetryData (Updated for 26 columns)
+            stream << "t_ms,dt_us,dt_ctrl_us,accel_roll,accel_roll_f,gyro_y,gyro_f,roll_filt,dyn_sp,error,p,i,d,output,pwm_cmd,pwm_sat,sat,mR,mL,pitch,ax,ay,az,gx,gy,gz\n";
 
             isRecording = true;
             ui->pushButton_RECORD->setText("STOP");
