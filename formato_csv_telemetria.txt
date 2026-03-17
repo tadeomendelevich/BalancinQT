@@ -1,0 +1,87 @@
+Formato de Columnas del Log CSV (Telemetría y Seguidor de Línea)
+================================================================
+
+Este archivo describe el orden exacto de las columnas que se exportan en los archivos `.csv` (ej. `telemetry_20231024_120000.csv`) generados por la aplicación Qt "BalancinQT" durante la grabación.
+
+Los datos están separados por comas (`,`).
+
+La primera fila del archivo siempre contiene los encabezados (headers) descritos a continuación.
+
+Índice | Nombre de Columna       | Descripción
+-------|-------------------------|----------------------------------------------------------
+0      | t_ms                    | Tiempo transcurrido en milisegundos desde el inicio
+1      | dt_us                   | Tiempo delta entre muestreos (microsegundos) (Serial)
+2      | dt_ctrl_us              | Tiempo delta del lazo de control PID (microsegundos)
+3      | accel_roll              | Ángulo en Roll calculado solo con el acelerómetro (grados)
+4      | accel_roll_f            | Ángulo en Roll del acelerómetro filtrado (Low-pass) (grados)
+5      | gyro_y                  | Velocidad angular en el eje Y (grados/s)
+6      | gyro_f                  | Velocidad angular filtrada en el eje Y (grados/s)
+7      | roll_filt               | Ángulo de inclinación final filtrado (Fusionado) (grados)
+8      | dyn_sp                  | Setpoint dinámico calculado para el equilibrio (grados)
+9      | error                   | Error actual del PID principal (Equilibrio)
+10     | p                       | Término Proporcional (P) del PID principal
+11     | i                       | Término Integral (I) del PID principal
+12     | d                       | Término Derivativo (D) del PID principal
+13     | output                  | Salida total del PID principal (antes de los motores)
+14     | pwm_cmd                 | Comando PWM calculado
+15     | pwm_sat                 | Comando PWM saturado/aplicado
+16     | sat                     | Bandera de saturación (1 = saturado, 0 = normal)
+17     | mR                      | Velocidad comandada al Motor Derecho (-100 a 100)
+18     | mL                      | Velocidad comandada al Motor Izquierdo (-100 a 100)
+19     | pitch                   | Ángulo en Pitch (grados)
+20     | ax                      | Aceleración bruta en eje X (m/s^2)
+21     | ay                      | Aceleración bruta en eje Y (m/s^2)
+22     | az                      | Aceleración bruta en eje Z (m/s^2)
+23     | gx                      | Velocidad angular bruta en eje X (deg/s)
+24     | gy                      | Velocidad angular bruta en eje Y (deg/s)
+25     | gz                      | Velocidad angular bruta en eje Z (deg/s)
+26     | line_error              | Error posicional de la línea (Seguidor de Línea)
+27     | p_line                  | Término Proporcional del PID de la línea
+28     | i_line                  | Término Integral del PID de la línea
+29     | d_line                  | Término Derivativo del PID de la línea
+30     | steering_adjustment     | Salida del PID de la línea (Ajuste diferencial de giro)
+31     | adc1                    | Valor del sensor ADC 1 (Extremo Derecho)
+32     | adc2                    | Valor del sensor ADC 2 (Centro Derecho)
+33     | adc3                    | Valor del sensor ADC 3 (Centro Izquierdo)
+34     | adc4                    | Valor del sensor ADC 4 (Extremo Izquierdo)
+
+Notas importantes para procesar en Python (ej. con Pandas):
+---------------------------------------------------------
+Si usas Pandas para procesar este archivo, puedes cargar los datos y graficarlos fácilmente. Las nuevas métricas del seguidor de línea se encuentran desde la columna de índice 26 en adelante.
+
+Ejemplo en Python:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Cargar el archivo CSV
+df = pd.read_csv('telemetry_YYYYMMDD_HHMMSS.csv')
+
+# Convertir el tiempo de milisegundos a segundos para mejor visualización
+df['t_s'] = df['t_ms'] / 1000.0
+
+# --- Gráfico de variables del Seguidor de Línea ---
+plt.figure(figsize=(10, 5))
+plt.plot(df['t_s'], df['line_error'], label='Error de Línea', color='magenta')
+plt.plot(df['t_s'], df['steering_adjustment'], label='Ajuste de Giro', color='black')
+plt.title('Seguidor de Línea - Error y Salida PID')
+plt.xlabel('Tiempo (s)')
+plt.ylabel('Valor')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# --- Gráfico de Sensores ADC del Seguidor ---
+plt.figure(figsize=(10, 5))
+plt.plot(df['t_s'], df['adc1'], label='ADC 1 (Der Ext)', color='red')
+plt.plot(df['t_s'], df['adc2'], label='ADC 2 (Der Cen)', color='green')
+plt.plot(df['t_s'], df['adc3'], label='ADC 3 (Izq Cen)', color='blue')
+plt.plot(df['t_s'], df['adc4'], label='ADC 4 (Izq Ext)', color='purple')
+plt.title('Valores de Sensores Infrarrojos (ADC)')
+plt.xlabel('Tiempo (s)')
+plt.ylabel('Valor ADC (0-4095)')
+plt.legend()
+plt.grid(True)
+plt.show()
+```

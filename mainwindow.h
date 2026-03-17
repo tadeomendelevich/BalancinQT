@@ -156,8 +156,19 @@ private:
         float    d_term;      // Término Derivativo
         int16_t  mR;          // Velocidad Motor Derecho (-100 a 100)
         int16_t  mL;          // Velocidad Motor Izquierdo (-100 a 100)
-        uint32_t dt_ctrl_us;
-        float    dyn_sp;
+        uint32_t dt_ctrl_us;  // Tiempo de control loop delta (microsegundos)
+        float    dyn_sp;      // Setpoint dinámico calculado (grados)
+
+        // Telemetría del Seguidor de Línea
+        float    line_error;          // Error posicional de la línea
+        float    p_line;              // Término Proporcional de la línea
+        float    i_line;              // Término Integral de la línea
+        float    d_line;              // Término Derivativo de la línea
+        float    steering_adjustment; // Salida del PID de la línea (ajuste de giro)
+        uint16_t adc1;                // Valor puro ADC 1 (Sensor derecha extremo)
+        uint16_t adc2;                // Valor puro ADC 2 (Sensor derecha centro)
+        uint16_t adc3;                // Valor puro ADC 3 (Sensor izquierda centro)
+        uint16_t adc4;                // Valor puro ADC 4 (Sensor izquierda extremo)
     };
     #pragma pack(pop)
 
@@ -306,6 +317,17 @@ private:
     QLineSeries *seriesDt, *seriesSatFlag;
     QLineSeries *seriesDtCtrl; // Nuevo: Control Loop DT
     QValueAxis *systemAxisX, *systemAxisY;
+
+    // Line Follower Tab (Nuevo)
+    QChartView *lineFollowerPidChartView;
+    QChart *lineFollowerPidChart;
+    QLineSeries *seriesLineError, *seriesLineP, *seriesLineI, *seriesLineD, *seriesLineSteering;
+    QValueAxis *lineFollowerPidAxisX, *lineFollowerPidAxisY;
+
+    QChartView *lineFollowerAdcChartView;
+    QChart *lineFollowerAdcChart;
+    QLineSeries *seriesLineAdc1, *seriesLineAdc2, *seriesLineAdc3, *seriesLineAdc4;
+    QValueAxis *lineFollowerAdcAxisX, *lineFollowerAdcAxisY;
 
     // GRABACIÓN DE CSV
     QFile csvLogFile;

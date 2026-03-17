@@ -371,6 +371,78 @@ MainWindow::MainWindow(QWidget *parent)
     adcChart->setTitle("Valores ADC");
     adcChartView->setChart(adcChart);
     adcChartView->setRenderHint(QPainter::Antialiasing);
+
+    // --- TAB 7: SEGUIDOR DE LÍNEA (NUEVO) ---
+    QWidget *tabLineFollower = new QWidget();
+    QVBoxLayout *layoutLineFollower = new QVBoxLayout(tabLineFollower);
+
+    // Chart Line Follower PID
+    lineFollowerPidChartView = new QChartView();
+    lineFollowerPidChart = new QChart();
+    lineFollowerPidChartView->setChart(lineFollowerPidChart);
+    lineFollowerPidChartView->setRenderHint(QPainter::Antialiasing);
+    lineFollowerPidChart->setTitle("Controlador PID Seguidor de Línea");
+
+    seriesLineError = new QLineSeries(); seriesLineError->setName("Error"); seriesLineError->setColor(Qt::magenta);
+    seriesLineP = new QLineSeries(); seriesLineP->setName("Proporcional"); seriesLineP->setColor(Qt::red);
+    seriesLineI = new QLineSeries(); seriesLineI->setName("Integral"); seriesLineI->setColor(Qt::green);
+    seriesLineD = new QLineSeries(); seriesLineD->setName("Derivativo"); seriesLineD->setColor(Qt::blue);
+    seriesLineSteering = new QLineSeries(); seriesLineSteering->setName("Ajuste Giro"); seriesLineSteering->setColor(Qt::black);
+
+    lineFollowerPidChart->addSeries(seriesLineError);
+    lineFollowerPidChart->addSeries(seriesLineP);
+    lineFollowerPidChart->addSeries(seriesLineI);
+    lineFollowerPidChart->addSeries(seriesLineD);
+    lineFollowerPidChart->addSeries(seriesLineSteering);
+
+    lineFollowerPidAxisX = new QValueAxis(); lineFollowerPidAxisX->setTitleText("Tiempo (s)");
+    lineFollowerPidAxisY = new QValueAxis(); lineFollowerPidAxisY->setTitleText("Valor");
+    lineFollowerPidChart->addAxis(lineFollowerPidAxisX, Qt::AlignBottom);
+    lineFollowerPidChart->addAxis(lineFollowerPidAxisY, Qt::AlignLeft);
+
+    for (auto *s : {seriesLineError, seriesLineP, seriesLineI, seriesLineD, seriesLineSteering}) {
+        s->attachAxis(lineFollowerPidAxisX);
+        s->attachAxis(lineFollowerPidAxisY);
+    }
+
+    lineFollowerPidChart->legend()->setVisible(true);
+    lineFollowerPidChart->legend()->setAlignment(Qt::AlignBottom);
+
+    // Chart Line Follower ADCs
+    lineFollowerAdcChartView = new QChartView();
+    lineFollowerAdcChart = new QChart();
+    lineFollowerAdcChartView->setChart(lineFollowerAdcChart);
+    lineFollowerAdcChartView->setRenderHint(QPainter::Antialiasing);
+    lineFollowerAdcChart->setTitle("Sensores ADC Seguidor de Línea (Extremo Der - Centro Der - Centro Izq - Extremo Izq)");
+
+    seriesLineAdc1 = new QLineSeries(); seriesLineAdc1->setName("ADC 1 (Der Ext)"); seriesLineAdc1->setColor(Qt::red);
+    seriesLineAdc2 = new QLineSeries(); seriesLineAdc2->setName("ADC 2 (Der Cen)"); seriesLineAdc2->setColor(Qt::green);
+    seriesLineAdc3 = new QLineSeries(); seriesLineAdc3->setName("ADC 3 (Izq Cen)"); seriesLineAdc3->setColor(Qt::blue);
+    seriesLineAdc4 = new QLineSeries(); seriesLineAdc4->setName("ADC 4 (Izq Ext)"); seriesLineAdc4->setColor(Qt::magenta);
+
+    lineFollowerAdcChart->addSeries(seriesLineAdc1);
+    lineFollowerAdcChart->addSeries(seriesLineAdc2);
+    lineFollowerAdcChart->addSeries(seriesLineAdc3);
+    lineFollowerAdcChart->addSeries(seriesLineAdc4);
+
+    lineFollowerAdcAxisX = new QValueAxis(); lineFollowerAdcAxisX->setTitleText("Tiempo (s)");
+    lineFollowerAdcAxisY = new QValueAxis(); lineFollowerAdcAxisY->setTitleText("ADC Value");
+    lineFollowerAdcAxisY->setRange(0, 4100);
+    lineFollowerAdcChart->addAxis(lineFollowerAdcAxisX, Qt::AlignBottom);
+    lineFollowerAdcChart->addAxis(lineFollowerAdcAxisY, Qt::AlignLeft);
+
+    for (auto *s : {seriesLineAdc1, seriesLineAdc2, seriesLineAdc3, seriesLineAdc4}) {
+        s->attachAxis(lineFollowerAdcAxisX);
+        s->attachAxis(lineFollowerAdcAxisY);
+    }
+
+    lineFollowerAdcChart->legend()->setVisible(true);
+    lineFollowerAdcChart->legend()->setAlignment(Qt::AlignBottom);
+
+    layoutLineFollower->addWidget(lineFollowerPidChartView);
+    layoutLineFollower->addWidget(lineFollowerAdcChartView);
+
+    ui->tabWidget_Graficas->addTab(tabLineFollower, "Seguidor de Línea");
 }
 
 MainWindow::~MainWindow()
@@ -1688,11 +1760,25 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         seriesML->append(t_sec, data->mL);
         seriesDtCtrl->append(t_sec, data->dt_ctrl_us);
 
+        // --- Gráficos Seguidor de Línea ---
+        seriesLineError->append(t_sec, data->line_error);
+        seriesLineP->append(t_sec, data->p_line);
+        seriesLineI->append(t_sec, data->i_line);
+        seriesLineD->append(t_sec, data->d_line);
+        seriesLineSteering->append(t_sec, data->steering_adjustment);
+
+        seriesLineAdc1->append(t_sec, data->adc1);
+        seriesLineAdc2->append(t_sec, data->adc2);
+        seriesLineAdc3->append(t_sec, data->adc3);
+        seriesLineAdc4->append(t_sec, data->adc4);
+
         // 4. Ejes X
         accAxisX->setRange(minX, maxX);
         pidAxisX->setRange(minX, maxX);
         motorsAxisX->setRange(minX, maxX);
         systemAxisX->setRange(minX, maxX);  // ← NUEVO
+        lineFollowerPidAxisX->setRange(minX, maxX);
+        lineFollowerAdcAxisX->setRange(minX, maxX);
 
         // 5. Auto-escala IMU
         qreal minAcc = 1000.0, maxAcc = -1000.0;
@@ -1722,6 +1808,22 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
             qreal margin = (maxPid - minPid) * 0.1;
             if (margin == 0) margin = 0.5;
             pidAxisY->setRange(minPid - margin, maxPid + margin);
+        }
+
+        // --- Auto-escala Line Follower PID ---
+        qreal minLinePid = 1000000.0, maxLinePid = -1000000.0;
+        for (auto *s : {seriesLineError, seriesLineP, seriesLineI, seriesLineD, seriesLineSteering}) {
+            for (const QPointF &p : s->points()) {
+                if (p.x() >= minX) {
+                    minLinePid = qMin(minLinePid, p.y());
+                    maxLinePid = qMax(maxLinePid, p.y());
+                }
+            }
+        }
+        if (minLinePid != 1000000.0 && maxLinePid != -1000000.0) {
+            qreal margin = (maxLinePid - minLinePid) * 0.1;
+            if (margin == 0) margin = 0.5;
+            lineFollowerPidAxisY->setRange(minLinePid - margin, maxLinePid + margin);
         }
 
         // 7. Motores Y fijo
@@ -1758,7 +1860,16 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
                << 0                 << ","   // az          ❌
                << 0                 << ","   // gx          ❌
                << 0                 << ","   // gy          ❌
-               << 0                 << "\n"; // gz          ❌
+               << 0                 << ","   // gz          ❌
+               << data->line_error  << ","   // line_error  ✅
+               << data->p_line      << ","   // p_line      ✅
+               << data->i_line      << ","   // i_line      ✅
+               << data->d_line      << ","   // d_line      ✅
+               << data->steering_adjustment << "," // steering_adjustment ✅
+               << data->adc1        << ","   // adc1        ✅
+               << data->adc2        << ","   // adc2        ✅
+               << data->adc3        << ","   // adc3        ✅
+               << data->adc4        << "\n"; // adc4        ✅
         }
         break;
     }
@@ -2196,7 +2307,16 @@ void MainWindow::processCsvLine(const QByteArray &line)
                << telemetryData.az << ","
                << telemetryData.gx << ","
                << telemetryData.gy << ","
-               << telemetryData.gz << "\n";
+               << telemetryData.gz << ","
+               << 0 << "," // line_error
+               << 0 << "," // p_line
+               << 0 << "," // i_line
+               << 0 << "," // d_line
+               << 0 << "," // steering_adjustment
+               << 0 << "," // adc1
+               << 0 << "," // adc2
+               << 0 << "," // adc3
+               << 0 << "\n"; // adc4
     }
 }
 
@@ -2213,8 +2333,8 @@ void MainWindow::toggleRecording()
         csvLogFile.setFileName(defaultSaveDirectory + "/" + filename);
         if (csvLogFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&csvLogFile);
-            // Escribir encabezado de acuerdo a la estructura TelemetryData (Updated for 26 columns)
-            stream << "t_ms,dt_us,dt_ctrl_us,accel_roll,accel_roll_f,gyro_y,gyro_f,roll_filt,dyn_sp,error,p,i,d,output,pwm_cmd,pwm_sat,sat,mR,mL,pitch,ax,ay,az,gx,gy,gz\n";
+            // Escribir encabezado de acuerdo a la estructura TelemetryData (Updated for 26 columns + 9 Line Follower)
+            stream << "t_ms,dt_us,dt_ctrl_us,accel_roll,accel_roll_f,gyro_y,gyro_f,roll_filt,dyn_sp,error,p,i,d,output,pwm_cmd,pwm_sat,sat,mR,mL,pitch,ax,ay,az,gx,gy,gz,line_error,p_line,i_line,d_line,steering_adjustment,adc1,adc2,adc3,adc4\n";
 
             isRecording = true;
             ui->pushButton_RECORD->setText("STOP");
