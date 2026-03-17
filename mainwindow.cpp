@@ -54,23 +54,23 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MOTORES", 0xA1);
     ui->comboBox_CMD->addItem("VELOCIDAD", 0xA4);
     ui->comboBox_CMD->addItem("SENDALLSENSORS", 0xA9);
-    ui->comboBox_CMD->addItem("MODIFY KP", 0xB1);
-    ui->comboBox_CMD->addItem("MODIFY KD", 0xB2);
-    ui->comboBox_CMD->addItem("MODIFY KI", 0xB3);
+    ui->comboBox_CMD->addItem("MODIFICAR KP", 0xB1);
+    ui->comboBox_CMD->addItem("MODIFICAR KD", 0xB2);
+    ui->comboBox_CMD->addItem("MODIFICAR KI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
     ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
     ui->comboBox_CMD->addItem("ACTIVAR LOG CSV", 0xB9);
     ui->comboBox_CMD->addItem("ACTIVAR WIFI LOG", 0xBA);
     ui->comboBox_CMD->addItem("MODIFY BETA_G", 0xBC);
     ui->comboBox_CMD->addItem("MODIFY BETA_A", 0xBD);
-    ui->comboBox_CMD->addItem("CHANGE DISPLAY", 0xBE);
-    ui->comboBox_CMD->addItem("MODIFY KV_BRAKE", 0xBF);
-    ui->comboBox_CMD->addItem("MODIFY KP_LINE", 0xC0);
-    ui->comboBox_CMD->addItem("MODIFY KD_LINE", 0xC1);
-    ui->comboBox_CMD->addItem("MODIFY KI_LINE", 0xC2);
-    ui->comboBox_CMD->addItem("MODIFY LINE_THRES", 0xC3);
-    ui->comboBox_CMD->addItem("MODIFY LINE_SPEED", 0xC4);
-    ui->comboBox_CMD->addItem("ACTIVATE LINE_FOLLOWING", 0xC5);
+    ui->comboBox_CMD->addItem("CAMBIAR PAGINA DISPLAY", 0xBE);
+    ui->comboBox_CMD->addItem("MODIFICAR KV_BRAKE", 0xBF);
+    ui->comboBox_CMD->addItem("MODIFICAR KP_LINE", 0xC0);
+    ui->comboBox_CMD->addItem("MODIFICAR KD_LINE", 0xC1);
+    ui->comboBox_CMD->addItem("MODIFICAR KI_LINE", 0xC2);
+    ui->comboBox_CMD->addItem("MODIFICAR LINE_THRES", 0xC3);
+    ui->comboBox_CMD->addItem("MODIFICAR ANGULO AVANCE", 0xC4);
+    ui->comboBox_CMD->addItem("ACTIVAR SEGUIDOR LINEA", 0xC5);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -590,6 +590,10 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         UdpSocket1->close();
         ui->pushButton_OPENUDP->setText("Open UDP");
         ui->pushButton_OPENUDP->setStyleSheet("background-color: #d32f2f; color: white;");
+        ui->pushButton_BALANCE->setStyleSheet("background-color: red; color: white;");
+        ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: red; color: white;");
+        isBalanceActive = false;
+        isFollowLineActive = false;
         ui->pushButton_UDP->setEnabled(false);
         ui->pushButton_BALANCE->setEnabled(false);
         ui->pushButton_FOLLOW_LINE->setEnabled(false);
@@ -871,7 +875,7 @@ void MainWindow::sendDataUDP()
     case MODIFY_KP_LINE: { // MODIFY_KP_LINE=0xC0
         dato[indice++] = MODIFY_KP_LINE;
 
-        double kp_val = QInputDialog::getDouble(this, "Factor KP seguidor de linea", "KP_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        double kp_val = QInputDialog::getDouble(this, "Factor KP seguidor de linea", "KP_LINE:", 0.0, 0.0, 100.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kp_val;
         dato[indice++] = w.ui8[0];
@@ -883,7 +887,7 @@ void MainWindow::sendDataUDP()
     case MODIFY_KD_LINE: { // MODIFY_KD_LINE=0xC1
         dato[indice++] = MODIFY_KD_LINE;
 
-        double kd_val = QInputDialog::getDouble(this, "Factor KD seguidor de linea", "KD_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        double kd_val = QInputDialog::getDouble(this, "Factor KD seguidor de linea", "KD_LINE:", 0.0, 0.0, 100.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kd_val;
         dato[indice++] = w.ui8[0];
@@ -1107,7 +1111,7 @@ void MainWindow::sendDataSerial(){
     case MODIFY_KP_LINE: { // MODIFY_KP_LINE=0xC0
         dato[indice++] = MODIFY_KP_LINE;
 
-        double kp_val = QInputDialog::getDouble(this, "Factor KP seguidor de linea", "KP_LINE:", 0.0, 0.0, 10.0, 3, &ok);
+        double kp_val = QInputDialog::getDouble(this, "Factor KP seguidor de linea", "KP_LINE:", 0.0, 0.0, 100.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kp_val;
         dato[indice++] = w.ui8[0];
