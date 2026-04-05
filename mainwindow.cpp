@@ -71,6 +71,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFICAR LINE_THRES", 0xC3);
     ui->comboBox_CMD->addItem("MODIFICAR ANGULO AVANCE", 0xC4);
     ui->comboBox_CMD->addItem("ACTIVAR SEGUIDOR LINEA", 0xC5);
+    ui->comboBox_CMD->addItem("ACTIVAR MANTENCION DE POSICION", 0xC6);
+
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -1020,6 +1022,7 @@ void MainWindow::sendDataUDP()
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
     case CHANGE_DISPLAY:   // CHANGE_DISPLAY=0xBE
     case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
+    case ACTIVATE_POS_MAINTENANCE: //ACTIVATE_POS_MAINTENANCE = 0xC6
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -1257,6 +1260,7 @@ void MainWindow::sendDataSerial(){
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
     case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
     case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
+    case ACTIVATE_POS_MAINTENANCE: //ACTIVATE_POS_MAINTENANCE = 0xC6
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -1936,6 +1940,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
             } else {
                 ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: red; color: white;"); // Rojo
             }
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case ACTIVATE_POS_MAINTENANCE :   // ACTIVATE_POS_MAINTENANCE=0xC6
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el valor de la bandera de balance correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
         break;

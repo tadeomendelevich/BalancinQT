@@ -135,6 +135,7 @@ private:
         MODIFY_LINE_THRES = 0xC3,
         MODIFY_LINE_SPEED = 0xC4,
         ACTIVATE_LINE_FOLLOWING = 0xC5,
+        ACTIVATE_POS_MAINTENANCE = 0xC6,
         OTHERS
     }_eCmd;
 
