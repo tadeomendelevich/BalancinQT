@@ -24,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     timer1=new QTimer(this);
     UdpSocket1 = new QUdpSocket(this);
 
+    manualControlTimer = new QTimer(this);
+    connect(manualControlTimer, &QTimer::timeout, this, &MainWindow::sendManualCommand);
+
     connect(ui->actionQuit,&QAction::triggered,this,&MainWindow::close);
     connect(ui->actionScanPorts, &QAction::triggered, settingPorts,&SettingsDialog::show);
     connect(ui->actionConnect_Device, &QAction::triggered,this,&MainWindow::openSerialPorts);
@@ -72,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFICAR ANGULO AVANCE", 0xC4);
     ui->comboBox_CMD->addItem("ACTIVAR SEGUIDOR LINEA", 0xC5);
     ui->comboBox_CMD->addItem("ACTIVAR MANTENCION DE POSICION", 0xC6);
-
+    ui->comboBox_CMD->addItem("ACTIVAR CONTROL MANUAL", 0xC7);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -1023,6 +1026,12 @@ void MainWindow::sendDataUDP()
     case CHANGE_DISPLAY:   // CHANGE_DISPLAY=0xBE
     case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
     case ACTIVATE_POS_MAINTENANCE: //ACTIVATE_POS_MAINTENANCE = 0xC6
+    case ACTIVATE_MANUAL_CONTROL:
+    case MOVE_FORWARD:
+    case MOVE_BACKWARD:
+    case MOVE_LEFT:
+    case MOVE_RIGHT:
+    case MOVE_STOP:
     case SETLEDS:
         dato[indice++] = cmdId;
         break;
@@ -1261,6 +1270,12 @@ void MainWindow::sendDataSerial(){
     case CHANGE_DISPLAY :   // CHANGE_DISPLAY=0xBE
     case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
     case ACTIVATE_POS_MAINTENANCE: //ACTIVATE_POS_MAINTENANCE = 0xC6
+    case ACTIVATE_MANUAL_CONTROL:
+    case MOVE_FORWARD:
+    case MOVE_BACKWARD:
+    case MOVE_LEFT:
+    case MOVE_RIGHT:
+    case MOVE_STOP:
     case SETLEDS:
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
@@ -1945,9 +1960,25 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     case ACTIVATE_POS_MAINTENANCE :   // ACTIVATE_POS_MAINTENANCE=0xC6
         if(datosRx[2]==ACK){
-            str="Se ha modificado el valor de la bandera de balance correctamente!";
+            str="Se ha modificado el valor de la bandera de mantencion de posicion correctamente!";
         }
         ui->textEdit_PROCCES->append(str);
+        break;
+    case ACTIVATE_MANUAL_CONTROL :
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el estado de control manual correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
+    case MOVE_FORWARD:
+    case MOVE_BACKWARD:
+    case MOVE_LEFT:
+    case MOVE_RIGHT:
+    case MOVE_STOP:
+        if(datosRx[2]==ACK){
+            // No logguear cada comando de movimiento para no llenar la consola si es a 20Hz
+            // str="Comando de movimiento manual aceptado.";
+        }
         break;
     default:
         str = str + "Comando DESCONOCIDO!!!!";
@@ -2548,4 +2579,115 @@ void MainWindow::on_pushButton_SetKI_clicked()
     ui->textEdit_PROCCES->append("Set KI (UDP): " + QString::number(val, 'f', 3));
     ui->lineEdit_KI->clear();   // Limpio y dejo pronto
     ui->lineEdit_KI->setPlaceholderText("Nuevo KI");
+}
+
+void MainWindow::sendManualCommand()
+{
+    // Verificar si el socket está listo para enviar
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        return;
+    }
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        return;
+    }
+
+    if (currentManualCommand == 0) return;
+
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = currentManualCommand;
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (event->isAutoRepeat()) {
+        QMainWindow::keyPressEvent(event);
+        return;
+    }
+
+    bool manualCmdTriggered = false;
+    switch (event->key()) {
+    case Qt::Key_Up:
+        currentManualCommand = MOVE_FORWARD;
+        manualCmdTriggered = true;
+        break;
+    case Qt::Key_Down:
+        currentManualCommand = MOVE_BACKWARD;
+        manualCmdTriggered = true;
+        break;
+    case Qt::Key_Left:
+        currentManualCommand = MOVE_LEFT;
+        manualCmdTriggered = true;
+        break;
+    case Qt::Key_Right:
+        currentManualCommand = MOVE_RIGHT;
+        manualCmdTriggered = true;
+        break;
+    default:
+        break;
+    }
+
+    if (manualCmdTriggered) {
+        sendManualCommand(); // Enviar el primer comando inmediatamente
+        if (!manualControlTimer->isActive()) {
+            manualControlTimer->start(50); // Enviar cada 50 ms (20Hz)
+        }
+    } else {
+        QMainWindow::keyPressEvent(event);
+    }
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
+{
+    if (event->isAutoRepeat()) {
+        QMainWindow::keyReleaseEvent(event);
+        return;
+    }
+
+    bool manualCmdReleased = false;
+    switch (event->key()) {
+    case Qt::Key_Up:
+        if (currentManualCommand == MOVE_FORWARD) manualCmdReleased = true;
+        break;
+    case Qt::Key_Down:
+        if (currentManualCommand == MOVE_BACKWARD) manualCmdReleased = true;
+        break;
+    case Qt::Key_Left:
+        if (currentManualCommand == MOVE_LEFT) manualCmdReleased = true;
+        break;
+    case Qt::Key_Right:
+        if (currentManualCommand == MOVE_RIGHT) manualCmdReleased = true;
+        break;
+    default:
+        break;
+    }
+
+    if (manualCmdReleased) {
+        manualControlTimer->stop();
+        currentManualCommand = MOVE_STOP;
+        sendManualCommand(); // Enviar comando STOP
+        currentManualCommand = 0; // Limpiar
+    } else {
+        QMainWindow::keyReleaseEvent(event);
+    }
 }

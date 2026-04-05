@@ -72,12 +72,6 @@ private slots:
 
     void on_pushButton_SetKI_clicked();
 
-    void sendManualCommand();
-
-protected:
-    void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
-
 private:
     Ui::MainWindow *ui;
     QSerialPort *serial;
@@ -142,12 +136,6 @@ private:
         MODIFY_LINE_SPEED = 0xC4,
         ACTIVATE_LINE_FOLLOWING = 0xC5,
         ACTIVATE_POS_MAINTENANCE = 0xC6,
-        ACTIVATE_MANUAL_CONTROL = 0xC7,
-        MOVE_FORWARD = 0xD0,
-        MOVE_BACKWARD = 0xD1,
-        MOVE_LEFT = 0xD2,
-        MOVE_RIGHT = 0xD3,
-        MOVE_STOP = 0xD4,
         OTHERS
     }_eCmd;
 
@@ -350,10 +338,6 @@ private:
     // Estado de botones
     bool isBalanceActive = false;
     bool isFollowLineActive = false;
-
-    // Control Manual
-    QTimer *manualControlTimer;
-    uint8_t currentManualCommand = 0;
 
     void toggleRecording();
     void selectSaveDirectory();
