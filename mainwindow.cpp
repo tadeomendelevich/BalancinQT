@@ -49,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
     QDir().mkpath(defaultSaveDirectory);
     ui->lineEdit_LogDir->setText(defaultSaveDirectory);
 
+    // Asegurarse de que la ventana recibe eventos de teclado
+    this->setFocusPolicy(Qt::StrongFocus);
+
     ui->comboBox_CMD->addItem("ALIVE", 0xF0);
     ui->comboBox_CMD->addItem("FIRMWARE", 0xF1);
     ui->comboBox_CMD->addItem("GETADCVALUES", 0xA5);
@@ -448,6 +451,9 @@ MainWindow::MainWindow(QWidget *parent)
     layoutLineFollower->addWidget(lineFollowerAdcChartView);
 
     ui->tabWidget_Graficas->addTab(tabLineFollower, "Seguidor de Línea");
+
+    // Auto-conectar el UDP al inicio
+    QTimer::singleShot(200, this, &MainWindow::on_pushButton_OPENUDP_clicked);
 }
 
 MainWindow::~MainWindow()
