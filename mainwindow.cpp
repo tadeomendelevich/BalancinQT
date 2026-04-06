@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    qApp->installEventFilter(this);
     serial=new QSerialPort(this);
     settingPorts=new SettingsDialog(this);
     estadoSerial = new QLabel(this);
@@ -2690,4 +2691,65 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     } else {
         QMainWindow::keyReleaseEvent(event);
     }
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        if (!keyEvent->isAutoRepeat()) {
+            bool handled = false;
+            switch (keyEvent->key()) {
+            case Qt::Key_Up:
+                currentManualCommand = MOVE_FORWARD;
+                handled = true; break;
+            case Qt::Key_Down:
+                currentManualCommand = MOVE_BACKWARD;
+                handled = true; break;
+            case Qt::Key_Left:
+                currentManualCommand = MOVE_LEFT;
+                handled = true; break;
+            case Qt::Key_Right:
+                currentManualCommand = MOVE_RIGHT;
+                handled = true; break;
+            default: break;
+            }
+            if (handled) {
+                sendManualCommand();
+                if (!manualControlTimer->isActive())
+                    manualControlTimer->start(50);
+                return true;
+            }
+        }
+    }
+    else if (event->type() == QEvent::KeyRelease) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        if (!keyEvent->isAutoRepeat()) {
+            bool handled = false;
+            switch (keyEvent->key()) {
+            case Qt::Key_Up:
+                if (currentManualCommand == MOVE_FORWARD) handled = true;
+                break;
+            case Qt::Key_Down:
+                if (currentManualCommand == MOVE_BACKWARD) handled = true;
+                break;
+            case Qt::Key_Left:
+                if (currentManualCommand == MOVE_LEFT) handled = true;
+                break;
+            case Qt::Key_Right:
+                if (currentManualCommand == MOVE_RIGHT) handled = true;
+                break;
+            default:
+                break;
+            }
+            if (handled) {
+                manualControlTimer->stop();
+                currentManualCommand = MOVE_STOP;
+                sendManualCommand();
+                currentManualCommand = 0;
+                return true;
+            }
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }

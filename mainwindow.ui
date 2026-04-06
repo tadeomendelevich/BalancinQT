@@ -624,6 +624,12 @@ QPushButton:pressed {
            <layout class="QVBoxLayout" name="verticalLayout_16">
             <item>
              <widget class="QLabel" name="label">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>14</pointsize>
@@ -644,6 +650,12 @@ QPushButton:pressed {
            <layout class="QHBoxLayout" name="horizontalLayout_16">
             <item>
              <widget class="QLabel" name="label_13">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -660,6 +672,12 @@ QPushButton:pressed {
             </item>
             <item>
              <widget class="QLabel" name="label_14">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -676,6 +694,12 @@ QPushButton:pressed {
             </item>
             <item>
              <widget class="QLabel" name="label_5">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
@@ -698,6 +722,12 @@ QPushButton:pressed {
              <layout class="QHBoxLayout" name="horizontalLayout_15">
               <item>
                <widget class="QLabel" name="label_KP">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>11</pointsize>
@@ -713,6 +743,12 @@ QPushButton:pressed {
               </item>
               <item>
                <widget class="QLabel" name="label_KD">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
@@ -728,6 +764,12 @@ QPushButton:pressed {
               </item>
               <item>
                <widget class="QLabel" name="label_KI">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
@@ -1029,7 +1071,7 @@ QPushButton:pressed {
              <widget class="QLabel" name="label_ADC_8">
               <property name="maximumSize">
                <size>
-                <width>60</width>
+                <width>500</width>
                 <height>30</height>
                </size>
               </property>
