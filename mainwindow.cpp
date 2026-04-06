@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->setFocusPolicy(Qt::StrongFocus);
     qApp->installEventFilter(this);
     serial=new QSerialPort(this);
     settingPorts=new SettingsDialog(this);
@@ -27,6 +28,55 @@ MainWindow::MainWindow(QWidget *parent)
 
     manualControlTimer = new QTimer(this);
     connect(manualControlTimer, &QTimer::timeout, this, &MainWindow::sendManualCommand);
+
+    // Conectar botones D-PAD a control manual
+    connect(ui->btn_UP, &QPushButton::pressed, this, [=](){
+        currentManualCommand = MOVE_FORWARD;
+        sendManualCommand();
+        if (!manualControlTimer->isActive()) manualControlTimer->start(50);
+    });
+    connect(ui->btn_UP, &QPushButton::released, this, [=](){
+        manualControlTimer->stop();
+        currentManualCommand = MOVE_STOP;
+        sendManualCommand();
+        currentManualCommand = 0;
+    });
+
+    connect(ui->btn_DOWN, &QPushButton::pressed, this, [=](){
+        currentManualCommand = MOVE_BACKWARD;
+        sendManualCommand();
+        if (!manualControlTimer->isActive()) manualControlTimer->start(50);
+    });
+    connect(ui->btn_DOWN, &QPushButton::released, this, [=](){
+        manualControlTimer->stop();
+        currentManualCommand = MOVE_STOP;
+        sendManualCommand();
+        currentManualCommand = 0;
+    });
+
+    connect(ui->btn_LEFT, &QPushButton::pressed, this, [=](){
+        currentManualCommand = MOVE_LEFT;
+        sendManualCommand();
+        if (!manualControlTimer->isActive()) manualControlTimer->start(50);
+    });
+    connect(ui->btn_LEFT, &QPushButton::released, this, [=](){
+        manualControlTimer->stop();
+        currentManualCommand = MOVE_STOP;
+        sendManualCommand();
+        currentManualCommand = 0;
+    });
+
+    connect(ui->btn_RIGHT, &QPushButton::pressed, this, [=](){
+        currentManualCommand = MOVE_RIGHT;
+        sendManualCommand();
+        if (!manualControlTimer->isActive()) manualControlTimer->start(50);
+    });
+    connect(ui->btn_RIGHT, &QPushButton::released, this, [=](){
+        manualControlTimer->stop();
+        currentManualCommand = MOVE_STOP;
+        sendManualCommand();
+        currentManualCommand = 0;
+    });
 
     connect(ui->actionQuit,&QAction::triggered,this,&MainWindow::close);
     connect(ui->actionScanPorts, &QAction::triggered, settingPorts,&SettingsDialog::show);
@@ -1441,35 +1491,23 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
         w.ui8[0] = datosRx[2];  // AX
         w.ui8[1] = datosRx[3];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_AX_VALUE->setText(str);
         lastAx= w.i16[0];
 
         w.ui8[0] = datosRx[4];  // AY
         w.ui8[1] = datosRx[5];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_AY_VALUE->setText(str);
         lastAy = w.i16[0];
 
         w.ui8[0] = datosRx[6];  // AZ
         w.ui8[1] = datosRx[7];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_AZ_VALUE->setText(str);
 
         w.ui8[0] = datosRx[8];  // GX
         w.ui8[1] = datosRx[9];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_GX_VALUE->setText(str);
 
         w.ui8[0] = datosRx[10];  // GY
         w.ui8[1] = datosRx[11];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_GY_VALUE->setText(str);
 
         w.ui8[0] = datosRx[12];  // GZ
         w.ui8[1] = datosRx[13];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_GZ_VALUE->setText(str);
 
         str = "Valores de MPU6050 obtenidos correctamente!";
         ui->textEdit_PROCCES->append(str);
@@ -1647,40 +1685,28 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
         w.ui8[0] = datosRx[18];  // AX
         w.ui8[1] = datosRx[19];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_AX_VALUE->setText(str);
         ax = w.i16[0];
         lastAx = w.i16[0];
 
         w.ui8[0] = datosRx[20];  // AY
         w.ui8[1] = datosRx[21];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_AY_VALUE->setText(str);
         ay = w.i16[0];
         lastAy = w.i16[0];
 
         w.ui8[0] = datosRx[22];  // AZ
         w.ui8[1] = datosRx[23];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_AZ_VALUE->setText(str);
         az = w.i16[0];
 
         w.ui8[0] = datosRx[24];  // GX
         w.ui8[1] = datosRx[25];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_GX_VALUE->setText(str);
         gx = w.i16[0];
 
         w.ui8[0] = datosRx[26];  // GY
         w.ui8[1] = datosRx[27];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_GY_VALUE->setText(str);
         gy = w.i16[0];
 
         w.ui8[0] = datosRx[28];  // GZ
         w.ui8[1] = datosRx[29];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_GZ_VALUE->setText(str);
         gz = w.i16[0];
 
         // ROLL
