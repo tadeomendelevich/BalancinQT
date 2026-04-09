@@ -8,9 +8,6 @@ Aplicación desarrollada en Qt para el monitoreo, control y análisis en tiempo 
 <p align="center">
   <img src="assets/interfaz_QT.png" width="700"/>
 </p>
-
-👉 Agregar aquí captura real de la interfaz (muy importante para el portfolio)
-
 ---
 
 ## 🧠 Descripción
