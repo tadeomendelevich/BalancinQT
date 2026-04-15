@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QInputDialog>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QFile>
 #include "settingsdialog.h"
 
@@ -355,6 +356,13 @@ private:
     // Control Manual
     QTimer *manualControlTimer;
     uint8_t currentManualCommand = 0;
+
+    // UDP Watchdog
+    QTimer *udpWatchdogTimer;
+    QElapsedTimer udpLastRxTime;
+    bool udpEverReceivedData;
+    void checkUdpInactivity();
+    void clearUdpScreens();
 
     void toggleRecording();
     void selectSaveDirectory();
