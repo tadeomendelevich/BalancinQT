@@ -29,6 +29,10 @@ MainWindow::MainWindow(QWidget *parent)
     manualControlTimer = new QTimer(this);
     connect(manualControlTimer, &QTimer::timeout, this, &MainWindow::sendManualCommand);
 
+    udpWatchdogTimer = new QTimer(this);
+    connect(udpWatchdogTimer, &QTimer::timeout, this, &MainWindow::checkUdpInactivity);
+    udpEverReceivedData = false;
+
     // Conectar botones D-PAD a control manual
     connect(ui->btn_UP, &QPushButton::pressed, this, [=](){
         currentManualCommand = MOVE_FORWARD;
@@ -735,6 +739,10 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         ui->pushButton_FOLLOW_LINE->setEnabled(false);
         ui->lineEdit_IP_REMOTA->clear();
         ui->lineEdit_DEVICEPORT->clear();
+
+        udpWatchdogTimer->stop();
+        udpEverReceivedData = false;
+
         return;
     }
 
@@ -759,6 +767,9 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     ui->pushButton_BALANCE->setEnabled(true);
     ui->pushButton_FOLLOW_LINE->setEnabled(true);
 
+    udpEverReceivedData = false;
+    udpWatchdogTimer->start(1000);
+
     // Cargar destino si ya está ingresado en la UI
     if (clientAddress.isNull()) {
         clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text().trimmed());
@@ -780,6 +791,9 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
 void MainWindow::OnUdpRxData()
 {
     while (UdpSocket1->hasPendingDatagrams()) {
+        udpLastRxTime.start();
+        udpEverReceivedData = true;
+
         QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
         const QByteArray payload = dgram.data();
         RemoteAddress = dgram.senderAddress();
@@ -2803,4 +2817,57 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
         }
     }
     return QMainWindow::eventFilter(obj, event);
+}
+
+void MainWindow::clearUdpScreens()
+{
+    ui->textEdit_RAW->clear();
+    ui->textEdit_PROCCES->clear();
+}
+
+void MainWindow::checkUdpInactivity()
+{
+    if (!udpEverReceivedData) {
+        return; // Nunca recibimos nada aún, no disparamos el watchdog
+    }
+
+    // 15000 ms = 15 segundos
+    if (udpLastRxTime.elapsed() > 15000) {
+        clearUdpScreens();
+
+        ui->textEdit_PROCCES->append("WATCHDOG UDP: Timeout (15s sin datos). Reiniciando socket...");
+
+        // Obtener el puerto local
+        bool ok = false;
+        const int localPort = ui->lineEdit_LOCALPORT->text().toInt(&ok, 10);
+        if (!ok || localPort <= 0 || localPort > 65535) {
+            ui->textEdit_PROCCES->append("WATCHDOG ERROR: Puerto local inválido para rebind.");
+            udpWatchdogTimer->stop();
+            return;
+        }
+
+        // 1. Cerrar el socket UDP actual
+        UdpSocket1->abort();
+
+        // 2. Volver a abrirlo haciendo bind sobre el mismo puerto local
+        const bool okBind = UdpSocket1->bind(
+            QHostAddress::AnyIPv4,
+            static_cast<quint16>(localPort),
+            QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint
+        );
+
+        if (!okBind) {
+            ui->textEdit_PROCCES->append(QString("WATCHDOG ERROR: Falló el rebind al puerto %1: %2").arg(localPort).arg(UdpSocket1->errorString()));
+            // Mantenemos el estado activo visualmente (rojo para cerrar) para que el usuario sepa
+            // que la app "cree" que debe estar abierto, o al menos no rompemos el toggle manual.
+        } else {
+            ui->textEdit_PROCCES->append("WATCHDOG UDP: Socket reabierto correctamente. Escuchando...");
+            // Queda escuchando nuevamente. No reiniciamos la bandera "udpEverReceivedData" para que si sigue sin haber datos, a los 15s vuelva a reconectar?
+            // "No quiero un loop de cerrar/abrir si nunca llegó nada desde que abrí el puerto."
+            // Ah, el usuario dice: "Solo debe dispararse el watchdog si antes ya se habían recibido datos UDP al menos una vez."
+            // Para evitar un loop infinito de cerrar/abrir, reseteamos la bandera.
+            // Así esperará un nuevo paquete antes de iniciar el timeout de 15s de nuevo.
+            udpEverReceivedData = false;
+        }
+    }
 }
