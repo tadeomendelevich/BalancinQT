@@ -32,48 +32,56 @@ MainWindow::MainWindow(QWidget *parent)
     // Conectar botones D-PAD a control manual
     connect(ui->btn_UP, &QPushButton::pressed, this, [=](){
         currentManualCommand = MOVE_FORWARD;
+        ui->textEdit_PROCCES->append("MANUAL CMD: ADELANTE ↑ [0x" + QString("%1").arg(MOVE_FORWARD, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         if (!manualControlTimer->isActive()) manualControlTimer->start(50);
     });
     connect(ui->btn_UP, &QPushButton::released, this, [=](){
         manualControlTimer->stop();
         currentManualCommand = MOVE_STOP;
+        ui->textEdit_PROCCES->append("MANUAL CMD: STOP ■ [0x" + QString("%1").arg(MOVE_STOP, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         currentManualCommand = 0;
     });
 
     connect(ui->btn_DOWN, &QPushButton::pressed, this, [=](){
         currentManualCommand = MOVE_BACKWARD;
+        ui->textEdit_PROCCES->append("MANUAL CMD: ATRÁS ↓ [0x" + QString("%1").arg(MOVE_BACKWARD, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         if (!manualControlTimer->isActive()) manualControlTimer->start(50);
     });
     connect(ui->btn_DOWN, &QPushButton::released, this, [=](){
         manualControlTimer->stop();
         currentManualCommand = MOVE_STOP;
+        ui->textEdit_PROCCES->append("MANUAL CMD: STOP ■ [0x" + QString("%1").arg(MOVE_STOP, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         currentManualCommand = 0;
     });
 
     connect(ui->btn_LEFT, &QPushButton::pressed, this, [=](){
         currentManualCommand = MOVE_LEFT;
+        ui->textEdit_PROCCES->append("MANUAL CMD: IZQUIERDA ← [0x" + QString("%1").arg(MOVE_LEFT, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         if (!manualControlTimer->isActive()) manualControlTimer->start(50);
     });
     connect(ui->btn_LEFT, &QPushButton::released, this, [=](){
         manualControlTimer->stop();
         currentManualCommand = MOVE_STOP;
+        ui->textEdit_PROCCES->append("MANUAL CMD: STOP ■ [0x" + QString("%1").arg(MOVE_STOP, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         currentManualCommand = 0;
     });
 
     connect(ui->btn_RIGHT, &QPushButton::pressed, this, [=](){
         currentManualCommand = MOVE_RIGHT;
+        ui->textEdit_PROCCES->append("MANUAL CMD: DERECHA → [0x" + QString("%1").arg(MOVE_RIGHT, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         if (!manualControlTimer->isActive()) manualControlTimer->start(50);
     });
     connect(ui->btn_RIGHT, &QPushButton::released, this, [=](){
         manualControlTimer->stop();
         currentManualCommand = MOVE_STOP;
+        ui->textEdit_PROCCES->append("MANUAL CMD: STOP ■ [0x" + QString("%1").arg(MOVE_STOP, 2, 16, QChar('0')).toUpper() + "]");
         sendManualCommand();
         currentManualCommand = 0;
     });
@@ -2741,6 +2749,18 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             default: break;
             }
             if (handled) {
+                // --- LOG al cambiar comando ---
+                QString cmdName;
+                switch (currentManualCommand) {
+                case MOVE_FORWARD:  cmdName = "ADELANTE ↑";  break;
+                    case MOVE_BACKWARD: cmdName = "ATRÁS ↓";     break;
+                    case MOVE_LEFT:     cmdName = "IZQUIERDA ←"; break;
+                    case MOVE_RIGHT:    cmdName = "DERECHA →";   break;
+                        default:            cmdName = "DESCONOCIDO"; break;
+                }
+                ui->textEdit_PROCCES->append("MANUAL CMD: " + cmdName
+                                             + " [0x" + QString("%1").arg(currentManualCommand, 2, 16, QChar('0')).toUpper() + "]");
+
                 sendManualCommand();
                 if (!manualControlTimer->isActive())
                     manualControlTimer->start(50);
@@ -2771,6 +2791,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             if (handled) {
                 manualControlTimer->stop();
                 currentManualCommand = MOVE_STOP;
+
+                // --- LOG al soltar (STOP) ---
+                ui->textEdit_PROCCES->append("MANUAL CMD: STOP ■"
+                                             + QString(" [0x%1]").arg(MOVE_STOP, 2, 16, QChar('0')).toUpper());
+
                 sendManualCommand();
                 currentManualCommand = 0;
                 return true;

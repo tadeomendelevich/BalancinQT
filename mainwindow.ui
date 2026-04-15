@@ -569,6 +569,18 @@ QPushButton:pressed {
                 </item>
                 <item>
                  <widget class="QPushButton" name="pushButton_SetKP">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>8</pointsize>
+                    <bold>true</bold>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>SET</string>
                   </property>
@@ -587,6 +599,18 @@ QPushButton:pressed {
                 </item>
                 <item>
                  <widget class="QPushButton" name="pushButton_SetKD">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>8</pointsize>
+                    <bold>true</bold>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>SET</string>
                   </property>
@@ -605,6 +629,18 @@ QPushButton:pressed {
                 </item>
                 <item>
                  <widget class="QPushButton" name="pushButton_SetKI">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>8</pointsize>
+                    <bold>true</bold>
+                   </font>
+                  </property>
                   <property name="text">
                    <string>SET</string>
                   </property>
@@ -627,7 +663,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>20</height>
+                <height>30</height>
                </size>
               </property>
               <property name="font">
@@ -725,7 +761,7 @@ QPushButton:pressed {
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>30</height>
+                  <height>20</height>
                  </size>
                 </property>
                 <property name="font">
@@ -746,7 +782,7 @@ QPushButton:pressed {
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>30</height>
+                  <height>20</height>
                  </size>
                 </property>
                 <property name="font">
@@ -767,7 +803,7 @@ QPushButton:pressed {
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>30</height>
+                  <height>20</height>
                  </size>
                 </property>
                 <property name="font">
@@ -899,7 +935,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -925,7 +961,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -951,7 +987,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -977,7 +1013,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -1098,7 +1134,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -1121,7 +1157,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -1144,7 +1180,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>30</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
@@ -1167,7 +1203,7 @@ QPushButton:pressed {
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>29</height>
+                <height>20</height>
                </size>
               </property>
               <property name="font">
