@@ -139,6 +139,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("ACTIVAR SEGUIDOR LINEA", 0xC5);
     ui->comboBox_CMD->addItem("ACTIVAR MANTENCION DE POSICION", 0xC6);
     ui->comboBox_CMD->addItem("ACTIVAR CONTROL MANUAL", 0xC7);
+    ui->comboBox_CMD->addItem("MODIFY SETPOINT", 0xC8);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -742,6 +743,7 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
 
         udpWatchdogTimer->stop();
         udpEverReceivedData = false;
+        ui->spinBox_SETPOINT->setValue(0.0);
 
         return;
     }
@@ -1082,6 +1084,16 @@ void MainWindow::sendDataUDP()
         dato[indice++] = w.ui8[3];
         break;
     }
+    case MODIFY_SETPOINT: {   // 0xC8
+        dato[indice++] = MODIFY_SETPOINT;
+
+        w.f32 = (float)ui->spinBox_SETPOINT->value();
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
     case GETALIVE:          // 0xF0
     case GETANGLE:          // 0xA7
     case GETADCVALUES:      // 0xA5
@@ -1089,16 +1101,16 @@ void MainWindow::sendDataUDP()
     case SENDALLSENSORS:    // 0xA9
     case GETDISTANCE:       // 0xA3
     case GETSPEED:          // 0xA4
-    case GETSWITCHES:       // ¡revisar si no choca con 0xA5!
+    case GETSWITCHES:       // 0xA5
     case GETFIRMWARE:       // 0xF1
     case GETANALOGSENSORS:  // 0xA0
-    case BALANCE: //BALANCE=0xB4
+    case BALANCE:           //BALANCE=0xB4
     case RESETMASSCENTER:   // RESETMASSCENTER=0xB7
     case ACTIVATE_CSV_LOG:  // ACTIVATE_CSV_LOG=0xB9
     case ACTIVATE_WIFI_LOG: // ACTIVATE_WIFI_LOG=0xBA
-    case CHANGE_DISPLAY:   // CHANGE_DISPLAY=0xBE
-    case ACTIVATE_LINE_FOLLOWING: // ACTIVATE_LINE_FOLLOWING = 0xC5
-    case ACTIVATE_POS_MAINTENANCE: //ACTIVATE_POS_MAINTENANCE = 0xC6
+    case CHANGE_DISPLAY:    // CHANGE_DISPLAY=0xBE
+    case ACTIVATE_LINE_FOLLOWING:   // ACTIVATE_LINE_FOLLOWING = 0xC5
+    case ACTIVATE_POS_MAINTENANCE:  //ACTIVATE_POS_MAINTENANCE = 0xC6
     case ACTIVATE_MANUAL_CONTROL:
     case MOVE_FORWARD:
     case MOVE_BACKWARD:
@@ -1319,6 +1331,16 @@ void MainWindow::sendDataSerial(){
         double angle_val = QInputDialog::getDouble(this, "Angulo de seguidor de linea", "Angulo (grados):", 0.0, -100.0, 100.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)angle_val;
+        dato[indice++] = w.ui8[0];
+        dato[indice++] = w.ui8[1];
+        dato[indice++] = w.ui8[2];
+        dato[indice++] = w.ui8[3];
+        break;
+    }
+    case MODIFY_SETPOINT: {   // 0xC8
+        dato[indice++] = MODIFY_SETPOINT;
+
+        w.f32 = (float)ui->spinBox_SETPOINT->value();
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
         dato[indice++] = w.ui8[2];
@@ -2019,6 +2041,12 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         }
         ui->textEdit_PROCCES->append(str);
         break;
+    case MODIFY_SETPOINT :
+        if(datosRx[2]==ACK){
+            str="Se ha modificado el SEPOINT correctamente!";
+        }
+        ui->textEdit_PROCCES->append(str);
+        break;
     case MOVE_FORWARD:
     case MOVE_BACKWARD:
     case MOVE_LEFT:
@@ -2037,10 +2065,16 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
 void MainWindow::on_pushButton_clicked()    // BOTON DE "CLEAR DISPLAYS"
 {
-    ui->textEdit_PROCCES->clear();
-    ui->textEdit_RAW->clear();
-    ui->textEdit_RAW->append("        Dato sin procesar");
-    ui->textEdit_PROCCES->append("      Dato procesado");
+    ui->textEdit_RAW->setHtml(
+        "<p align='center' style='margin-top: 40%;'>"
+        "<span style='font-family: Verdana; font-size: 14px; text-decoration: underline;'>"
+        "Dato sin procesar</span></p>"
+    );
+    ui->textEdit_PROCCES->setHtml(
+        "<p align='center' style='margin-top: 40%;'>"
+        "<span style='font-family: Verdana; font-size: 20px; text-decoration: underline;'>"
+        "Dato procesado</span></p>"
+    );
 }
 
 void MainWindow::updatePlot() {
@@ -2837,6 +2871,7 @@ void MainWindow::checkUdpInactivity()
         ui->lineEdit_IP_REMOTA->clear();
         ui->lineEdit_DEVICEPORT->clear();
 
+        ui->spinBox_SETPOINT->setValue(0.0);
         ui->textEdit_PROCCES->append("WATCHDOG UDP: Timeout (15s sin datos). Reiniciando socket...");
 
         // Obtener el puerto local
@@ -2871,5 +2906,22 @@ void MainWindow::checkUdpInactivity()
             // Así esperará un nuevo paquete antes de iniciar el timeout de 15s de nuevo.
             udpEverReceivedData = false;
         }
+    }
+}
+
+void MainWindow::on_pushButton_SETPOINT_clicked()
+{
+    // Seleccionar MODIFY_SETPOINT en el comboBox
+    int idx = ui->comboBox_CMD->findData(MODIFY_SETPOINT);
+    if (idx >= 0) ui->comboBox_CMD->setCurrentIndex(idx);
+
+    // Enviar por el canal disponible
+    if (serial->isOpen()) {
+        sendDataSerial();
+    } else if (UdpSocket1->state() == QAbstractSocket::BoundState
+               && !clientAddress.isNull() && puertoremoto > 0) {
+        sendDataUDP();
+    } else {
+        ui->textEdit_PROCCES->append("SET SETPOINT: Sin conexión disponible.");
     }
 }

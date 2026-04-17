@@ -11,96 +11,284 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Comunications</string>
+   <string>BalancinQT — Panel de Control</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#centralwidget {
-    background-color: black;
+   <string notr="true">/* ============ BalancinQT Global Theme ============ */
+#centralwidget {
+    background-color: #0d1a08;
     background-image: url(:/img/logoUNERsolo.png);
     background-repeat: no-repeat;
     background-position: center;
 }
-
-/* QMenu con verde militar degradado */
+QMenuBar {
+    background-color: #111e08;
+    color: #b8dfa0;
+    border-bottom: 1px solid #3a5f0b;
+    padding: 2px;
+}
+QMenuBar::item {
+    background-color: transparent;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+QMenuBar::item:selected { background-color: #2e4c07; }
 QMenu {
-    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,
-        stop:0 #556b2f, stop:1 #3a5f0b);
-    color: white;
-    font-weight: bold;
-    border: 1px solid #6b8e23;
-}
-
-/* Botones */
-QPushButton {
-    color: white;
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #6b8e23, stop:1 #3a5f0b);
-    border: 2px solid #2e4600;
-    border-radius: 10px;
-    padding: 6px 12px;
-    font-weight: bold;
-}
-QPushButton:hover {
-    background-color: #4b6e1f;
-}
-
-/* Labels */
-QLabel {
+    background-color: #182e08;
     color: #d0ffcc;
     border: 1px solid #4a6620;
-    background-color: rgba(50, 80, 30, 0.3);
-    border-radius: 6px;
     padding: 4px;
 }
-
-/* QTextEdit */
-QTextEdit {
-    border: 2px solid #4a6620;
+QMenu::item {
+    padding: 5px 20px 5px 10px;
+    border-radius: 3px;
+}
+QMenu::item:selected { background-color: #3a5f0b; }
+QMenu::separator {
+    height: 1px;
+    background: #3a5f0b;
+    margin: 3px 8px;
+}
+QPushButton {
+    color: #e8ffe0;
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #4e6e18, stop:1 #2a4808);
+    border: 1px solid #3a5a10;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-weight: bold;
+    font-size: 11px;
+}
+QPushButton:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #6b8e23, stop:1 #3a5f0b);
+    border-color: #7aaa28;
+}
+QPushButton:pressed {
+    background-color: #1e3506;
+    border-color: #8aab30;
+}
+QPushButton:disabled {
+    background-color: #1a2a10;
+    color: #4a5a3a;
+    border-color: #202e12;
+}
+QPushButton:checked {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #b01010, stop:1 #6a0808);
+    border: 2px solid #e04040;
+    color: white;
+}
+QPushButton#btn_UP,
+QPushButton#btn_DOWN,
+QPushButton#btn_LEFT,
+QPushButton#btn_RIGHT {
+    font-size: 20px;
+    padding: 8px;
     border-radius: 10px;
-    background-color: rgba(30, 50, 20, 0.3);
-    color: #e6ffe6;
+}
+QLabel {
+    color: #c8e6a0;
+    background-color: transparent;
+    border: none;
+    padding: 2px 4px;
+}
+QLabel#label_10, QLabel#label_11, QLabel#label {
+    color: #a0d060;
+    background-color: rgba(30, 60, 10, 0.45);
+    border: 1px solid #3a5f0b;
+    border-radius: 5px;
+    padding: 5px;
+}
+QLabel#label_inclination_Xvalue,
+QLabel#label_inclination_Yvalue {
+    color: #44ffcc;
+    background-color: rgba(0, 40, 30, 0.55);
+    border: 1px solid #207060;
+    border-radius: 5px;
+    font-family: Consolas;
+    font-weight: bold;
+    padding: 4px 8px;
+    min-width: 60px;
+}
+QLabel#label_KP, QLabel#label_KD, QLabel#label_KI {
+    color: #ffe080;
+    background-color: rgba(40, 30, 0, 0.55);
+    border: 1px solid #706010;
+    border-radius: 5px;
+    font-family: Consolas;
+    padding: 4px 8px;
+}
+QLabel#label_ADCVALUE_1, QLabel#label_ADCVALUE_2,
+QLabel#label_ADCVALUE_3, QLabel#label_ADCVALUE_4,
+QLabel#label_ADCVALUE_5, QLabel#label_ADCVALUE_6,
+QLabel#label_ADCVALUE_7, QLabel#label_ADCVALUE_8 {
+    color: #66ffaa;
+    background-color: rgba(0, 35, 15, 0.65);
+    border: 1px solid #1a5a30;
+    border-radius: 4px;
+    font-family: Consolas;
+    padding: 3px 6px;
+}
+QTextEdit {
+    border: 1px solid #3a5f0b;
+    border-radius: 8px;
+    background-color: rgba(8, 20, 4, 0.90);
+    color: #b8e8a0;
     padding: 6px;
     font-family: Consolas;
+    selection-background-color: #3a5f0b;
+    selection-color: #ffffff;
 }
-
-/* Personalizados */
 QTextEdit#textEdit_RAW {
-    font-size: 14px;
-    font-style: italic;
+    font-size: 12px;
+    color: #78b878;
+    border-color: #2a4510;
 }
 QTextEdit#textEdit_PROCCES {
-    font-size: 18px;
-    font-style: italic;
+    font-size: 13px;
+    color: #c0ffa0;
+    border-color: #5a8020;
 }
-
-/* ComboBox */
+QLineEdit {
+    color: #c8ffb0;
+    background-color: rgba(8, 25, 4, 0.85);
+    border: 1px solid #3a5f0b;
+    border-radius: 6px;
+    padding: 4px 8px;
+    selection-background-color: #3a5f0b;
+    selection-color: white;
+}
+QLineEdit:focus {
+    border-color: #7aaa28;
+    background-color: rgba(12, 35, 5, 0.95);
+}
+QLineEdit:read-only {
+    color: #78a870;
+    background-color: rgba(5, 18, 2, 0.75);
+}
+QDoubleSpinBox, QSpinBox {
+    color: #c8ffb0;
+    background-color: rgba(8, 25, 4, 0.85);
+    border: 1px solid #3a5f0b;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-family: Consolas;
+    font-size: 12px;
+}
+QDoubleSpinBox:focus, QSpinBox:focus {
+    border-color: #7aaa28;
+    background-color: rgba(12, 35, 5, 0.95);
+}
+QDoubleSpinBox::up-button, QSpinBox::up-button,
+QDoubleSpinBox::down-button, QSpinBox::down-button {
+    background-color: #2e4c07;
+    border: 1px solid #3a5f0b;
+    width: 16px;
+}
+QDoubleSpinBox::up-button:hover, QSpinBox::up-button:hover,
+QDoubleSpinBox::down-button:hover, QSpinBox::down-button:hover {
+    background-color: #4a7818;
+}
+QLabel#label_SETPOINT {
+    color: #44ffdd;
+    background-color: rgba(0, 40, 30, 0.55);
+    border: 1px solid #207060;
+    border-radius: 6px;
+    font-family: Consolas;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 5px 10px;
+    qproperty-alignment: AlignCenter;
+}
 QComboBox {
-    color: white;
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-        stop:0 #6b8e23, stop:1 #3a5f0b);
-    border: 2px solid #2e4600;
-    border-radius: 10px;
-    padding: 3px;
+    color: #d0ffcc;
+    background-color: rgba(15, 40, 8, 0.90);
+    border: 1px solid #3a5f0b;
+    border-radius: 6px;
+    padding: 5px 8px;
 }
-QComboBox:on {
-    padding-top: 3px;
-    padding-left: 4px;
-}
+QComboBox:hover { border-color: #6b8e23; }
 QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
-    width: 15px;
-    border-left: 1px solid #2e4600;
+    width: 22px;
+    border-left: 1px solid #3a5f0b;
     border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
 }
-</string>
+QComboBox QAbstractItemView {
+    background-color: #182e08;
+    border: 1px solid #4a6620;
+    color: #d0ffcc;
+    selection-background-color: #3a5f0b;
+    outline: none;
+}
+QTabWidget::pane {
+    border: 1px solid #3a5f0b;
+    border-radius: 5px;
+    background-color: rgba(8, 18, 4, 0.70);
+    top: -1px;
+}
+QTabBar::tab {
+    background-color: #162a08;
+    color: #7a9a60;
+    border: 1px solid #263a10;
+    border-bottom: none;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding: 6px 16px;
+    margin-right: 2px;
+    font-weight: bold;
+    font-size: 11px;
+}
+QTabBar::tab:selected {
+    background-color: rgba(8, 18, 4, 0.70);
+    color: #c0ffaa;
+    border-color: #5a8020;
+    border-bottom: 2px solid #8aab30;
+}
+QTabBar::tab:hover:!selected {
+    background-color: #1e3a0c;
+    color: #a0d080;
+}
+QScrollBar:vertical {
+    background-color: #0c180a;
+    width: 10px;
+    margin: 0;
+}
+QScrollBar::handle:vertical {
+    background-color: #2e5010;
+    border-radius: 5px;
+    min-height: 24px;
+}
+QScrollBar::handle:vertical:hover { background-color: #4a7818; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar:horizontal {
+    background-color: #0c180a;
+    height: 10px;
+    margin: 0;
+}
+QScrollBar::handle:horizontal {
+    background-color: #2e5010;
+    border-radius: 5px;
+    min-width: 24px;
+}
+QScrollBar::handle:horizontal:hover { background-color: #4a7818; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+QStatusBar {
+    background-color: #0d1a08;
+    color: #789060;
+    border-top: 1px solid #2a4010;
+    font-size: 11px;
+}
+QStatusBar QLabel {
+    border: none;
+    background: transparent;
+    padding: 2px 6px;
+}</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <property name="styleSheet">
-    <string notr="true">#centralWidget { background: rgb(255, 164, 73); }
-</string>
-   </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_10">
@@ -133,11 +321,13 @@ QComboBox::drop-down {
              <widget class="QLabel" name="label_inclination_Xvalue">
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
+                <bold>true</bold>
                </font>
               </property>
               <property name="text">
-               <string>0.00</string>
+               <string>0.00 °</string>
               </property>
              </widget>
             </item>
@@ -158,11 +348,13 @@ QComboBox::drop-down {
              <widget class="QLabel" name="label_inclination_Yvalue">
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
+                <bold>true</bold>
                </font>
               </property>
               <property name="text">
-               <string>0.00</string>
+               <string>0.00 °</string>
               </property>
              </widget>
             </item>
@@ -211,7 +403,7 @@ QComboBox::drop-down {
                </size>
               </property>
               <property name="text">
-               <string>...</string>
+               <string>…</string>
               </property>
              </widget>
             </item>
@@ -336,12 +528,12 @@ QComboBox::drop-down {
          <font>
           <family>Consolas</family>
           <pointsize>-1</pointsize>
-          <italic>true</italic>
-          <bold>true</bold>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="frameShape">
-         <enum>QFrame::HLine</enum>
+         <enum>QFrame::NoFrame</enum>
         </property>
         <property name="html">
          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -350,8 +542,8 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:14px; font-weight:700; font-style:italic;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:16px; font-weight:400; font-style:normal; text-decoration: underline;&quot;&gt;Dato sin procesar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:12px; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:14px; text-decoration: underline;&quot;&gt;Dato sin procesar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
@@ -373,22 +565,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
          <font>
           <family>Consolas</family>
           <pointsize>-1</pointsize>
-          <italic>true</italic>
-          <bold>true</bold>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QPushButton {
-    background-color: #8B0000;
-    color: white;
-    font-weight: bold;
-}
-QPushButton:hover {
-    background-color: #A00000;
-}
-QPushButton:pressed {
-    background-color: #600000;
-}</string>
         </property>
         <property name="html">
          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -397,8 +576,8 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:18px; font-weight:700; font-style:italic;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:24px; font-weight:400; font-style:normal; text-decoration: underline;&quot;&gt;Dato procesado&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:13px; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:20px; text-decoration: underline;&quot;&gt;Dato procesado&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
@@ -420,9 +599,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QPushButton" name="pushButton_BALANCE">
-              <property name="styleSheet">
-               <string notr="true">background-color: red;</string>
-              </property>
               <property name="text">
                <string>BALANCE</string>
               </property>
@@ -430,9 +606,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QPushButton" name="pushButton_FOLLOW_LINE">
-              <property name="styleSheet">
-               <string notr="true">background-color: red;</string>
-              </property>
               <property name="text">
                <string>FOLLOW LINE</string>
               </property>
@@ -447,11 +620,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QPushButton" name="pushButton_RECORD">
-              <property name="styleSheet">
-               <string notr="true">QPushButton:checked { background-color: red; border: 2px solid white; }</string>
-              </property>
               <property name="text">
-               <string>RECORD</string>
+               <string>⏺ RECORD</string>
               </property>
               <property name="checkable">
                <bool>true</bool>
@@ -471,11 +641,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <bold>true</bold>
                  </font>
                 </property>
-                <property name="frameShape">
-                 <enum>QFrame::NoFrame</enum>
-                </property>
                 <property name="text">
-                 <string>local PORT:</string>
+                 <string>Local PORT:</string>
                 </property>
                </widget>
               </item>
@@ -490,22 +657,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <widget class="QPushButton" name="pushButton_OPENUDP">
                 <property name="minimumSize">
                  <size>
-                  <width>70</width>
+                  <width>80</width>
                   <height>30</height>
                  </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton {
-    background-color: #8B0000;
-    color: white;
-    font-weight: bold;
-}
-QPushButton:hover {
-    background-color: #A00000;
-}
-QPushButton:pressed {
-    background-color: #600000;
-}</string>
                 </property>
                 <property name="text">
                  <string>Open UDP</string>
@@ -524,7 +678,7 @@ QPushButton:pressed {
                  </font>
                 </property>
                 <property name="text">
-                 <string>device IP :</string>
+                 <string>Device IP:</string>
                 </property>
                </widget>
               </item>
@@ -543,7 +697,7 @@ QPushButton:pressed {
                  </font>
                 </property>
                 <property name="text">
-                 <string>device PORT:</string>
+                 <string>Device PORT:</string>
                 </property>
                </widget>
               </item>
@@ -577,7 +731,7 @@ QPushButton:pressed {
                   </property>
                   <property name="font">
                    <font>
-                    <pointsize>8</pointsize>
+                    <pointsize>-1</pointsize>
                     <bold>true</bold>
                    </font>
                   </property>
@@ -607,7 +761,7 @@ QPushButton:pressed {
                   </property>
                   <property name="font">
                    <font>
-                    <pointsize>8</pointsize>
+                    <pointsize>-1</pointsize>
                     <bold>true</bold>
                    </font>
                   </property>
@@ -637,7 +791,7 @@ QPushButton:pressed {
                   </property>
                   <property name="font">
                    <font>
-                    <pointsize>8</pointsize>
+                    <pointsize>-1</pointsize>
                     <bold>true</bold>
                    </font>
                   </property>
@@ -761,16 +915,17 @@ QPushButton:pressed {
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>20</height>
+                  <height>25</height>
                  </size>
                 </property>
                 <property name="font">
                  <font>
+                  <family>Consolas</family>
                   <pointsize>11</pointsize>
                  </font>
                 </property>
                 <property name="text">
-                 <string>0,000</string>
+                 <string>0.000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -782,16 +937,17 @@ QPushButton:pressed {
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>20</height>
+                  <height>25</height>
                  </size>
                 </property>
                 <property name="font">
                  <font>
+                  <family>Consolas</family>
                   <pointsize>12</pointsize>
                  </font>
                 </property>
                 <property name="text">
-                 <string>0,000</string>
+                 <string>0.000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -803,16 +959,17 @@ QPushButton:pressed {
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>20</height>
+                  <height>25</height>
                  </size>
                 </property>
                 <property name="font">
                  <font>
+                  <family>Consolas</family>
                   <pointsize>12</pointsize>
                  </font>
                 </property>
                 <property name="text">
-                 <string>0,000</string>
+                 <string>0.000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -843,9 +1000,6 @@ QPushButton:pressed {
                 <bold>true</bold>
                </font>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
               <property name="text">
                <string>ADC 1</string>
               </property>
@@ -868,9 +1022,6 @@ QPushButton:pressed {
                 <bold>true</bold>
                </font>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
               <property name="text">
                <string>ADC 2</string>
               </property>
@@ -892,9 +1043,6 @@ QPushButton:pressed {
                 <pointsize>12</pointsize>
                 <bold>true</bold>
                </font>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
               </property>
               <property name="text">
                <string>ADC 3</string>
@@ -940,16 +1088,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -966,16 +1110,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -992,16 +1132,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
-              <property name="frameShape">
-               <enum>QFrame::Panel</enum>
-              </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1018,11 +1154,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
                </font>
               </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1139,13 +1276,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1162,13 +1298,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1185,13 +1320,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1208,13 +1342,12 @@ QPushButton:pressed {
               </property>
               <property name="font">
                <font>
+                <family>Consolas</family>
                 <pointsize>12</pointsize>
-                <italic>false</italic>
-                <bold>false</bold>
                </font>
               </property>
               <property name="text">
-               <string>000</string>
+               <string>0000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1226,13 +1359,65 @@ QPushButton:pressed {
          </layout>
         </item>
         <item>
+         <widget class="QLabel" name="label_SETPOINT">
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>⦿ Setpoint</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QDoubleSpinBox" name="spinBox_SETPOINT">
+            <property name="minimum">
+             <double>-180.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>180.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.500000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_SETPOINT">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>SET</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <layout class="QGridLayout" name="gridLayout_DirectionButtons">
           <item row="0" column="1">
            <widget class="QPushButton" name="btn_UP">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>60</width>
+              <height>30</height>
              </size>
             </property>
             <property name="text">
@@ -1244,8 +1429,8 @@ QPushButton:pressed {
            <widget class="QPushButton" name="btn_LEFT">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>60</width>
+              <height>30</height>
              </size>
             </property>
             <property name="text">
@@ -1257,8 +1442,8 @@ QPushButton:pressed {
            <widget class="QPushButton" name="btn_RIGHT">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>60</width>
+              <height>30</height>
              </size>
             </property>
             <property name="text">
@@ -1270,8 +1455,8 @@ QPushButton:pressed {
            <widget class="QPushButton" name="btn_DOWN">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>60</width>
+              <height>30</height>
              </size>
             </property>
             <property name="text">
@@ -1287,6 +1472,12 @@ QPushButton:pressed {
     </item>
     <item row="1" column="0">
      <widget class="QPushButton" name="pushButton">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>30</height>
+       </size>
+      </property>
       <property name="text">
        <string>CLEAR DISPLAYS</string>
       </property>
@@ -1300,7 +1491,7 @@ QPushButton:pressed {
      <x>0</x>
      <y>0</y>
      <width>1317</width>
-     <height>21</height>
+     <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDevice">

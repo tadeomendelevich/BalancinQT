@@ -75,6 +75,8 @@ private slots:
 
     void sendManualCommand();
 
+    void on_pushButton_SETPOINT_clicked();
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
@@ -145,6 +147,7 @@ private:
         ACTIVATE_LINE_FOLLOWING = 0xC5,
         ACTIVATE_POS_MAINTENANCE = 0xC6,
         ACTIVATE_MANUAL_CONTROL = 0xC7,
+        MODIFY_SETPOINT = 0xC8,
         MOVE_FORWARD = 0xD0,
         MOVE_BACKWARD = 0xD1,
         MOVE_LEFT = 0xD2,
