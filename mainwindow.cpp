@@ -2831,9 +2831,11 @@ void MainWindow::checkUdpInactivity()
         return; // Nunca recibimos nada aún, no disparamos el watchdog
     }
 
-    // 15000 ms = 15 segundos
-    if (udpLastRxTime.elapsed() > 15000) {
+    // 25000 ms = 25 segundos
+    if (udpLastRxTime.elapsed() > 25000) {
         clearUdpScreens();
+        ui->lineEdit_IP_REMOTA->clear();
+        ui->lineEdit_DEVICEPORT->clear();
 
         ui->textEdit_PROCCES->append("WATCHDOG UDP: Timeout (15s sin datos). Reiniciando socket...");
 
