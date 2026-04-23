@@ -269,9 +269,24 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
 QSplitter::handle {
     background-color: #0d1a08;
     image: none;
+    border: none;
+    width: 4px;
+    height: 4px;
+    margin: 0px;
+}
+QSplitter::handle:horizontal {
+    background-color: #0d1a08;
+    width: 4px;
+}
+QSplitter::handle:vertical {
+    background-color: #0d1a08;
+    height: 4px;
+}
+QSplitter::handle:hover {
+    background-color: rgba(90, 128, 32, 0.35);
 }
 QSplitter::handle:pressed {
-    background-color: rgba(138, 171, 48, 0.2);
+    background-color: rgba(138, 171, 48, 0.25);
 }
 QStatusBar {
     background-color: #0d1a08;
@@ -283,6 +298,12 @@ QStatusBar QLabel {
     border: none;
     background: transparent;
     padding: 2px 6px;
+}
+QWidget#widget_controls {
+    background-color: transparent;
+}
+QWidget {
+    background-color: transparent;
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -291,6 +312,9 @@ QStatusBar QLabel {
      <widget class="QSplitter" name="splitter_main">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="handleWidth">
+       <number>2</number>
       </property>
       <widget class="QTabWidget" name="tabWidget_Graficas">
         <property name="maximumSize">
@@ -538,6 +562,9 @@ QStatusBar QLabel {
         </property>
         <property name="orientation">
          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="handleWidth">
+         <number>2</number>
         </property>
         <widget class="QTextEdit" name="textEdit_RAW">
          <property name="font">
