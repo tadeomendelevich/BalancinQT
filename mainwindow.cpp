@@ -33,6 +33,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(udpWatchdogTimer, &QTimer::timeout, this, &MainWindow::checkUdpInactivity);
     udpEverReceivedData = false;
 
+    connect(ui->textEdit_RAW, &QTextEdit::textChanged, this, [this](){
+        ui->textEdit_RAW->moveCursor(QTextCursor::End);
+    });
+    connect(ui->textEdit_PROCCES, &QTextEdit::textChanged, this, [this](){
+        ui->textEdit_PROCCES->moveCursor(QTextCursor::End);
+    });
+
     // Conectar botones D-PAD a control manual
     connect(ui->btn_UP, &QPushButton::pressed, this, [=](){
         currentManualCommand = MOVE_FORWARD;
@@ -1015,7 +1022,7 @@ void MainWindow::sendDataUDP()
     case MODIFY_KV_BRAKE: { // MODIFY_KV_BRAKE=0xBF
         dato[indice++] = MODIFY_KV_BRAKE;
 
-        double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 10.0, 3, &ok);
+        double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 100.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kv_val;
         dato[indice++] = w.ui8[0];
@@ -1268,7 +1275,7 @@ void MainWindow::sendDataSerial(){
     case MODIFY_KV_BRAKE: { // MODIFY_KV_BRAKE=0xBF
         dato[indice++] = MODIFY_KV_BRAKE;
 
-        double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 10.0, 3, &ok);
+        double kv_val = QInputDialog::getDouble(this, "Factor KV BRAKE", "KV_BRAKE:", 0.0, 0.0, 100.0, 3, &ok);
         if (!ok) return;
         w.f32 = (float)kv_val;
         dato[indice++] = w.ui8[0];
@@ -1467,53 +1474,14 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
 
     case GETADCVALUES: { //GETADCVALUES=0xA5
-        w.ui8[0] = datosRx[2];  // ADC1
-        w.ui8[1] = datosRx[3];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_1->setText(str);
-        adcValues[0] = w.ui16[0];
-
-        w.ui8[0] = datosRx[4];  // ADC2
-        w.ui8[1] = datosRx[5];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_2->setText(str);
-        adcValues[1] = w.ui16[0];
-
-        w.ui8[0] = datosRx[6];  // ADC3
-        w.ui8[1] = datosRx[7];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_3->setText(str);
-        adcValues[2] = w.ui16[0];
-
-        w.ui8[0] = datosRx[8];  // ADC4
-        w.ui8[1] = datosRx[9];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_4->setText(str);
-        adcValues[3] = w.ui16[0];
-
-        w.ui8[0] = datosRx[10];  // ADC5
-        w.ui8[1] = datosRx[11];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_5->setText(str);
-        adcValues[4] = w.ui16[0];
-
-        w.ui8[0] = datosRx[12];  // ADC6
-        w.ui8[1] = datosRx[13];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_6->setText(str);
-        adcValues[5] = w.ui16[0];
-
-        w.ui8[0] = datosRx[14];  // ADC7
-        w.ui8[1] = datosRx[15];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_7->setText(str);
-        adcValues[6] = w.ui16[0];
-
-        w.ui8[0] = datosRx[16];  // ADC8
-        w.ui8[1] = datosRx[17];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_8->setText(str);
-        adcValues[7] = w.ui16[0];
+        w.ui8[0] = datosRx[2];  w.ui8[1] = datosRx[3];  adcValues[0] = w.ui16[0];
+        w.ui8[0] = datosRx[4];  w.ui8[1] = datosRx[5];  adcValues[1] = w.ui16[0];
+        w.ui8[0] = datosRx[6];  w.ui8[1] = datosRx[7];  adcValues[2] = w.ui16[0];
+        w.ui8[0] = datosRx[8];  w.ui8[1] = datosRx[9];  adcValues[3] = w.ui16[0];
+        w.ui8[0] = datosRx[10]; w.ui8[1] = datosRx[11]; adcValues[4] = w.ui16[0];
+        w.ui8[0] = datosRx[12]; w.ui8[1] = datosRx[13]; adcValues[5] = w.ui16[0];
+        w.ui8[0] = datosRx[14]; w.ui8[1] = datosRx[15]; adcValues[6] = w.ui16[0];
+        w.ui8[0] = datosRx[16]; w.ui8[1] = datosRx[17]; adcValues[7] = w.ui16[0];
 
         str = "Valores de ADC obtenidos correctamente!";
         ui->textEdit_PROCCES->append(str);
@@ -1679,53 +1647,14 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 
         t = elapsedSec;
 
-        w.ui8[0] = datosRx[2];  // ADC1
-        w.ui8[1] = datosRx[3];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_1->setText(str);
-        adcValues[0] = w.ui16[0];
-
-        w.ui8[0] = datosRx[4];  // ADC2
-        w.ui8[1] = datosRx[5];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_2->setText(str);
-        adcValues[1] = w.ui16[0];
-
-        w.ui8[0] = datosRx[6];  // ADC3
-        w.ui8[1] = datosRx[7];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_3->setText(str);
-        adcValues[2] = w.ui16[0];
-
-        w.ui8[0] = datosRx[8];  // ADC4
-        w.ui8[1] = datosRx[9];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_4->setText(str);
-        adcValues[3] = w.ui16[0];
-
-        w.ui8[0] = datosRx[10];  // ADC5
-        w.ui8[1] = datosRx[11];
-        str = QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_5->setText(str);
-        adcValues[4] = w.ui16[0];
-
-        w.ui8[0] = datosRx[12];  // ADC6
-        w.ui8[1] = datosRx[13];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_6->setText(str);
-        adcValues[5] = w.ui16[0];
-
-        w.ui8[0] = datosRx[14];  // ADC7
-        w.ui8[1] = datosRx[15];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_7->setText(str);
-        adcValues[6] = w.ui16[0];
-
-        w.ui8[0] = datosRx[16];  // ADC8
-        w.ui8[1] = datosRx[17];
-        str =QString("%1").arg(w.ui16[0], 5, 10, QChar('0'));
-        ui->label_ADCVALUE_8->setText(str);
-        adcValues[7] = w.ui16[0];
+        w.ui8[0] = datosRx[2];  w.ui8[1] = datosRx[3];  adcValues[0] = w.ui16[0];
+        w.ui8[0] = datosRx[4];  w.ui8[1] = datosRx[5];  adcValues[1] = w.ui16[0];
+        w.ui8[0] = datosRx[6];  w.ui8[1] = datosRx[7];  adcValues[2] = w.ui16[0];
+        w.ui8[0] = datosRx[8];  w.ui8[1] = datosRx[9];  adcValues[3] = w.ui16[0];
+        w.ui8[0] = datosRx[10]; w.ui8[1] = datosRx[11]; adcValues[4] = w.ui16[0];
+        w.ui8[0] = datosRx[12]; w.ui8[1] = datosRx[13]; adcValues[5] = w.ui16[0];
+        w.ui8[0] = datosRx[14]; w.ui8[1] = datosRx[15]; adcValues[6] = w.ui16[0];
+        w.ui8[0] = datosRx[16]; w.ui8[1] = datosRx[17]; adcValues[7] = w.ui16[0];
 
         w.ui8[0] = datosRx[18];  // AX
         w.ui8[1] = datosRx[19];
@@ -2066,14 +1995,18 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
 void MainWindow::on_pushButton_clicked()    // BOTON DE "CLEAR DISPLAYS"
 {
     ui->textEdit_RAW->setHtml(
-        "<p align='center' style='margin-top: 40%;'>"
-        "<span style='font-family: Verdana; font-size: 14px; text-decoration: underline;'>"
-        "Dato sin procesar</span></p>"
+        "<html><head><meta charset=\"utf-8\"/></head>"
+        "<body style=\"font-family:'Consolas'; font-size:12px;\">"
+        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(20,50,8,0.85); border-radius:5px;\">"
+        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#78d878; letter-spacing:2px;\">&#x2191; DATO ENVIADO &#x2191;</span>"
+        "</p></body></html>"
     );
     ui->textEdit_PROCCES->setHtml(
-        "<p align='center' style='margin-top: 40%;'>"
-        "<span style='font-family: Verdana; font-size: 20px; text-decoration: underline;'>"
-        "Dato procesado</span></p>"
+        "<html><head><meta charset=\"utf-8\"/></head>"
+        "<body style=\"font-family:'Consolas'; font-size:13px;\">"
+        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(0,50,35,0.85); border-radius:5px;\">"
+        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#44ffcc; letter-spacing:2px;\">&#x2193; DATO RECIBIDO &#x2193;</span>"
+        "</p></body></html>"
     );
 }
 
@@ -2664,6 +2597,177 @@ void MainWindow::on_pushButton_SetKI_clicked()
     ui->lineEdit_KI->setPlaceholderText("Nuevo KI");
 }
 
+void MainWindow::on_pushButton_SetKP_LINE_clicked()
+{
+    bool ok = false;
+    QString text = ui->lineEdit_KP_LINE->text();
+    text.replace(',', '.');
+    double val = text.toDouble(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "El valor de KP_LINE no es un número válido.");
+        return;
+    }
+
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+        return;
+    }
+
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        QMessageBox::warning(this, "UDP", "Destino IP o PUERTO no configurado.");
+        return;
+    }
+
+    _udat w;
+    w.f32 = (float)val;
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = MODIFY_KP_LINE;
+    dato[indice++] = w.ui8[0];
+    dato[indice++] = w.ui8[1];
+    dato[indice++] = w.ui8[2];
+    dato[indice++] = w.ui8[3];
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+
+    ui->textEdit_PROCCES->append("Set KP_LINE (UDP): " + QString::number(val, 'f', 3));
+    ui->label_KP_LINE->setText(QString::number(val, 'f', 3));
+    ui->lineEdit_KP_LINE->clear();
+    ui->lineEdit_KP_LINE->setPlaceholderText("Nuevo KP");
+}
+
+void MainWindow::on_pushButton_SetKD_LINE_clicked()
+{
+    bool ok = false;
+    QString text = ui->lineEdit_KD_LINE->text();
+    text.replace(',', '.');
+    double val = text.toDouble(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "El valor de KD_LINE no es un número válido.");
+        return;
+    }
+
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+        return;
+    }
+
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        QMessageBox::warning(this, "UDP", "Destino IP o PUERTO no configurado.");
+        return;
+    }
+
+    _udat w;
+    w.f32 = (float)val;
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = MODIFY_KD_LINE;
+    dato[indice++] = w.ui8[0];
+    dato[indice++] = w.ui8[1];
+    dato[indice++] = w.ui8[2];
+    dato[indice++] = w.ui8[3];
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+
+    ui->textEdit_PROCCES->append("Set KD_LINE (UDP): " + QString::number(val, 'f', 3));
+    ui->label_KD_LINE->setText(QString::number(val, 'f', 3));
+    ui->lineEdit_KD_LINE->clear();
+    ui->lineEdit_KD_LINE->setPlaceholderText("Nuevo KD");
+}
+
+void MainWindow::on_pushButton_SetKI_LINE_clicked()
+{
+    bool ok = false;
+    QString text = ui->lineEdit_KI_LINE->text();
+    text.replace(',', '.');
+    double val = text.toDouble(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "El valor de KI_LINE no es un número válido.");
+        return;
+    }
+
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        QMessageBox::warning(this, "UDP", "Primero abrí el puerto local (Open UDP).");
+        return;
+    }
+
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        QMessageBox::warning(this, "UDP", "Destino IP o PUERTO no configurado.");
+        return;
+    }
+
+    _udat w;
+    w.f32 = (float)val;
+    unsigned char dato[256];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = MODIFY_KI_LINE;
+    dato[indice++] = w.ui8[0];
+    dato[indice++] = w.ui8[1];
+    dato[indice++] = w.ui8[2];
+    dato[indice++] = w.ui8[3];
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+
+    ui->textEdit_PROCCES->append("Set KI_LINE (UDP): " + QString::number(val, 'f', 3));
+    ui->label_KI_LINE->setText(QString::number(val, 'f', 3));
+    ui->lineEdit_KI_LINE->clear();
+    ui->lineEdit_KI_LINE->setPlaceholderText("Nuevo KI");
+}
+
 void MainWindow::sendManualCommand()
 {
     // Verificar si el socket está listo para enviar
@@ -2855,8 +2959,20 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
 void MainWindow::clearUdpScreens()
 {
-    ui->textEdit_RAW->clear();
-    ui->textEdit_PROCCES->clear();
+    ui->textEdit_RAW->setHtml(
+        "<html><head><meta charset=\"utf-8\"/></head>"
+        "<body style=\"font-family:'Consolas'; font-size:12px;\">"
+        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(20,50,8,0.85); border-radius:5px;\">"
+        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#78d878; letter-spacing:2px;\">&#x2191; DATO ENVIADO &#x2191;</span>"
+        "</p></body></html>"
+    );
+    ui->textEdit_PROCCES->setHtml(
+        "<html><head><meta charset=\"utf-8\"/></head>"
+        "<body style=\"font-family:'Consolas'; font-size:13px;\">"
+        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(0,50,35,0.85); border-radius:5px;\">"
+        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#44ffcc; letter-spacing:2px;\">&#x2193; DATO RECIBIDO &#x2193;</span>"
+        "</p></body></html>"
+    );
 }
 
 void MainWindow::checkUdpInactivity()

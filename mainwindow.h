@@ -73,6 +73,12 @@ private slots:
 
     void on_pushButton_SetKI_clicked();
 
+    void on_pushButton_SetKP_LINE_clicked();
+
+    void on_pushButton_SetKD_LINE_clicked();
+
+    void on_pushButton_SetKI_LINE_clicked();
+
     void sendManualCommand();
 
     void on_pushButton_SETPOINT_clicked();

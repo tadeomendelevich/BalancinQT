@@ -111,24 +111,14 @@ QLabel#label_inclination_Yvalue {
     padding: 4px 8px;
     min-width: 60px;
 }
-QLabel#label_KP, QLabel#label_KD, QLabel#label_KI {
+QLabel#label_KP, QLabel#label_KD, QLabel#label_KI,
+QLabel#label_KP_LINE, QLabel#label_KD_LINE, QLabel#label_KI_LINE {
     color: #ffe080;
     background-color: rgba(40, 30, 0, 0.55);
     border: 1px solid #706010;
     border-radius: 5px;
     font-family: Consolas;
     padding: 4px 8px;
-}
-QLabel#label_ADCVALUE_1, QLabel#label_ADCVALUE_2,
-QLabel#label_ADCVALUE_3, QLabel#label_ADCVALUE_4,
-QLabel#label_ADCVALUE_5, QLabel#label_ADCVALUE_6,
-QLabel#label_ADCVALUE_7, QLabel#label_ADCVALUE_8 {
-    color: #66ffaa;
-    background-color: rgba(0, 35, 15, 0.65);
-    border: 1px solid #1a5a30;
-    border-radius: 4px;
-    font-family: Consolas;
-    padding: 3px 6px;
 }
 QTextEdit {
     border: 1px solid #3a5f0b;
@@ -276,6 +266,13 @@ QScrollBar::handle:horizontal {
 }
 QScrollBar::handle:horizontal:hover { background-color: #4a7818; }
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+QSplitter::handle {
+    background-color: #0d1a08;
+    image: none;
+}
+QSplitter::handle:pressed {
+    background-color: rgba(138, 171, 48, 0.2);
+}
 QStatusBar {
     background-color: #0d1a08;
     color: #789060;
@@ -291,9 +288,17 @@ QStatusBar QLabel {
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_10">
-      <item>
-       <widget class="QTabWidget" name="tabWidget_Graficas">
+     <widget class="QSplitter" name="splitter_main">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QTabWidget" name="tabWidget_Graficas">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
@@ -435,8 +440,14 @@ QStatusBar QLabel {
            <widget class="QChartView" name="accelerationWidget" native="true">
             <property name="minimumSize">
              <size>
-              <width>300</width>
+              <width>20</width>
               <height>200</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
              </size>
             </property>
            </widget>
@@ -467,8 +478,14 @@ QStatusBar QLabel {
            <widget class="QChartView" name="gyroscopeWidget" native="true">
             <property name="minimumSize">
              <size>
-              <width>300</width>
+              <width>50</width>
               <height>200</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
              </size>
             </property>
            </widget>
@@ -506,12 +523,7 @@ QStatusBar QLabel {
          </layout>
         </widget>
        </widget>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_10"/>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="textEdit_RAW">
+      <widget class="QSplitter" name="splitter_texts">
         <property name="minimumSize">
          <size>
           <width>200</width>
@@ -524,64 +536,54 @@ QStatusBar QLabel {
           <height>16777215</height>
          </size>
         </property>
-        <property name="font">
-         <font>
-          <family>Consolas</family>
-          <pointsize>-1</pointsize>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
         </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="html">
-         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <widget class="QTextEdit" name="textEdit_RAW">
+         <property name="font">
+          <font>
+           <family>Consolas</family>
+           <pointsize>-1</pointsize>
+           <italic>false</italic>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:12px; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:14px; text-decoration: underline;&quot;&gt;Dato sin procesar&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="textEdit_PROCCES">
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>300</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <family>Consolas</family>
-          <pointsize>-1</pointsize>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="html">
-         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px; background-color:rgba(20,50,8,0.847059);&quot;&gt;&lt;span style=&quot; font-size:13px; font-weight:700; color:#78d878;&quot;&gt;↑ DATO ENVIADO ↑&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+        <widget class="QTextEdit" name="textEdit_PROCCES">
+         <property name="font">
+          <font>
+           <family>Consolas</family>
+           <pointsize>-1</pointsize>
+           <italic>false</italic>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:13px; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:40px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Verdana'; font-size:20px; text-decoration: underline;&quot;&gt;Dato procesado&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
+&lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px; background-color:rgba(0,50,35,0.847059);&quot;&gt;&lt;span style=&quot; font-size:13px; font-weight:700; color:#44ffcc;&quot;&gt;↓ DATO RECIBIDO ↓&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
        </widget>
-      </item>
-      <item>
+      <widget class="QWidget" name="widget_controls">
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -707,100 +709,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <string/>
                 </property>
                </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_PID_Inputs">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_KP">
-                <item>
-                 <widget class="QLineEdit" name="lineEdit_KP">
-                  <property name="placeholderText">
-                   <string>Nuevo KP</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="pushButton_SetKP">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>-1</pointsize>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>SET</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_KD">
-                <item>
-                 <widget class="QLineEdit" name="lineEdit_KD">
-                  <property name="placeholderText">
-                   <string>Nuevo KD</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="pushButton_SetKD">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>-1</pointsize>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>SET</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_KI">
-                <item>
-                 <widget class="QLineEdit" name="lineEdit_KI">
-                  <property name="placeholderText">
-                   <string>Nuevo KI</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="pushButton_SetKI">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>-1</pointsize>
-                    <bold>true</bold>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>SET</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
               </item>
              </layout>
             </item>
@@ -980,202 +888,130 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <layout class="QHBoxLayout" name="horizontalLayout_PID_Inputs">
             <item>
-             <widget class="QLabel" name="label_ADC_1">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>ADC 1</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_KP">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_KP">
+                <property name="placeholderText">
+                 <string>Nuevo KP</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_SetKP">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>-1</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QLabel" name="label_2">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>ADC 2</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_KD">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_KD">
+                <property name="placeholderText">
+                 <string>Nuevo KD</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_SetKD">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>-1</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QLabel" name="label_ADC_3">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>ADC 3</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_ADC_4">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>ADC 4</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="label_ADCVALUE_1">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_ADCVALUE_2">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_ADCVALUE_3">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_ADCVALUE_4">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_KI">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_KI">
+                <property name="placeholderText">
+                 <string>Nuevo KI</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_SetKI">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>-1</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
+         <layout class="QVBoxLayout" name="verticalLayout_PID_LINE">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <widget class="QLabel" name="label_PID_LINE_title">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>14</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>PID SEGUIDOR LÍNEA</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_PID_LINE_headers">
             <item>
-             <widget class="QLabel" name="label_ADC_5">
+             <widget class="QLabel" name="label_PID_LINE_KP_hdr">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -1189,7 +1025,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="text">
-               <string>ADC 5</string>
+               <string>KP</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1197,7 +1033,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_ADC_6">
+             <widget class="QLabel" name="label_PID_LINE_KD_hdr">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -1211,7 +1047,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="text">
-               <string>ADC 6</string>
+               <string>KD</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1219,7 +1055,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_ADC_7">
+             <widget class="QLabel" name="label_PID_LINE_KI_hdr">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -1233,29 +1069,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="text">
-               <string>ADC 7</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_ADC_8">
-              <property name="maximumSize">
-               <size>
-                <width>500</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>ADC 8</string>
+               <string>KI</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1265,23 +1079,23 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <layout class="QHBoxLayout" name="horizontalLayout_PID_LINE_values">
             <item>
-             <widget class="QLabel" name="label_ADCVALUE_5">
+             <widget class="QLabel" name="label_KP_LINE">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>20</height>
+                <height>25</height>
                </size>
               </property>
               <property name="font">
                <font>
                 <family>Consolas</family>
-                <pointsize>12</pointsize>
+                <pointsize>11</pointsize>
                </font>
               </property>
               <property name="text">
-               <string>0000</string>
+               <string>0.000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1289,21 +1103,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_ADCVALUE_6">
+             <widget class="QLabel" name="label_KD_LINE">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>20</height>
+                <height>25</height>
                </size>
               </property>
               <property name="font">
                <font>
                 <family>Consolas</family>
-                <pointsize>12</pointsize>
+                <pointsize>11</pointsize>
                </font>
               </property>
               <property name="text">
-               <string>0000</string>
+               <string>0.000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -1311,48 +1125,120 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_ADCVALUE_7">
+             <widget class="QLabel" name="label_KI_LINE">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>20</height>
+                <height>25</height>
                </size>
               </property>
               <property name="font">
                <font>
                 <family>Consolas</family>
-                <pointsize>12</pointsize>
+                <pointsize>11</pointsize>
                </font>
               </property>
               <property name="text">
-               <string>0000</string>
+               <string>0.000</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_PID_LINE_inputs">
             <item>
-             <widget class="QLabel" name="label_ADCVALUE_8">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_KP_LINE">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_KP_LINE">
+                <property name="placeholderText">
+                 <string>Nuevo KP</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_SetKP_LINE">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>-1</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_KD_LINE">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_KD_LINE">
+                <property name="placeholderText">
+                 <string>Nuevo KD</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_SetKD_LINE">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>-1</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_KI_LINE">
+              <item>
+               <widget class="QLineEdit" name="lineEdit_KI_LINE">
+                <property name="placeholderText">
+                 <string>Nuevo KI</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_SetKI_LINE">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>-1</pointsize>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
@@ -1385,7 +1271,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <double>180.000000000000000</double>
             </property>
             <property name="singleStep">
-             <double>0.500000000000000</double>
+             <double>0.250000000000000</double>
             </property>
            </widget>
           </item>
@@ -1416,8 +1302,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <widget class="QPushButton" name="btn_UP">
             <property name="minimumSize">
              <size>
-              <width>60</width>
-              <height>30</height>
+              <width>45</width>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1429,8 +1315,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <widget class="QPushButton" name="btn_LEFT">
             <property name="minimumSize">
              <size>
-              <width>60</width>
-              <height>30</height>
+              <width>45</width>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1442,8 +1328,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <widget class="QPushButton" name="btn_RIGHT">
             <property name="minimumSize">
              <size>
-              <width>60</width>
-              <height>30</height>
+              <width>45</width>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1455,8 +1341,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <widget class="QPushButton" name="btn_DOWN">
             <property name="minimumSize">
              <size>
-              <width>60</width>
-              <height>30</height>
+              <width>45</width>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1467,8 +1353,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </item>
        </layout>
-      </item>
-     </layout>
+      </widget>
+     </widget>
     </item>
     <item row="1" column="0">
      <widget class="QPushButton" name="pushButton">
