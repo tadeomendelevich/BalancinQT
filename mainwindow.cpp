@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->accelerationWidget->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    ui->gyroscopeWidget->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     this->setFocusPolicy(Qt::StrongFocus);
     qApp->installEventFilter(this);
     serial=new QSerialPort(this);
