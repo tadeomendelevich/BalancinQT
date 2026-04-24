@@ -2,4 +2,5 @@
     <qresource prefix="/img">
         <file>logoUNERsolo.png</file>
     </qresource>
+
 </RCC>

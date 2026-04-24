@@ -11,6 +11,7 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include "settingsdialog.h"
+#include "robotviewer3d.h"
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QChart>
@@ -352,6 +353,9 @@ private:
     QChart *lineFollowerAdcChart;
     QLineSeries *seriesLineAdc1, *seriesLineAdc2, *seriesLineAdc3, *seriesLineAdc4;
     QValueAxis *lineFollowerAdcAxisX, *lineFollowerAdcAxisY;
+
+    // Vista 3D del robot
+    RobotViewer3D *robotViewer3D;
 
     // GRABACIÓN DE CSV
     QFile csvLogFile;

@@ -519,6 +519,15 @@ MainWindow::MainWindow(QWidget *parent)
     layoutLineFollower->addWidget(lineFollowerAdcChartView);
 
     ui->tabWidget_Graficas->addTab(tabLineFollower, "Seguidor de Línea");
+
+    // --- TAB Vista 3D ---
+    QWidget *tab3D = new QWidget();
+    QVBoxLayout *layout3D = new QVBoxLayout(tab3D);
+    layout3D->setContentsMargins(0, 0, 0, 0);
+    robotViewer3D = new RobotViewer3D(tab3D);
+    layout3D->addWidget(robotViewer3D);
+    ui->tabWidget_Graficas->insertTab(0, tab3D, "Vista 3D");
+    ui->tabWidget_Graficas->setCurrentIndex(0);
 }
 
 MainWindow::~MainWindow()
@@ -1538,6 +1547,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         float roll = w.f32;  // firmado
         QString strRoll = QString::number(roll, 'f', 2) + " \u00B0";
         ui->label_inclination_Xvalue->setText(strRoll);
+        robotViewer3D->setPitch(roll);
 
         // PITCH
         w.ui8[0] = datosRx[6];
@@ -1688,6 +1698,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         qint16 roll = w.i16[0];  // firmado
         QString strRoll = QString::number(roll) + " \u00B0";
         ui->label_inclination_Xvalue->setText(strRoll);
+        robotViewer3D->setPitch(static_cast<float>(roll));
 
         // PITCH
         w.ui8[0] = datosRx[32];
@@ -1762,6 +1773,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         // 1. UI Labels
         ui->label_inclination_Xvalue->setText(
         QString::number(data->roll_filt, 'f', 2) + " °");
+        robotViewer3D->setPitch(data->roll_filt);
 
         // 2. Tiempo
         double t_sec = data->t_ms / 1000.0;
@@ -2171,6 +2183,7 @@ void MainWindow::processCsvLine(const QByteArray &line)
 
     // Muestro los valores de ROLL y PITCH
     ui->label_inclination_Xvalue->setText(QString::number(telemetryData.roll_filt, 'f', 2) + " °");
+    robotViewer3D->setPitch(telemetryData.roll_filt);
     ui->label_inclination_Yvalue->setText(QString::number(telemetryData.pitch, 'f', 2) + " °");
 
     // Graficamos Giroscopio (gyro_y) en el chart de giroscopio

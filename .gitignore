@@ -1,0 +1,5 @@
+# Modelos 3D (archivos grandes, no van en git)
+AutoMicro.obj
+AutoMicro.mtl
+*.obj
+*.mtl
