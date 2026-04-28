@@ -9,6 +9,9 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QGroupBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -521,6 +524,74 @@ MainWindow::MainWindow(QWidget *parent)
     layoutLineFollower->addWidget(lineFollowerAdcChartView);
 
     ui->tabWidget_Graficas->addTab(tabLineFollower, "Seguidor de Línea");
+
+    // --- TAB MPU CRUDO: valores numéricos de acelerómetro y giroscopio ---
+    {
+        auto makeValueLabel = [](QWidget *parent) {
+            auto *lbl = new QLabel("---", parent);
+            QFont f = lbl->font();
+            f.setPointSize(28);
+            f.setBold(true);
+            f.setFamily("Courier");
+            lbl->setFont(f);
+            lbl->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+            lbl->setMinimumWidth(200);
+            return lbl;
+        };
+        auto makeTitleLabel = [](const QString &text, QWidget *parent) {
+            auto *lbl = new QLabel(text, parent);
+            QFont f = lbl->font();
+            f.setPointSize(14);
+            f.setBold(false);
+            lbl->setFont(f);
+            lbl->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+            return lbl;
+        };
+
+        QWidget *tabMpu = new QWidget();
+        QHBoxLayout *hMain = new QHBoxLayout(tabMpu);
+        hMain->setContentsMargins(30, 30, 30, 30);
+        hMain->setSpacing(40);
+
+        // --- Bloque Acelerómetro ---
+        auto *grpAcc = new QGroupBox("Acelerómetro  (m/s²)", tabMpu);
+        grpAcc->setStyleSheet("QGroupBox { font-size:16px; font-weight:bold; }");
+        auto *gridAcc = new QGridLayout(grpAcc);
+        gridAcc->setSpacing(16);
+
+        lblRawAx = makeValueLabel(grpAcc);
+        lblRawAy = makeValueLabel(grpAcc);
+        lblRawAz = makeValueLabel(grpAcc);
+        gridAcc->addWidget(makeTitleLabel("Ax", grpAcc), 0, 0);
+        gridAcc->addWidget(lblRawAx,                     0, 1);
+        gridAcc->addWidget(makeTitleLabel("Ay", grpAcc), 1, 0);
+        gridAcc->addWidget(lblRawAy,                     1, 1);
+        gridAcc->addWidget(makeTitleLabel("Az", grpAcc), 2, 0);
+        gridAcc->addWidget(lblRawAz,                     2, 1);
+        gridAcc->setRowStretch(3, 1);
+
+        // --- Bloque Giroscopio ---
+        auto *grpGyro = new QGroupBox("Giroscopio  (°/s)", tabMpu);
+        grpGyro->setStyleSheet("QGroupBox { font-size:16px; font-weight:bold; }");
+        auto *gridGyro = new QGridLayout(grpGyro);
+        gridGyro->setSpacing(16);
+
+        lblRawGx = makeValueLabel(grpGyro);
+        lblRawGy = makeValueLabel(grpGyro);
+        lblRawGz = makeValueLabel(grpGyro);
+        gridGyro->addWidget(makeTitleLabel("Gx", grpGyro), 0, 0);
+        gridGyro->addWidget(lblRawGx,                      0, 1);
+        gridGyro->addWidget(makeTitleLabel("Gy", grpGyro), 1, 0);
+        gridGyro->addWidget(lblRawGy,                      1, 1);
+        gridGyro->addWidget(makeTitleLabel("Gz", grpGyro), 2, 0);
+        gridGyro->addWidget(lblRawGz,                      2, 1);
+        gridGyro->setRowStretch(3, 1);
+
+        hMain->addWidget(grpAcc);
+        hMain->addWidget(grpGyro);
+
+        ui->tabWidget_Graficas->insertTab(0, tabMpu, "MPU Crudo");
+    }
 
     // --- TAB Vista 3D ---
     QWidget *tab3D = new QWidget();
@@ -2205,6 +2276,14 @@ void MainWindow::processCsvLine(const QByteArray &line)
     seriesRawGx->append(t_sec, telemetryData.gx);
     seriesRawGy->append(t_sec, telemetryData.gy);
     seriesRawGz->append(t_sec, telemetryData.gz);
+
+    // Actualizar labels numéricos del tab MPU Crudo
+    lblRawAx->setText(QString::number(telemetryData.ax, 'f', 3));
+    lblRawAy->setText(QString::number(telemetryData.ay, 'f', 3));
+    lblRawAz->setText(QString::number(telemetryData.az, 'f', 3));
+    lblRawGx->setText(QString::number(telemetryData.gx, 'f', 2));
+    lblRawGy->setText(QString::number(telemetryData.gy, 'f', 2));
+    lblRawGz->setText(QString::number(telemetryData.gz, 'f', 2));
 
     // Actualizamos el eje X para que "corra" con el tiempo
     // Mantenemos una ventana de 10 segundos

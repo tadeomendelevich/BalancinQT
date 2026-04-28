@@ -357,6 +357,10 @@ private:
     // Vista 3D del robot
     RobotViewer3D *robotViewer3D;
 
+    // Labels de valores crudos MPU
+    QLabel *lblRawAx, *lblRawAy, *lblRawAz;
+    QLabel *lblRawGx, *lblRawGy, *lblRawGz;
+
     // GRABACIÓN DE CSV
     QFile csvLogFile;
     bool isRecording = false;

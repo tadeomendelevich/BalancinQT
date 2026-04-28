@@ -71,6 +71,7 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     : QWidget(parent)
     , m_view(new Qt3DExtras::Qt3DWindow())
     , m_robotTransform(nullptr)
+    , m_baseTransform(nullptr)
 {
     m_view->defaultFrameGraph()->setClearColor(QColor(10, 18, 6));
 
@@ -80,7 +81,7 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     Qt3DRender::QCamera *cam = m_view->camera();
     cam->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 3000.0f);
     cam->setPosition(QVector3D(250.0f, 160.0f, 350.0f));
-    cam->setViewCenter(QVector3D(0.0f, 20.0f, 0.0f));
+    cam->setViewCenter(QVector3D(0.0f, 80.0f, 0.0f));
     cam->setUpVector(QVector3D(0.0f, 1.0f, 0.0f));
 
     auto *camCtrl = new Qt3DExtras::QOrbitCameraController(root);
@@ -113,7 +114,7 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     floorMat->setDiffuse(QColor(14, 28, 9));
     floorMat->setSpecular(QColor(30, 60, 20));
     floorMat->setShininess(10.0f);
-    floorTransform->setTranslation(QVector3D(0.0f, -100.0f, 0.0f)); // posición provisional
+    floorTransform->setTranslation(QVector3D(0.0f, 0.0f, 0.0f)); // piso fijo en Y=0
 
     floorEntity->addComponent(floorMesh);
     floorEntity->addComponent(floorTransform);
@@ -134,11 +135,12 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
 
     // --- Entidad base: escala + orientación estática del modelo ---
     auto *robotBaseEntity = new Qt3DCore::QEntity(root);
-    auto *baseTransform   = new Qt3DCore::QTransform(robotBaseEntity);
-    baseTransform->setScale(12.0f);
-    baseTransform->setRotation(
+    m_baseTransform = new Qt3DCore::QTransform(robotBaseEntity);
+    m_baseTransform->setScale(12.0f);
+    m_baseTransform->setRotation(
         QQuaternion::fromAxisAndAngle(QVector3D(1.0f, 0.0f, 0.0f), -90.0f));
-    robotBaseEntity->addComponent(baseTransform);
+    m_baseTransform->setTranslation(QVector3D(0.0f, 25.0f, 0.0f)); // altura base
+    robotBaseEntity->addComponent(m_baseTransform);
 
     // --- Entidad de pitch dinámico ---
     auto *robotEntity = new Qt3DCore::QEntity(robotBaseEntity);
@@ -158,24 +160,25 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     material->setShininess(90.0f);
     robotEntity->addComponent(material);
 
-    // Auto-centrado + piso dinámico usando QBoundingVolume
-    auto *bv = new Qt3DCore::QBoundingVolume(robotEntity);
+    // Auto-centrado: eleva el modelo para que sus ruedas queden sobre el piso.
+    // Se usa conexión manual (no SingleShot) para ignorar disparos con bounds
+    // todavía en cero (antes de que el mesh termine de cargar).
+    auto *bv   = new Qt3DCore::QBoundingVolume(robotEntity);
+    auto *conn = new QMetaObject::Connection();
     robotEntity->addComponent(bv);
-    QObject::connect(bv, &Qt3DCore::QBoundingVolume::implicitMaxPointChanged, bv,
-        [bv, this, floorTransform](){
+    *conn = QObject::connect(bv, &Qt3DCore::QBoundingVolume::implicitMaxPointChanged,
+        [bv, this, conn](){
             QVector3D minPt = bv->implicitMinPoint();
             QVector3D maxPt = bv->implicitMaxPoint();
+            if (minPt == maxPt) return; // mesh aún no cargado, esperar
+
+            // Centrar el modelo en su punto geométrico: rotación desde el centro
             QVector3D center = (minPt + maxPt) / 2.0f;
             m_robotTransform->setTranslation(-center);
 
-            // local Z → world Y (tras rotación -90°X y escala 12)
-            float localBottomZ = minPt.z() - center.z();
-            float worldFloorY  = localBottomZ * 12.0f - 2.0f; // -2 de margen
-            floorTransform->setTranslation(QVector3D(0.0f, worldFloorY, 0.0f));
-
-            // Reposicionar grilla al mismo Y
-            // (las líneas fueron creadas en Y fijo, se dejan como referencia visual)
-        }, Qt::SingleShotConnection);
+            QObject::disconnect(*conn);
+            delete conn;
+        });
 
     m_view->setRootEntity(root);
 
@@ -193,6 +196,6 @@ void RobotViewer3D::setPitch(float degrees)
         return;
     QVector3D currentTranslation = m_robotTransform->translation();
     m_robotTransform->setRotation(
-        QQuaternion::fromAxisAndAngle(QVector3D(1.0f, 0.0f, 0.0f), degrees));
+        QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), degrees));
     m_robotTransform->setTranslation(currentTranslation);
 }

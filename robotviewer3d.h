@@ -16,6 +16,7 @@ public:
 private:
     Qt3DExtras::Qt3DWindow *m_view;
     Qt3DCore::QTransform   *m_robotTransform;
+    Qt3DCore::QTransform   *m_baseTransform;
 };
 
 #endif // ROBOTVIEWER3D_H
