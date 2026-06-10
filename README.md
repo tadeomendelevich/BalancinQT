@@ -1,110 +1,123 @@
-# 🖥️ Interfaz de Control y Monitoreo - Self-Balancing Robot
-Aplicación desarrollada en Qt para el monitoreo, control y análisis en tiempo real de un robot autobalanceado basado en STM32.
+<div align="center">
+
+# 🤖 BalancinQT — Interfaz de Control y Monitoreo
+
+**Aplicación de escritorio Qt para el robot autobalanceado STM32**
+
+[![C++](https://img.shields.io/badge/C++-Qt%20Framework-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](https://www.qt.io/)
+[![Qt](https://img.shields.io/badge/Qt-Widgets%20%2B%20Charts-41CD52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/)
+[![STM32](https://img.shields.io/badge/STM32-Firmware-03234B?style=for-the-badge&logo=stmicroelectronics&logoColor=white)](https://www.st.com/)
+[![Serial/UDP](https://img.shields.io/badge/Comm-Serial%20%2F%20UDP-0078D7?style=for-the-badge)]()
+
+*Universidad Nacional de Entre Ríos (UNER)*
+
+</div>
 
 ---
 
 ## 📸 Interfaz gráfica
 
 <p align="center">
-  <img src="interfaz_QT.png" width="700"/>
+  <img src="interfaz_QT.png" width="750" alt="Interfaz Qt del robot autobalanceado"/>
 </p>
 
-## 🧠 Descripción
+---
 
-Esta aplicación permite interactuar en tiempo real con el sistema embebido del robot autobalanceado, facilitando el monitoreo de variables críticas, ajuste de parámetros de control y análisis del comportamiento dinámico del sistema.
+## 📋 Descripción
 
-Integra comunicación serial y UDP con un protocolo propio, visualización de datos en gráficos y herramientas de logging para análisis posterior.
+Aplicación de escritorio desarrollada en **C++ con Qt** para el monitoreo, control y análisis en tiempo real del robot autobalanceado ([ver firmware](https://github.com/tadeomendelevich/Balancin_Mendelevich)). Facilita el ajuste de parámetros de control, la visualización de sensores y el análisis del comportamiento dinámico del sistema.
+
+La comunicación con el hardware se realiza mediante un **protocolo binario propio (UNER)** por USB-Serial o WiFi (ESP-01/UDP).
 
 ---
 
-## ⚙️ Tecnologías utilizadas
+## ✨ Funcionalidades
 
-- C++  
-- Qt (Qt Widgets + Qt Charts)  
-- QSerialPort (comunicación serial)  
-- QUdpSocket (comunicación UDP)  
-- Protocolo de comunicación UNER  
-- Microcontrolador STM32  
+### 🎛️ Control
+- Ajuste de parámetros **PID** (Kp, Ki, Kd) en tiempo real
+- Control manual por **teclado** (flechas) y **botones D-PAD** en pantalla
+- Activación de modos de operación:
+  - 🔄 Balanceo automático
+  - ➖ Seguidor de línea
+  - 🕹️ Control manual
 
----
+### 📊 Visualización (8 pestañas en tiempo real)
 
-## 🚀 Funcionalidades principales
+| Pestaña | Contenido |
+|---|---|
+| Aceleración / Ángulo | Fusión de sensores — roll y pitch |
+| Giroscopio | Datos raw y filtrados |
+| Control PID | P, I, D, error, output |
+| Motores / PWM | Señales de potencia |
+| Sistema | Tiempos de control y flags |
+| Sensores raw | Acelerómetro + giroscopio sin procesar |
+| ADC | 8 canales analógicos |
+| Seguidor de línea | PID + valores de sensores IR |
 
-- 📡 Comunicación en tiempo real (Serial y UDP)  
-- 📊 Visualización de datos en múltiples gráficos dinámicos  
-- 🎛️ Ajuste de parámetros PID (KP, KI, KD) en vivo  
-- 📁 Registro de datos en archivos CSV  
-- 🎮 Control manual del robot (teclado y botones)  
-- 🔄 Monitoreo de sensores (MPU6050 y ADCs)  
-- 🤖 Activación de modos:
-  - Balanceo automático  
-  - Seguidor de línea  
-  - Control manual  
-
----
-
-## 📊 Visualización de datos
-
-La interfaz incluye múltiples pestañas para análisis en tiempo real:
-
-- 📈 Aceleración y ángulo (fusión de sensores)  
-- 🌀 Giroscopio (raw y filtrado)  
-- ⚙️ Control PID (P, I, D, error, output)  
-- 🔋 Motores y señales PWM  
-- ⏱️ Sistema (tiempos de control y flags)  
-- 📡 Sensores raw (acelerómetro y giroscopio)  
-- 📊 Valores ADC (8 canales)  
-- ➖ Seguidor de línea (PID + sensores)  
+### 💾 Logging
+- Registro de sesión en archivos **CSV** con timestamp automático
+- Compatible con Excel, MATLAB, Python para análisis posterior
 
 ---
 
-## 🔌 Comunicación
+## 🔌 Protocolo de comunicación UNER
 
-El sistema utiliza un protocolo propio basado en paquetes estructurados:
+```
+┌────────┬────────────────┬──────────┐
+│ Header │    Payload     │ Checksum │
+│ "UNER" │ Datos variables│  1 byte  │
+└────────┴────────────────┴──────────┘
+```
 
-- Header: `UNER`  
-- Payload dinámico  
-- Checksum de validación  
-
-Soporta comunicación por:
-- Serial (USB)  
-- UDP (WiFi - ESP01)  
-
----
-
-## 🎮 Control del sistema
-
-- Control manual mediante teclado (flechas)  
-- Control mediante interfaz gráfica (botones tipo D-PAD)  
-- Envío de comandos para modificar parámetros en tiempo real  
+Soporta dos canales de comunicación:
+- **USB-Serial** — `QSerialPort`
+- **WiFi UDP** — `QUdpSocket` vía módulo ESP-01
 
 ---
 
-## 📁 Logging
+## 🛠️ Compilación
 
-- Registro de datos en archivos `.csv`  
-- Exportación automática con timestamp  
-- Compatible con análisis en herramientas externas  
+### Requisitos
 
----
+- Qt 5.x o superior (módulos: Widgets, Charts, SerialPort, Network)
+- Compilador C++17 (MinGW o MSVC en Windows, GCC en Linux)
 
-## 🧪 Desafíos técnicos
+### Build
 
-- Manejo de comunicación en tiempo real  
-- Sincronización de datos entre hardware y GUI  
-- Visualización eficiente de múltiples señales  
-- Implementación de protocolo robusto  
-- Gestión de jitter y tiempos de muestreo  
-
----
-
-## 🎯 Objetivo
-
-Desarrollar una herramienta de monitoreo y control que permita analizar, ajustar y optimizar el comportamiento del robot autobalanceado en tiempo real.
+```bash
+# Con Qt Creator: abrir BalancinQT.pro y compilar
+# O desde línea de comandos:
+qmake BalancinQT.pro
+make
+```
 
 ---
 
-## 👨‍💻 Autor
+## 📁 Estructura del proyecto
 
-Tadeo Mendelevich  
-https://github.com/tadeomendelevich
+```
+BalancinQT/
+├── main.cpp              # Punto de entrada
+├── mainwindow.cpp/h      # Ventana principal y lógica de UI
+├── mainwindow.ui         # Definición de la interfaz gráfica
+├── robotviewer3d.cpp/h   # Visualizador 3D del robot
+├── settingsdialog.cpp/h  # Diálogo de configuración de puerto
+├── resources.qrc         # Recursos embebidos
+└── formato_csv_telemetria.txt  # Especificación del formato de log
+```
+
+---
+
+## 🔗 Proyectos relacionados
+
+- **[Balancin_Mendelevich](https://github.com/tadeomendelevich/Balancin_Mendelevich)** — Firmware STM32 del robot (C, BlackPill STM32F411)
+- **[-Blink2025](https://github.com/tadeomendelevich/-Blink2025)** — Plataforma de sensores STM32F103
+
+---
+
+<div align="center">
+
+**Autor:** [Tadeo Mendelevich](https://github.com/tadeomendelevich)  
+*Ingeniería en Sistemas de Información — UNER*
+
+</div>
