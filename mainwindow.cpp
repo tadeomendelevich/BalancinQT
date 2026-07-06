@@ -12,6 +12,9 @@
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QGroupBox>
+#include <QtMath>
+#include <cmath>
+#include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -125,9 +128,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit_LogDir->setText(defaultSaveDirectory);
 
     ui->comboBox_CMD->addItem("ALIVE", 0xF0);
-    ui->comboBox_CMD->addItem("FIRMWARE", 0xF1);
     ui->comboBox_CMD->addItem("GETADCVALUES", 0xA5);
-    ui->comboBox_CMD->addItem("MPU6050", 0xA6);
+    //ui->comboBox_CMD->addItem("MPU6050", 0xA6);
     ui->comboBox_CMD->addItem("ANGLE", 0xA7);
     ui->comboBox_CMD->addItem("MOTORES", 0xA1);
     ui->comboBox_CMD->addItem("VELOCIDAD", 0xA4);
@@ -136,22 +138,24 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboBox_CMD->addItem("MODIFICAR KD", 0xB2);
     ui->comboBox_CMD->addItem("MODIFICAR KI", 0xB3);
     ui->comboBox_CMD->addItem("BALANCE", 0xB4);
-    ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
+    //ui->comboBox_CMD->addItem("RESET CENTRO DE MASA", 0xB7);
     ui->comboBox_CMD->addItem("ACTIVAR LOG CSV", 0xB9);
     ui->comboBox_CMD->addItem("ACTIVAR WIFI LOG", 0xBA);
-    ui->comboBox_CMD->addItem("MODIFY BETA_G", 0xBC);
-    ui->comboBox_CMD->addItem("MODIFY BETA_A", 0xBD);
-    ui->comboBox_CMD->addItem("CAMBIAR PAGINA DISPLAY", 0xBE);
+    ui->comboBox_CMD->addItem("MODIFICAR BETA_G", 0xBC);
+    ui->comboBox_CMD->addItem("MODIFICAR BETA_A", 0xBD);
+    ui->comboBox_CMD->addItem("SIGUIENTE PAGINA DISPLAY", 0xBE);
     ui->comboBox_CMD->addItem("MODIFICAR KV_BRAKE", 0xBF);
     ui->comboBox_CMD->addItem("MODIFICAR KP_LINE", 0xC0);
     ui->comboBox_CMD->addItem("MODIFICAR KD_LINE", 0xC1);
     ui->comboBox_CMD->addItem("MODIFICAR KI_LINE", 0xC2);
     ui->comboBox_CMD->addItem("MODIFICAR LINE_THRES", 0xC3);
-    ui->comboBox_CMD->addItem("MODIFICAR ANGULO AVANCE", 0xC4);
+    ui->comboBox_CMD->addItem("MODIFICAR VELOCIDAD DE AVANCE EN LINEA", 0xC4);
     ui->comboBox_CMD->addItem("ACTIVAR SEGUIDOR LINEA", 0xC5);
     ui->comboBox_CMD->addItem("ACTIVAR MANTENCION DE POSICION", 0xC6);
-    ui->comboBox_CMD->addItem("ACTIVAR CONTROL MANUAL", 0xC7);
-    ui->comboBox_CMD->addItem("MODIFY SETPOINT", 0xC8);
+    ui->comboBox_CMD->addItem("ACTIVAR CONTROL MANUAL (MEDIANTE COMANDOS)", 0xC7);
+    ui->comboBox_CMD->addItem("MODIFICAR SETPOINT", 0xC8);
+    ui->comboBox_CMD->addItem("GET ODOMETRY", 0xDA);
+    ui->comboBox_CMD->addItem("RESET ODOMETRY", 0xDB);
 
     estadoProtocolo=START;
     estadoProtocoloUdp = START;
@@ -524,6 +528,109 @@ MainWindow::MainWindow(QWidget *parent)
     layoutLineFollower->addWidget(lineFollowerAdcChartView);
 
     ui->tabWidget_Graficas->addTab(tabLineFollower, "Seguidor de Línea");
+
+    // --- TAB 8: ODOMETRIA WIFI (Nuevo) ---
+    // Alimentado por el paquete WIFI_ODOM_DATA=0xDC, que el firmware empuja solo
+    // (push, no hay que pedirlo) cada WIFI_ODOM_PERIOD_MS (500ms por defecto) mientras
+    // haya conexión WiFi activa. Mapa navegable (rueda=zoom centrado en el cursor,
+    // arrastre=paneo, doble click=reset — ver OdomChartView) con la "cinta" (tramos
+    // donde se detectó la línea) dibujada como segmentos negros gruesos, y
+    // anotaciones de texto en los puntos donde se perdió la línea o se detectó un
+    // objeto.
+    QWidget *tabOdom = new QWidget();
+    QVBoxLayout *layoutOdom = new QVBoxLayout(tabOdom);
+
+    lblOdomInfo = new QLabel("Odometría: esperando datos por WiFi...");
+    lblOdomInfo->setAlignment(Qt::AlignCenter);
+    layoutOdom->addWidget(lblOdomInfo);
+
+    QHBoxLayout *layoutOdomButtons = new QHBoxLayout();
+    QPushButton *btnOdomReset = new QPushButton("Reset vista (o doble click en el mapa)");
+    QPushButton *btnOdomClear = new QPushButton("Borrar mapa");
+    layoutOdomButtons->addWidget(btnOdomReset);
+    layoutOdomButtons->addWidget(btnOdomClear);
+    layoutOdom->addLayout(layoutOdomButtons);
+
+    odomChartView = new OdomChartView();
+    odomChart = new QChart();
+    odomChartView->setChart(odomChart);
+    odomChartView->setRenderHint(QPainter::Antialiasing);
+    odomChart->setTitle("Mapa XY (odometría) — rueda: zoom, arrastre: paneo, doble click: reset");
+
+    odomTrailSeries = new QLineSeries();
+    odomTrailSeries->setName("Trayectoria");
+    QPen trailPen(Qt::gray);
+    trailPen.setWidth(1);
+    odomTrailSeries->setPen(trailPen);
+
+    odomLostMarkers = new QScatterSeries();
+    odomLostMarkers->setName("Línea perdida");
+    odomLostMarkers->setColor(Qt::red);
+    odomLostMarkers->setMarkerSize(10.0);
+
+    odomObjMarkers = new QScatterSeries();
+    odomObjMarkers->setName("Objeto detectado");
+    odomObjMarkers->setColor(QColor(255, 140, 0)); // naranja
+    odomObjMarkers->setMarkerSize(10.0);
+
+    odomCurrentSeries = new QScatterSeries();
+    odomCurrentSeries->setName("Posición actual");
+    odomCurrentSeries->setColor(Qt::blue);
+    odomCurrentSeries->setMarkerSize(12.0);
+
+    odomChart->addSeries(odomTrailSeries);
+    odomChart->addSeries(odomLostMarkers);
+    odomChart->addSeries(odomObjMarkers);
+    odomChart->addSeries(odomCurrentSeries);
+
+    // Mapa limpio: sin título de eje, sin líneas de referencia (grilla) ni línea/
+    // números de eje — solo queda dibujado el recorrido en sí. Los ejes se
+    // mantienen como objetos (siguen definiendo la escala/rango) pero invisibles.
+    odomAxisX = new QValueAxis();
+    odomAxisY = new QValueAxis();
+    odomAxisX->setTitleText(""); odomAxisY->setTitleText("");
+    odomAxisX->setGridLineVisible(false); odomAxisY->setGridLineVisible(false);
+    odomAxisX->setMinorGridLineVisible(false); odomAxisY->setMinorGridLineVisible(false);
+    odomAxisX->setLabelsVisible(false); odomAxisY->setLabelsVisible(false);
+    odomAxisX->setLineVisible(false); odomAxisY->setLineVisible(false);
+    odomChart->addAxis(odomAxisX, Qt::AlignBottom);
+    odomChart->addAxis(odomAxisY, Qt::AlignLeft);
+    odomAxisX->setRange(odomMinX, odomMaxX);
+    odomAxisY->setRange(odomMinY, odomMaxY);
+
+    for (auto *s : {static_cast<QAbstractSeries*>(odomTrailSeries),
+                     static_cast<QAbstractSeries*>(odomLostMarkers),
+                     static_cast<QAbstractSeries*>(odomObjMarkers),
+                     static_cast<QAbstractSeries*>(odomCurrentSeries)}) {
+        s->attachAxis(odomAxisX);
+        s->attachAxis(odomAxisY);
+    }
+
+    odomChart->legend()->setVisible(true);
+    odomChart->legend()->setAlignment(Qt::AlignBottom);
+
+    // Flecha de rumbo: dos QGraphicsItems sueltos (no forman parte de ninguna
+    // serie) que indican hacia dónde apunta el robot en la posición actual.
+    odomHeadingLine = new QGraphicsLineItem();
+    odomHeadingLine->setPen(QPen(Qt::blue, 2));
+    odomChart->scene()->addItem(odomHeadingLine);
+
+    odomHeadingArrowHead = new QGraphicsPolygonItem();
+    odomHeadingArrowHead->setPen(QPen(Qt::blue));
+    odomHeadingArrowHead->setBrush(QBrush(Qt::blue));
+    odomChart->scene()->addItem(odomHeadingArrowHead);
+
+    // Reposicionar las anotaciones de texto y la flecha de rumbo (QGraphicsItems
+    // sueltos, fuera de las series) cada vez que el usuario hace zoom/paneo.
+    connect(odomChartView, &OdomChartView::viewChanged, this, &MainWindow::repositionOdomAnnotations);
+    connect(btnOdomReset, &QPushButton::clicked, this, [this]() {
+        odomChart->zoomReset();
+        repositionOdomAnnotations();
+    });
+    connect(btnOdomClear, &QPushButton::clicked, this, &MainWindow::clearOdomMap);
+
+    layoutOdom->addWidget(odomChartView);
+    ui->tabWidget_Graficas->addTab(tabOdom, "Odometría (WiFi)");
 
     // --- TAB MPU CRUDO: valores numéricos de acelerómetro y giroscopio ---
     {
@@ -1207,6 +1314,8 @@ void MainWindow::sendDataUDP()
     case MOVE_RIGHT:
     case MOVE_STOP:
     case SETLEDS:
+    case GET_ODOMETRY:      // GET_ODOMETRY=0xDA
+    case RESET_ODOMETRY:    // RESET_ODOMETRY=0xDB
         dato[indice++] = cmdId;
         break;
 
@@ -1461,6 +1570,8 @@ void MainWindow::sendDataSerial(){
     case MOVE_RIGHT:
     case MOVE_STOP:
     case SETLEDS:
+    case GET_ODOMETRY:      // GET_ODOMETRY=0xDA
+    case RESET_ODOMETRY:    // RESET_ODOMETRY=0xDB
         dato[indice++]=cmdId;
         //falta implementar el envío del valor de seteo
         dato[NBYTES]=0x02;
@@ -1634,6 +1745,49 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         ui->textEdit_PROCCES->append("Valores de inclinacion obtenidos correctamente!");
         break;
     }
+
+    case GET_ODOMETRY: { // GET_ODOMETRY=0xDA — respuesta: x[m], y[m], theta[°]
+        w.ui8[0] = datosRx[2];
+        w.ui8[1] = datosRx[3];
+        w.ui8[2] = datosRx[4];
+        w.ui8[3] = datosRx[5];
+        float odomX = w.f32;
+
+        w.ui8[0] = datosRx[6];
+        w.ui8[1] = datosRx[7];
+        w.ui8[2] = datosRx[8];
+        w.ui8[3] = datosRx[9];
+        float odomY = w.f32;
+
+        w.ui8[0] = datosRx[10];
+        w.ui8[1] = datosRx[11];
+        w.ui8[2] = datosRx[12];
+        w.ui8[3] = datosRx[13];
+        float odomTheta = w.f32;
+
+        str = "ODOMETRIA -> X: " + QString::number(odomX, 'f', 3)
+            + " m  Y: " + QString::number(odomY, 'f', 3)
+            + " m  Theta: " + QString::number(odomTheta, 'f', 2) + " °";
+        ui->textEdit_PROCCES->append(str);
+        break;
+    }
+    case WIFI_ODOM_DATA: { // WIFI_ODOM_DATA=0xDC — push periódico (no pedido), no requiere ACTIVATE_WIFI_LOG
+        if (datosRx[0] < (sizeof(WifiOdomData_t) + 1)) {
+            ui->textEdit_PROCCES->append("WIFI_ODOM_DATA: Packet too short!");
+            break;
+        }
+
+        WifiOdomData_t *odata = reinterpret_cast<WifiOdomData_t*>(&datosRx[2]);
+        updateOdomChart(odata->x_m, odata->y_m, odata->theta_deg, odata->line_detected != 0, odata->line_state);
+        break;
+    }
+    case RESET_ODOMETRY: // RESET_ODOMETRY=0xDB — respuesta: ACK
+        if (datosRx[2] == ACK)
+            str = "ODOMETRIA RESETEADA (ACK)";
+        else
+            str = "RESET_ODOMETRY: NO ACK!";
+        ui->textEdit_PROCCES->append(str);
+        break;
 
     case MODIFYKP: { //    MODIFYKP=0xB1,
         w.ui8[0] = datosRx[2];  // KP VALUE - Byte 0
@@ -2144,6 +2298,187 @@ void MainWindow::updatePosition()
     }
 }
 
+
+void MainWindow::updateOdomChart(float x, float y, float thetaDeg, bool lineDetected, uint8_t lineState)
+{
+    odomTrailSeries->append(x, y);
+
+    // "Cinta": mientras hay línea detectada se va agregando al segmento en curso
+    // (grueso y negro); al perderla se cierra el segmento (nullptr) para que la
+    // próxima vez que se detecte línea arranque un segmento nuevo — así no queda
+    // una línea recta uniendo dos tramos de cinta separados por un tramo sin línea.
+    if (lineDetected) {
+        if (!odomTapeCurrent) {
+            odomTapeCurrent = new QLineSeries();
+            QPen tapePen(Qt::black);
+            tapePen.setWidth(6);
+            tapePen.setCapStyle(Qt::RoundCap);
+            odomTapeCurrent->setPen(tapePen);
+            if (odomTapeSegments.isEmpty())
+                odomTapeCurrent->setName("Cinta (línea)");
+
+            odomChart->addSeries(odomTapeCurrent);
+            odomTapeCurrent->attachAxis(odomAxisX);
+            odomTapeCurrent->attachAxis(odomAxisY);
+
+            if (!odomTapeSegments.isEmpty()) {
+                // Ocultar de la leyenda todos los segmentos salvo el primero, para
+                // no llenarla con una entrada "Cinta (línea)" por cada tramo.
+                const auto markers = odomChart->legend()->markers(odomTapeCurrent);
+                if (!markers.isEmpty()) markers.first()->setVisible(false);
+            }
+            odomTapeSegments.append(odomTapeCurrent);
+        }
+        odomTapeCurrent->append(x, y);
+    } else {
+        odomTapeCurrent = nullptr;
+    }
+
+    if (odomCurrentSeries->count() == 0)
+        odomCurrentSeries->append(x, y);
+    else
+        odomCurrentSeries->replace(0, QPointF(x, y));
+
+    // Eventos: se anotan solo en la transición, no en cada muestra, para no
+    // llenar el mapa de marcadores repetidos mientras el robot sigue en el mismo
+    // estado (p.ej. todo el tiempo que dura la secuencia de esquive de un objeto).
+    if (odomHasPrev) {
+        if (odomPrevLineDetected && !lineDetected) {
+            addOdomAnnotation(x, y, "Línea perdida", OdomEventLineLost);
+        }
+        if (odomPrevLineState < ODOM_LINE_STATE_OBJ_FIRST && lineState >= ODOM_LINE_STATE_OBJ_FIRST) {
+            addOdomAnnotation(x, y, "Objeto", OdomEventObject);
+        }
+    }
+    odomPrevLineDetected = lineDetected;
+    odomPrevLineState    = lineState;
+    odomHasPrev          = true;
+
+    odomLastX     = x;
+    odomLastY     = y;
+    odomLastTheta = thetaDeg;
+
+    // Autoescala con margen, igual que el mapa 2D del display OLED (P7): el rango
+    // solo crece, nunca se achica, para no reescalar el gráfico constantemente.
+    bool rescale = false;
+    if (x - 0.3 < odomMinX) { odomMinX = x - 0.3; rescale = true; }
+    if (x + 0.3 > odomMaxX) { odomMaxX = x + 0.3; rescale = true; }
+    if (y - 0.3 < odomMinY) { odomMinY = y - 0.3; rescale = true; }
+    if (y + 0.3 > odomMaxY) { odomMaxY = y + 0.3; rescale = true; }
+    if (rescale) {
+        odomAxisX->setRange(odomMinX, odomMaxX);
+        odomAxisY->setRange(odomMinY, odomMaxY);
+    }
+
+    lblOdomInfo->setText(QString("X: %1 m   Y: %2 m   Theta: %3°   Línea: %4")
+                              .arg(x, 0, 'f', 2)
+                              .arg(y, 0, 'f', 2)
+                              .arg(thetaDeg, 0, 'f', 1)
+                              .arg(lineDetected ? "SI" : "NO"));
+
+    // Cualquier cambio de rango de ejes (autoescala de arriba) mueve en pantalla
+    // los puntos de las anotaciones; recalcular sus posiciones siempre al final.
+    repositionOdomAnnotations();
+}
+
+void MainWindow::addOdomAnnotation(double x, double y, const QString &text, OdomEventType type)
+{
+    const QColor color = (type == OdomEventLineLost) ? QColor(Qt::red) : QColor(255, 140, 0);
+
+    auto *item = new QGraphicsSimpleTextItem(text);
+    item->setBrush(QBrush(color));
+    QFont f = item->font();
+    f.setBold(true);
+    f.setPointSize(8);
+    item->setFont(f);
+    odomChart->scene()->addItem(item);
+
+    OdomAnnotation a{x, y, item};
+    odomAnnotations.append(a);
+
+    if (type == OdomEventLineLost)
+        odomLostMarkers->append(x, y);
+    else
+        odomObjMarkers->append(x, y);
+
+    repositionOdomAnnotations();
+}
+
+void MainWindow::repositionOdomAnnotations()
+{
+    for (const OdomAnnotation &a : qAsConst(odomAnnotations)) {
+        const QPointF scenePos = odomChart->mapToPosition(QPointF(a.x, a.y), odomTrailSeries);
+        // Chico offset para que el texto no tape el marcador de color.
+        a.item->setPos(scenePos.x() + 8, scenePos.y() - 16);
+    }
+
+    if (odomHasPrev)
+        updateHeadingArrow(odomLastX, odomLastY, odomLastTheta);
+}
+
+void MainWindow::updateHeadingArrow(double x, double y, double thetaDeg)
+{
+    // Largo de la flecha proporcional a lo que se ve del mapa en este momento (no
+    // fijo en metros), para que sea igual de visible zoomeado o alejado.
+    const double rangeX = odomAxisX->max() - odomAxisX->min();
+    const double rangeY = odomAxisY->max() - odomAxisY->min();
+    const double len = 0.08 * std::max(rangeX, rangeY);
+
+    const double thetaRad = qDegreesToRadians(thetaDeg);
+    const QPointF tip(x + len * std::cos(thetaRad), y + len * std::sin(thetaRad));
+
+    const QPointF startScene = odomChart->mapToPosition(QPointF(x, y), odomTrailSeries);
+    const QPointF tipScene   = odomChart->mapToPosition(tip, odomTrailSeries);
+
+    odomHeadingLine->setLine(QLineF(startScene, tipScene));
+
+    // Cabezal de flecha: triángulo chico calculado en coordenadas de pantalla
+    // (no de datos), para que se vea igual de grande sin importar el zoom.
+    const double angle     = std::atan2(tipScene.y() - startScene.y(), tipScene.x() - startScene.x());
+    const double headLen   = 8.0;
+    const double headAngle = qDegreesToRadians(25.0);
+
+    const QPointF p1 = tipScene;
+    const QPointF p2 = tipScene - QPointF(headLen * std::cos(angle - headAngle), headLen * std::sin(angle - headAngle));
+    const QPointF p3 = tipScene - QPointF(headLen * std::cos(angle + headAngle), headLen * std::sin(angle + headAngle));
+
+    odomHeadingArrowHead->setPolygon(QPolygonF({p1, p2, p3}));
+}
+
+void MainWindow::clearOdomMap()
+{
+    odomTrailSeries->clear();
+    odomCurrentSeries->clear();
+    odomLostMarkers->clear();
+    odomObjMarkers->clear();
+
+    for (QLineSeries *seg : qAsConst(odomTapeSegments)) {
+        odomChart->removeSeries(seg);
+        delete seg;
+    }
+    odomTapeSegments.clear();
+    odomTapeCurrent = nullptr;
+
+    for (const OdomAnnotation &a : qAsConst(odomAnnotations)) {
+        odomChart->scene()->removeItem(a.item);
+        delete a.item;
+    }
+    odomAnnotations.clear();
+
+    odomHasPrev          = false;
+    odomPrevLineDetected = false;
+    odomPrevLineState    = 0;
+
+    odomMinX = -0.5; odomMaxX = 0.5;
+    odomMinY = -0.5; odomMaxY = 0.5;
+    odomAxisX->setRange(odomMinX, odomMaxX);
+    odomAxisY->setRange(odomMinY, odomMaxY);
+
+    odomHeadingLine->setLine(QLineF());
+    odomHeadingArrowHead->setPolygon(QPolygonF());
+
+    lblOdomInfo->setText("Odometría: esperando datos por WiFi...");
+}
 
 void MainWindow::on_pushButton_released() {
     // Acción vacía o algo temporal

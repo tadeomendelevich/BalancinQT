@@ -12,6 +12,7 @@
 #include <QFile>
 #include "settingsdialog.h"
 #include "robotviewer3d.h"
+#include "odomchartview.h"
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QChart>
@@ -21,6 +22,12 @@
 #include <QtCharts/QBarSet>
 #include <QtCharts/QBarCategoryAxis>
 #include <QtCharts/QScatterSeries>
+#include <QtCharts/QLegendMarker>
+#include <QGraphicsSimpleTextItem>
+#include <QGraphicsLineItem>
+#include <QGraphicsPolygonItem>
+#include <QGraphicsScene>
+#include <QPushButton>
 
 #define SAMPLE_INTERVAL_MS 30   // Intervalo de muestreo en milisegundos de todos los sensores
 #define SAMPLE_INTERVAL_S  (static_cast<double>(SAMPLE_INTERVAL_MS) / 1000.0)   // Deriva el intervalo en segundos (double)
@@ -32,6 +39,12 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
+    // Declarado acá (antes de cualquier método que lo use como parámetro) porque
+    // dentro de una class, el tipo de un parámetro debe ser visible en el punto de
+    // la declaración — a diferencia de los cuerpos de función, que sí ven la clase
+    // completa sin importar el orden.
+    enum OdomEventType { OdomEventLineLost, OdomEventObject };
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -67,6 +80,11 @@ private slots:
     void updatePlot();
 
     void updatePosition();
+    void updateOdomChart(float x, float y, float thetaDeg, bool lineDetected, uint8_t lineState);
+    void addOdomAnnotation(double x, double y, const QString &text, OdomEventType type);
+    void repositionOdomAnnotations();
+    void updateHeadingArrow(double x, double y, double thetaDeg);
+    void clearOdomMap();
 
     void on_pushButton_SetKP_clicked();
 
@@ -160,6 +178,9 @@ private:
         MOVE_LEFT = 0xD2,
         MOVE_RIGHT = 0xD3,
         MOVE_STOP = 0xD4,
+        GET_ODOMETRY = 0xDA,
+        RESET_ODOMETRY = 0xDB,
+        WIFI_ODOM_DATA = 0xDC,
         OTHERS
     }_eCmd;
 
@@ -194,6 +215,22 @@ private:
         uint16_t adc2;                // Valor puro ADC 2 (Sensor derecha centro)
         uint16_t adc3;                // Valor puro ADC 3 (Sensor izquierda centro)
         uint16_t adc4;                // Valor puro ADC 4 (Sensor izquierda extremo)
+    };
+    #pragma pack(pop)
+
+    // Mirror de WifiOdomData_t (Core/Inc/UNER.h del firmware) — push periódico (2 Hz
+    // por defecto) de pose + posición de línea, para graficar sin depender de
+    // ACTIVATE_WIFI_LOG. Mantener en sincro con el firmware si se cambia el layout.
+    #pragma pack(push, 1)
+    struct WifiOdomData_t {
+        uint32_t t_ms;
+        float    x_m;
+        float    y_m;
+        float    theta_deg;
+        float    line_error;
+        uint8_t  line_detected;
+        uint8_t  robot_state;
+        uint8_t  line_state;
     };
     #pragma pack(pop)
 
@@ -353,6 +390,40 @@ private:
     QChart *lineFollowerAdcChart;
     QLineSeries *seriesLineAdc1, *seriesLineAdc2, *seriesLineAdc3, *seriesLineAdc4;
     QValueAxis *lineFollowerAdcAxisX, *lineFollowerAdcAxisY;
+
+    // Odometría WiFi (Nuevo): mapa XY navegable + posición de línea, alimentado por
+    // WIFI_ODOM_DATA=0xDC. Ver odomchartview.h para el pan/zoom del QChartView.
+    struct OdomAnnotation {
+        double x, y;
+        QGraphicsSimpleTextItem *item;
+    };
+
+    OdomChartView  *odomChartView;
+    QChart         *odomChart;
+    QLineSeries    *odomTrailSeries;      // trayectoria completa (x,y), fina y gris
+    QList<QLineSeries*> odomTapeSegments; // tramos de "cinta" (línea detectada): gruesos y negros
+    QLineSeries    *odomTapeCurrent = nullptr; // segmento de cinta en curso (nullptr = tramo actual sin línea)
+    QScatterSeries *odomLostMarkers;      // marcador en cada punto donde se perdió la línea
+    QScatterSeries *odomObjMarkers;       // marcador en cada punto donde se detectó un objeto
+    QScatterSeries *odomCurrentSeries;    // posición actual (único punto)
+    QValueAxis     *odomAxisX, *odomAxisY;
+    QLabel         *lblOdomInfo;
+    double odomMinX = -0.5, odomMaxX = 0.5, odomMinY = -0.5, odomMaxY = 0.5;
+
+    QList<OdomAnnotation> odomAnnotations;   // textos flotantes ("Línea perdida", "Objeto")
+    bool    odomHasPrev         = false;     // false hasta el primer paquete recibido
+    bool    odomPrevLineDetected = false;
+    uint8_t odomPrevLineState    = 0;
+    // Primer valor del enum eLineState (main.c) que corresponde a la secuencia de
+    // evasión de objeto (LINE_STATE_OBJ_ESPERA_REVERSA). Frágil: si se reordena el
+    // enum en el firmware, actualizar este número también.
+    static constexpr uint8_t ODOM_LINE_STATE_OBJ_FIRST = 13;
+
+    // Flecha de rumbo: QGraphicsItems sueltos (igual que las anotaciones), no son
+    // parte de ninguna serie — se recalculan en cada dato nuevo y en cada pan/zoom.
+    QGraphicsLineItem    *odomHeadingLine     = nullptr;
+    QGraphicsPolygonItem *odomHeadingArrowHead = nullptr;
+    double odomLastX = 0.0, odomLastY = 0.0, odomLastTheta = 0.0;
 
     // Vista 3D del robot
     RobotViewer3D *robotViewer3D;

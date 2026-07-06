@@ -11,11 +11,13 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    odomchartview.cpp \
     robotviewer3d.cpp \
     settingsdialog.cpp
 
 HEADERS += \
     mainwindow.h \
+    odomchartview.h \
     robotviewer3d.h \
     settingsdialog.h
 
