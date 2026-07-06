@@ -13,6 +13,7 @@
 #include "settingsdialog.h"
 #include "robotviewer3d.h"
 #include "odomchartview.h"
+#include "healthdashboard.h"
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QChart>
@@ -223,6 +224,7 @@ private:
     // ACTIVATE_WIFI_LOG. Mantener en sincro con el firmware si se cambia el layout.
     #pragma pack(push, 1)
     struct WifiOdomData_t {
+        uint16_t seq;
         uint32_t t_ms;
         float    x_m;
         float    y_m;
@@ -449,6 +451,13 @@ private:
     QTimer *udpWatchdogTimer;
     QElapsedTimer udpLastRxTime;
     bool udpEverReceivedData;
+
+    // Dashboard de salud (Nuevo): ping periódico de latencia (reutiliza GETALIVE,
+    // sin pasar por el combo de comandos) + panel flotante arriba a la derecha.
+    HealthDashboard *healthDashboard = nullptr;
+    QTimer          *alivePingTimer  = nullptr;
+    QElapsedTimer    aliveSentTimer;
+    void sendAlivePing();
     void checkUdpInactivity();
     void clearUdpScreens();
 

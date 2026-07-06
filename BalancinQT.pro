@@ -9,6 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    healthdashboard.cpp \
     main.cpp \
     mainwindow.cpp \
     odomchartview.cpp \
@@ -16,6 +17,7 @@ SOURCES += \
     settingsdialog.cpp
 
 HEADERS += \
+    healthdashboard.h \
     mainwindow.h \
     odomchartview.h \
     robotviewer3d.h \

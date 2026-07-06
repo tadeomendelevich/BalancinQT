@@ -41,12 +41,88 @@ MainWindow::MainWindow(QWidget *parent)
     connect(udpWatchdogTimer, &QTimer::timeout, this, &MainWindow::checkUdpInactivity);
     udpEverReceivedData = false;
 
+    // Dashboard de salud: embebido en el panel de controles, justo debajo de
+    // Device PORT (mismo lugar donde se abre/configura la conexión UDP) — la
+    // versión flotante arriba a la derecha tapaba otras cosas y molestaba.
+    healthDashboard = new HealthDashboard(this);
+    healthDashboard->setConnectionOpen(false);
+    ui->verticalLayout->addWidget(healthDashboard);
+
+    alivePingTimer = new QTimer(this);
+    connect(alivePingTimer, &QTimer::timeout, this, &MainWindow::sendAlivePing);
+
     connect(ui->textEdit_RAW, &QTextEdit::textChanged, this, [this](){
         ui->textEdit_RAW->moveCursor(QTextCursor::End);
     });
     connect(ui->textEdit_PROCCES, &QTextEdit::textChanged, this, [this](){
         ui->textEdit_PROCCES->moveCursor(QTextCursor::End);
     });
+
+    // "Dato enviado" (textEdit_RAW) oculto por defecto — el usuario casi no lo mira
+    // y ocupaba la mitad del panel de texto de forma permanente. Se puede volver a
+    // mostrar con este botón tipo "tab", agregado como la primera hoja del splitter
+    // vertical (splitter_texts) que ya contenía RAW arriba / PROCCES abajo.
+    ui->textEdit_RAW->hide();
+    {
+        auto *toggleBar = new QWidget(this);
+        auto *toggleLayout = new QHBoxLayout(toggleBar);
+        toggleLayout->setContentsMargins(4, 2, 4, 2);
+
+        auto *btnToggleRaw = new QPushButton("▾ Ver dato enviado", toggleBar);
+        btnToggleRaw->setStyleSheet(
+            "QPushButton { background-color: rgba(20,50,8,0.85); color: #78d878;"
+            " font-weight: bold; border-radius: 4px; padding: 3px; }"
+            );
+        toggleLayout->addWidget(btnToggleRaw);
+        toggleBar->setFixedHeight(28);
+
+        connect(btnToggleRaw, &QPushButton::clicked, this, [this, btnToggleRaw]() {
+            const bool nowVisible = !ui->textEdit_RAW->isVisible();
+            ui->textEdit_RAW->setVisible(nowVisible);
+            btnToggleRaw->setText(nowVisible ? "▴ Ocultar dato enviado" : "▾ Ver dato enviado");
+        });
+
+        ui->splitter_texts->insertWidget(0, toggleBar);
+    }
+
+    // Paneles PID BALANCE / PID SEGUIDOR LÍNEA plegables: con el dashboard de
+    // salud embebido, el panel de controles quedó muy apretado. Arrancan
+    // colapsados (solo título + botón) y se despliegan al tocar el botón —
+    // los headers/valores/inputs de cada uno directamente se ocultan (en un
+    // QVBoxLayout, widgets ocultos no reservan espacio, así la sección
+    // colapsada ocupa casi nada).
+    auto makePidFoldable = [this](QVBoxLayout *sectionLayout,
+                                   const QList<QWidget*> &collapsible,
+                                   const QString &openText,
+                                   const QString &closedText) {
+        for (QWidget *w : collapsible) w->setVisible(false);
+
+        auto *btn = new QPushButton(closedText, this);
+        btn->setCheckable(true);
+        btn->setChecked(false);
+        btn->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; }");
+        connect(btn, &QPushButton::toggled, this, [collapsible, btn, openText, closedText](bool checked) {
+            for (QWidget *w : collapsible) w->setVisible(checked);
+            btn->setText(checked ? openText : closedText);
+        });
+        sectionLayout->insertWidget(1, btn); // índice 1 = justo debajo del título de la sección
+    };
+
+    makePidFoldable(ui->verticalLayout_13, {
+                        ui->label_13, ui->label_14, ui->label_5,
+                        ui->label_KP, ui->label_KD, ui->label_KI,
+                        ui->lineEdit_KP, ui->pushButton_SetKP,
+                        ui->lineEdit_KD, ui->pushButton_SetKD,
+                        ui->lineEdit_KI, ui->pushButton_SetKI
+                    }, "▴ Ocultar PID Balance", "▾ Ver PID Balance");
+
+    makePidFoldable(ui->verticalLayout_PID_LINE, {
+                        ui->label_PID_LINE_KP_hdr, ui->label_PID_LINE_KD_hdr, ui->label_PID_LINE_KI_hdr,
+                        ui->label_KP_LINE, ui->label_KD_LINE, ui->label_KI_LINE,
+                        ui->lineEdit_KP_LINE, ui->pushButton_SetKP_LINE,
+                        ui->lineEdit_KD_LINE, ui->pushButton_SetKD_LINE,
+                        ui->lineEdit_KI_LINE, ui->pushButton_SetKI_LINE
+                    }, "▴ Ocultar PID Línea", "▾ Ver PID Línea");
 
     // Conectar botones D-PAD a control manual
     connect(ui->btn_UP, &QPushButton::pressed, this, [=](){
@@ -941,6 +1017,9 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         udpEverReceivedData = false;
         ui->spinBox_SETPOINT->setValue(0.0);
 
+        alivePingTimer->stop();
+        healthDashboard->setConnectionOpen(false);
+
         return;
     }
 
@@ -968,6 +1047,9 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     udpEverReceivedData = false;
     udpWatchdogTimer->start(1000);
 
+    healthDashboard->setConnectionOpen(true);
+    alivePingTimer->start(2000);
+
     // Cargar destino si ya está ingresado en la UI
     if (clientAddress.isNull()) {
         clientAddress.setAddress(ui->lineEdit_IP_REMOTA->text().trimmed());
@@ -991,6 +1073,7 @@ void MainWindow::OnUdpRxData()
     while (UdpSocket1->hasPendingDatagrams()) {
         udpLastRxTime.start();
         udpEverReceivedData = true;
+        healthDashboard->onPacketReceived();
 
         QNetworkDatagram dgram = UdpSocket1->receiveDatagram();
         const QByteArray payload = dgram.data();
@@ -1625,14 +1708,19 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
             if(source) {
                     contadorAlive++;
                     str="ALIVE BLUEPILL VIA *SERIE* RECIBIDO!!!";
+                    ui->textEdit_PROCCES->append(str);
             } else {
                     contadorAlive++;
-                    str="ALIVE BLUEPILL VIA *UDP* RECIBIDO N°: " + QString().number(contadorAlive,10);
+                    // El ping de latencia (sendAlivePing, cada 2s) usa este mismo comando —
+                    // no se loguea acá para no llenar la consola con un mensaje cada 2s.
+                    if (aliveSentTimer.isValid()) {
+                        healthDashboard->onAlivePong(aliveSentTimer.elapsed());
+                    }
             }
         } else {
             str= "ALIVE BLUEPILL VIA *SERIE*  NO ACK!!!";
+            ui->textEdit_PROCCES->append(str);
         }
-        ui->textEdit_PROCCES->append(str);
         break;
     case GETFIRMWARE://     GETFIRMWARE=0xF1
         str = "FIRMWARE:";
@@ -1778,6 +1866,8 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         }
 
         WifiOdomData_t *odata = reinterpret_cast<WifiOdomData_t*>(&datosRx[2]);
+        healthDashboard->onOdomSeq(odata->seq);
+        healthDashboard->onRobotState(odata->robot_state);
         updateOdomChart(odata->x_m, odata->y_m, odata->theta_deg, odata->line_detected != 0, odata->line_state);
         break;
     }
@@ -2400,6 +2490,8 @@ void MainWindow::addOdomAnnotation(double x, double y, const QString &text, Odom
         odomLostMarkers->append(x, y);
     else
         odomObjMarkers->append(x, y);
+
+    healthDashboard->onEvent(text);
 
     repositionOdomAnnotations();
 }
@@ -3234,6 +3326,45 @@ void MainWindow::sendManualCommand()
     UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
 }
 
+void MainWindow::sendAlivePing()
+{
+    // Ping de latencia: manda GETALIVE directo por UDP (mismo patrón que
+    // sendManualCommand, sin pasar por comboBox_CMD) y arranca un cronómetro; el
+    // RTT se mide cuando llega el ACK en decodeData() (case GETALIVE).
+    if (UdpSocket1->state() != QAbstractSocket::BoundState && UdpSocket1->localPort() == 0) {
+        return;
+    }
+    if (clientAddress.isNull() || puertoremoto <= 0) {
+        return;
+    }
+
+    unsigned char dato[8];
+    int indice = 0;
+
+    dato[indice++] = 'U';
+    dato[indice++] = 'N';
+    dato[indice++] = 'E';
+    dato[indice++] = 'R';
+    int idxNbytes = indice;
+    dato[indice++] = 0x00;
+    dato[indice++] = ':';
+    int payloadStart = indice;
+
+    dato[indice++] = GETALIVE;
+
+    unsigned char nbytes = static_cast<unsigned char>(indice - payloadStart + 1);
+    dato[idxNbytes] = nbytes;
+
+    unsigned char chk = 'U' ^ 'N' ^ 'E' ^ 'R' ^ dato[idxNbytes] ^ ':';
+    for (int i = payloadStart; i < indice; ++i) chk ^= dato[i];
+    dato[indice++] = chk;
+
+    aliveSentTimer.start();
+
+    int totalLen = 6 + nbytes;
+    UdpSocket1->writeDatagram(reinterpret_cast<const char *>(dato), totalLen, clientAddress, static_cast<quint16>(puertoremoto));
+}
+
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     if (event->isAutoRepeat()) {
@@ -3418,6 +3549,7 @@ void MainWindow::checkUdpInactivity()
 
         ui->spinBox_SETPOINT->setValue(0.0);
         ui->textEdit_PROCCES->append("WATCHDOG UDP: Timeout (15s sin datos). Reiniciando socket...");
+        healthDashboard->onEvent("Watchdog UDP: reconectando (timeout)");
 
         // Obtener el puerto local
         bool ok = false;

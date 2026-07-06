@@ -24,10 +24,10 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QSplitter>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextEdit>
-#include <QtWidgets/QSplitter>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 
@@ -69,10 +69,10 @@ public:
     QWidget *tab_System;
     QVBoxLayout *verticalLayout_TabSystem;
     QChartView *systemWidget;
-    QWidget *widget_controls;
     QSplitter *splitter_texts;
     QTextEdit *textEdit_RAW;
     QTextEdit *textEdit_PROCCES;
+    QWidget *widget_controls;
     QVBoxLayout *verticalLayout_6;
     QVBoxLayout *verticalLayout_5;
     QComboBox *comboBox_CMD;
@@ -413,6 +413,28 @@ public:
 "}\n"
 "QScrollBar::handle:horizontal:hover { background-color: #4a7818; }\n"
 "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }\n"
+"QSplitter::handle {\n"
+"    background-color: #0d1a08;\n"
+"    image: none;\n"
+"    border: none;\n"
+"    width: 4px;\n"
+"    height: 4px;\n"
+"    margin: 0px;\n"
+"}\n"
+"QSplitter::handle:horizontal {\n"
+"    background-color: #0d1a08;\n"
+"    width: 4px;\n"
+"}\n"
+"QSplitter::handle:vertical {\n"
+"    background-color: #0d1a08;\n"
+"    height: 4px;\n"
+"}\n"
+"QSplitter::handle:hover {\n"
+"    background-color: rgba(90, 128, 32, 0.35);\n"
+"}\n"
+"QSplitter::handle:pressed {\n"
+"    background-color: rgba(138, 171, 48, 0.25);\n"
+"}\n"
 "QStatusBar {\n"
 "    background-color: #0d1a08;\n"
 "    color: #789060;\n"
@@ -423,6 +445,13 @@ public:
 "    border: none;\n"
 "    background: transparent;\n"
 "    padding: 2px 6px;\n"
+"}\n"
+"QWidget#widget_controls {\n"
+"    background-color: transpare"
+                        "nt;\n"
+"}\n"
+"QWidget {\n"
+"    background-color: transparent;\n"
 "}"));
         actionScanPorts = new QAction(MainWindow);
         actionScanPorts->setObjectName("actionScanPorts");
@@ -439,9 +468,10 @@ public:
         splitter_main = new QSplitter(centralwidget);
         splitter_main->setObjectName("splitter_main");
         splitter_main->setOrientation(Qt::Horizontal);
-        splitter_main->setHandleWidth(6);
-        tabWidget_Graficas = new QTabWidget(centralwidget);
+        splitter_main->setHandleWidth(2);
+        tabWidget_Graficas = new QTabWidget(splitter_main);
         tabWidget_Graficas->setObjectName("tabWidget_Graficas");
+        tabWidget_Graficas->setMaximumSize(QSize(16777215, 16777215));
         tab_IMU = new QWidget();
         tab_IMU->setObjectName("tab_IMU");
         verticalLayout_TabIMU = new QVBoxLayout(tab_IMU);
@@ -521,7 +551,8 @@ public:
 
         accelerationWidget = new QChartView(tab_IMU);
         accelerationWidget->setObjectName("accelerationWidget");
-        accelerationWidget->setMinimumSize(QSize(300, 200));
+        accelerationWidget->setMinimumSize(QSize(20, 200));
+        accelerationWidget->setMaximumSize(QSize(100, 16777215));
 
         verticalLayout_TabIMU->addWidget(accelerationWidget);
 
@@ -535,7 +566,8 @@ public:
 
         gyroscopeWidget = new QChartView(tab_IMU);
         gyroscopeWidget->setObjectName("gyroscopeWidget");
-        gyroscopeWidget->setMinimumSize(QSize(300, 200));
+        gyroscopeWidget->setMinimumSize(QSize(50, 200));
+        gyroscopeWidget->setMaximumSize(QSize(100, 16777215));
 
         verticalLayout_TabIMU->addWidget(gyroscopeWidget);
 
@@ -570,71 +602,62 @@ public:
         verticalLayout_TabSystem->addWidget(systemWidget);
 
         tabWidget_Graficas->addTab(tab_System, QString());
-
         splitter_main->addWidget(tabWidget_Graficas);
-
-        widget_controls = new QWidget(centralwidget);
-        widget_controls->setObjectName("widget_controls");
-
-        splitter_texts = new QSplitter(centralwidget);
+        splitter_texts = new QSplitter(splitter_main);
         splitter_texts->setObjectName("splitter_texts");
-        splitter_texts->setOrientation(Qt::Vertical);
         splitter_texts->setMinimumSize(QSize(200, 0));
         splitter_texts->setMaximumSize(QSize(300, 16777215));
-        splitter_texts->setHandleWidth(6);
-
+        splitter_texts->setOrientation(Qt::Vertical);
+        splitter_texts->setHandleWidth(2);
+        textEdit_RAW = new QTextEdit(splitter_texts);
+        textEdit_RAW->setObjectName("textEdit_RAW");
         QFont font3;
         font3.setFamilies({QString::fromUtf8("Consolas")});
         font3.setBold(false);
         font3.setItalic(false);
-
-        textEdit_RAW = new QTextEdit(splitter_texts);
-        textEdit_RAW->setObjectName("textEdit_RAW");
         textEdit_RAW->setFont(font3);
         textEdit_RAW->setFrameShape(QFrame::NoFrame);
-
         splitter_texts->addWidget(textEdit_RAW);
-
         textEdit_PROCCES = new QTextEdit(splitter_texts);
         textEdit_PROCCES->setObjectName("textEdit_PROCCES");
         textEdit_PROCCES->setFont(font3);
-
         splitter_texts->addWidget(textEdit_PROCCES);
-
         splitter_main->addWidget(splitter_texts);
-
+        widget_controls = new QWidget(splitter_main);
+        widget_controls->setObjectName("widget_controls");
         verticalLayout_6 = new QVBoxLayout(widget_controls);
         verticalLayout_6->setObjectName("verticalLayout_6");
+        verticalLayout_6->setContentsMargins(0, 0, 0, 0);
         verticalLayout_5 = new QVBoxLayout();
         verticalLayout_5->setObjectName("verticalLayout_5");
-        comboBox_CMD = new QComboBox(centralwidget);
+        comboBox_CMD = new QComboBox(widget_controls);
         comboBox_CMD->setObjectName("comboBox_CMD");
 
         verticalLayout_5->addWidget(comboBox_CMD);
 
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName("horizontalLayout");
-        pushButton_SEND = new QPushButton(centralwidget);
+        pushButton_SEND = new QPushButton(widget_controls);
         pushButton_SEND->setObjectName("pushButton_SEND");
 
         horizontalLayout->addWidget(pushButton_SEND);
 
-        pushButton_BALANCE = new QPushButton(centralwidget);
+        pushButton_BALANCE = new QPushButton(widget_controls);
         pushButton_BALANCE->setObjectName("pushButton_BALANCE");
 
         horizontalLayout->addWidget(pushButton_BALANCE);
 
-        pushButton_FOLLOW_LINE = new QPushButton(centralwidget);
+        pushButton_FOLLOW_LINE = new QPushButton(widget_controls);
         pushButton_FOLLOW_LINE->setObjectName("pushButton_FOLLOW_LINE");
 
         horizontalLayout->addWidget(pushButton_FOLLOW_LINE);
 
-        pushButton_UDP = new QPushButton(centralwidget);
+        pushButton_UDP = new QPushButton(widget_controls);
         pushButton_UDP->setObjectName("pushButton_UDP");
 
         horizontalLayout->addWidget(pushButton_UDP);
 
-        pushButton_RECORD = new QPushButton(centralwidget);
+        pushButton_RECORD = new QPushButton(widget_controls);
         pushButton_RECORD->setObjectName("pushButton_RECORD");
         pushButton_RECORD->setCheckable(true);
 
@@ -647,18 +670,18 @@ public:
         verticalLayout->setObjectName("verticalLayout");
         horizontalLayout_2 = new QHBoxLayout();
         horizontalLayout_2->setObjectName("horizontalLayout_2");
-        label_9 = new QLabel(centralwidget);
+        label_9 = new QLabel(widget_controls);
         label_9->setObjectName("label_9");
         label_9->setFont(font2);
 
         horizontalLayout_2->addWidget(label_9);
 
-        lineEdit_LOCALPORT = new QLineEdit(centralwidget);
+        lineEdit_LOCALPORT = new QLineEdit(widget_controls);
         lineEdit_LOCALPORT->setObjectName("lineEdit_LOCALPORT");
 
         horizontalLayout_2->addWidget(lineEdit_LOCALPORT);
 
-        pushButton_OPENUDP = new QPushButton(centralwidget);
+        pushButton_OPENUDP = new QPushButton(widget_controls);
         pushButton_OPENUDP->setObjectName("pushButton_OPENUDP");
         pushButton_OPENUDP->setMinimumSize(QSize(80, 30));
 
@@ -669,13 +692,13 @@ public:
 
         horizontalLayout_8 = new QHBoxLayout();
         horizontalLayout_8->setObjectName("horizontalLayout_8");
-        label_7 = new QLabel(centralwidget);
+        label_7 = new QLabel(widget_controls);
         label_7->setObjectName("label_7");
         label_7->setFont(font2);
 
         horizontalLayout_8->addWidget(label_7);
 
-        lineEdit_IP_REMOTA = new QLineEdit(centralwidget);
+        lineEdit_IP_REMOTA = new QLineEdit(widget_controls);
         lineEdit_IP_REMOTA->setObjectName("lineEdit_IP_REMOTA");
 
         horizontalLayout_8->addWidget(lineEdit_IP_REMOTA);
@@ -685,13 +708,13 @@ public:
 
         horizontalLayout_9 = new QHBoxLayout();
         horizontalLayout_9->setObjectName("horizontalLayout_9");
-        label_8 = new QLabel(centralwidget);
+        label_8 = new QLabel(widget_controls);
         label_8->setObjectName("label_8");
         label_8->setFont(font2);
 
         horizontalLayout_9->addWidget(label_8);
 
-        lineEdit_DEVICEPORT = new QLineEdit(centralwidget);
+        lineEdit_DEVICEPORT = new QLineEdit(widget_controls);
         lineEdit_DEVICEPORT->setObjectName("lineEdit_DEVICEPORT");
 
         horizontalLayout_9->addWidget(lineEdit_DEVICEPORT);
@@ -709,7 +732,7 @@ public:
         verticalLayout_13->setObjectName("verticalLayout_13");
         verticalLayout_16 = new QVBoxLayout();
         verticalLayout_16->setObjectName("verticalLayout_16");
-        label = new QLabel(centralwidget);
+        label = new QLabel(widget_controls);
         label->setObjectName("label");
         label->setMaximumSize(QSize(16777215, 30));
         QFont font4;
@@ -725,7 +748,7 @@ public:
 
         horizontalLayout_16 = new QHBoxLayout();
         horizontalLayout_16->setObjectName("horizontalLayout_16");
-        label_13 = new QLabel(centralwidget);
+        label_13 = new QLabel(widget_controls);
         label_13->setObjectName("label_13");
         label_13->setMaximumSize(QSize(16777215, 30));
         label_13->setFont(font);
@@ -733,7 +756,7 @@ public:
 
         horizontalLayout_16->addWidget(label_13);
 
-        label_14 = new QLabel(centralwidget);
+        label_14 = new QLabel(widget_controls);
         label_14->setObjectName("label_14");
         label_14->setMaximumSize(QSize(16777215, 30));
         label_14->setFont(font);
@@ -741,7 +764,7 @@ public:
 
         horizontalLayout_16->addWidget(label_14);
 
-        label_5 = new QLabel(centralwidget);
+        label_5 = new QLabel(widget_controls);
         label_5->setObjectName("label_5");
         label_5->setMaximumSize(QSize(16777215, 30));
         label_5->setFont(font);
@@ -756,7 +779,7 @@ public:
         verticalLayout_14->setObjectName("verticalLayout_14");
         horizontalLayout_15 = new QHBoxLayout();
         horizontalLayout_15->setObjectName("horizontalLayout_15");
-        label_KP = new QLabel(centralwidget);
+        label_KP = new QLabel(widget_controls);
         label_KP->setObjectName("label_KP");
         label_KP->setMaximumSize(QSize(16777215, 25));
         QFont font5;
@@ -767,7 +790,7 @@ public:
 
         horizontalLayout_15->addWidget(label_KP);
 
-        label_KD = new QLabel(centralwidget);
+        label_KD = new QLabel(widget_controls);
         label_KD->setObjectName("label_KD");
         label_KD->setMaximumSize(QSize(16777215, 25));
         QFont font6;
@@ -778,7 +801,7 @@ public:
 
         horizontalLayout_15->addWidget(label_KD);
 
-        label_KI = new QLabel(centralwidget);
+        label_KI = new QLabel(widget_controls);
         label_KI->setObjectName("label_KI");
         label_KI->setMaximumSize(QSize(16777215, 25));
         label_KI->setFont(font6);
@@ -796,12 +819,12 @@ public:
         horizontalLayout_PID_Inputs->setObjectName("horizontalLayout_PID_Inputs");
         horizontalLayout_KP = new QHBoxLayout();
         horizontalLayout_KP->setObjectName("horizontalLayout_KP");
-        lineEdit_KP = new QLineEdit(centralwidget);
+        lineEdit_KP = new QLineEdit(widget_controls);
         lineEdit_KP->setObjectName("lineEdit_KP");
 
         horizontalLayout_KP->addWidget(lineEdit_KP);
 
-        pushButton_SetKP = new QPushButton(centralwidget);
+        pushButton_SetKP = new QPushButton(widget_controls);
         pushButton_SetKP->setObjectName("pushButton_SetKP");
         pushButton_SetKP->setMinimumSize(QSize(0, 20));
         pushButton_SetKP->setFont(font2);
@@ -813,12 +836,12 @@ public:
 
         horizontalLayout_KD = new QHBoxLayout();
         horizontalLayout_KD->setObjectName("horizontalLayout_KD");
-        lineEdit_KD = new QLineEdit(centralwidget);
+        lineEdit_KD = new QLineEdit(widget_controls);
         lineEdit_KD->setObjectName("lineEdit_KD");
 
         horizontalLayout_KD->addWidget(lineEdit_KD);
 
-        pushButton_SetKD = new QPushButton(centralwidget);
+        pushButton_SetKD = new QPushButton(widget_controls);
         pushButton_SetKD->setObjectName("pushButton_SetKD");
         pushButton_SetKD->setMinimumSize(QSize(0, 20));
         pushButton_SetKD->setFont(font2);
@@ -830,12 +853,12 @@ public:
 
         horizontalLayout_KI = new QHBoxLayout();
         horizontalLayout_KI->setObjectName("horizontalLayout_KI");
-        lineEdit_KI = new QLineEdit(centralwidget);
+        lineEdit_KI = new QLineEdit(widget_controls);
         lineEdit_KI->setObjectName("lineEdit_KI");
 
         horizontalLayout_KI->addWidget(lineEdit_KI);
 
-        pushButton_SetKI = new QPushButton(centralwidget);
+        pushButton_SetKI = new QPushButton(widget_controls);
         pushButton_SetKI->setObjectName("pushButton_SetKI");
         pushButton_SetKI->setMinimumSize(QSize(0, 20));
         pushButton_SetKI->setFont(font2);
@@ -853,7 +876,7 @@ public:
 
         verticalLayout_PID_LINE = new QVBoxLayout();
         verticalLayout_PID_LINE->setObjectName("verticalLayout_PID_LINE");
-        label_PID_LINE_title = new QLabel(centralwidget);
+        label_PID_LINE_title = new QLabel(widget_controls);
         label_PID_LINE_title->setObjectName("label_PID_LINE_title");
         label_PID_LINE_title->setMaximumSize(QSize(16777215, 30));
         label_PID_LINE_title->setFont(font4);
@@ -863,7 +886,7 @@ public:
 
         horizontalLayout_PID_LINE_headers = new QHBoxLayout();
         horizontalLayout_PID_LINE_headers->setObjectName("horizontalLayout_PID_LINE_headers");
-        label_PID_LINE_KP_hdr = new QLabel(centralwidget);
+        label_PID_LINE_KP_hdr = new QLabel(widget_controls);
         label_PID_LINE_KP_hdr->setObjectName("label_PID_LINE_KP_hdr");
         label_PID_LINE_KP_hdr->setMaximumSize(QSize(16777215, 30));
         label_PID_LINE_KP_hdr->setFont(font);
@@ -871,7 +894,7 @@ public:
 
         horizontalLayout_PID_LINE_headers->addWidget(label_PID_LINE_KP_hdr);
 
-        label_PID_LINE_KD_hdr = new QLabel(centralwidget);
+        label_PID_LINE_KD_hdr = new QLabel(widget_controls);
         label_PID_LINE_KD_hdr->setObjectName("label_PID_LINE_KD_hdr");
         label_PID_LINE_KD_hdr->setMaximumSize(QSize(16777215, 30));
         label_PID_LINE_KD_hdr->setFont(font);
@@ -879,7 +902,7 @@ public:
 
         horizontalLayout_PID_LINE_headers->addWidget(label_PID_LINE_KD_hdr);
 
-        label_PID_LINE_KI_hdr = new QLabel(centralwidget);
+        label_PID_LINE_KI_hdr = new QLabel(widget_controls);
         label_PID_LINE_KI_hdr->setObjectName("label_PID_LINE_KI_hdr");
         label_PID_LINE_KI_hdr->setMaximumSize(QSize(16777215, 30));
         label_PID_LINE_KI_hdr->setFont(font);
@@ -892,7 +915,7 @@ public:
 
         horizontalLayout_PID_LINE_values = new QHBoxLayout();
         horizontalLayout_PID_LINE_values->setObjectName("horizontalLayout_PID_LINE_values");
-        label_KP_LINE = new QLabel(centralwidget);
+        label_KP_LINE = new QLabel(widget_controls);
         label_KP_LINE->setObjectName("label_KP_LINE");
         label_KP_LINE->setMaximumSize(QSize(16777215, 25));
         label_KP_LINE->setFont(font5);
@@ -900,7 +923,7 @@ public:
 
         horizontalLayout_PID_LINE_values->addWidget(label_KP_LINE);
 
-        label_KD_LINE = new QLabel(centralwidget);
+        label_KD_LINE = new QLabel(widget_controls);
         label_KD_LINE->setObjectName("label_KD_LINE");
         label_KD_LINE->setMaximumSize(QSize(16777215, 25));
         label_KD_LINE->setFont(font5);
@@ -908,7 +931,7 @@ public:
 
         horizontalLayout_PID_LINE_values->addWidget(label_KD_LINE);
 
-        label_KI_LINE = new QLabel(centralwidget);
+        label_KI_LINE = new QLabel(widget_controls);
         label_KI_LINE->setObjectName("label_KI_LINE");
         label_KI_LINE->setMaximumSize(QSize(16777215, 25));
         label_KI_LINE->setFont(font5);
@@ -923,12 +946,12 @@ public:
         horizontalLayout_PID_LINE_inputs->setObjectName("horizontalLayout_PID_LINE_inputs");
         horizontalLayout_KP_LINE = new QHBoxLayout();
         horizontalLayout_KP_LINE->setObjectName("horizontalLayout_KP_LINE");
-        lineEdit_KP_LINE = new QLineEdit(centralwidget);
+        lineEdit_KP_LINE = new QLineEdit(widget_controls);
         lineEdit_KP_LINE->setObjectName("lineEdit_KP_LINE");
 
         horizontalLayout_KP_LINE->addWidget(lineEdit_KP_LINE);
 
-        pushButton_SetKP_LINE = new QPushButton(centralwidget);
+        pushButton_SetKP_LINE = new QPushButton(widget_controls);
         pushButton_SetKP_LINE->setObjectName("pushButton_SetKP_LINE");
         pushButton_SetKP_LINE->setMinimumSize(QSize(0, 20));
         pushButton_SetKP_LINE->setFont(font2);
@@ -940,12 +963,12 @@ public:
 
         horizontalLayout_KD_LINE = new QHBoxLayout();
         horizontalLayout_KD_LINE->setObjectName("horizontalLayout_KD_LINE");
-        lineEdit_KD_LINE = new QLineEdit(centralwidget);
+        lineEdit_KD_LINE = new QLineEdit(widget_controls);
         lineEdit_KD_LINE->setObjectName("lineEdit_KD_LINE");
 
         horizontalLayout_KD_LINE->addWidget(lineEdit_KD_LINE);
 
-        pushButton_SetKD_LINE = new QPushButton(centralwidget);
+        pushButton_SetKD_LINE = new QPushButton(widget_controls);
         pushButton_SetKD_LINE->setObjectName("pushButton_SetKD_LINE");
         pushButton_SetKD_LINE->setMinimumSize(QSize(0, 20));
         pushButton_SetKD_LINE->setFont(font2);
@@ -957,12 +980,12 @@ public:
 
         horizontalLayout_KI_LINE = new QHBoxLayout();
         horizontalLayout_KI_LINE->setObjectName("horizontalLayout_KI_LINE");
-        lineEdit_KI_LINE = new QLineEdit(centralwidget);
+        lineEdit_KI_LINE = new QLineEdit(widget_controls);
         lineEdit_KI_LINE->setObjectName("lineEdit_KI_LINE");
 
         horizontalLayout_KI_LINE->addWidget(lineEdit_KI_LINE);
 
-        pushButton_SetKI_LINE = new QPushButton(centralwidget);
+        pushButton_SetKI_LINE = new QPushButton(widget_controls);
         pushButton_SetKI_LINE->setObjectName("pushButton_SetKI_LINE");
         pushButton_SetKI_LINE->setMinimumSize(QSize(0, 20));
         pushButton_SetKI_LINE->setFont(font2);
@@ -978,7 +1001,7 @@ public:
 
         verticalLayout_6->addLayout(verticalLayout_PID_LINE);
 
-        label_SETPOINT = new QLabel(centralwidget);
+        label_SETPOINT = new QLabel(widget_controls);
         label_SETPOINT->setObjectName("label_SETPOINT");
         label_SETPOINT->setBaseSize(QSize(0, 20));
         label_SETPOINT->setAlignment(Qt::AlignCenter);
@@ -987,7 +1010,7 @@ public:
 
         horizontalLayout_5 = new QHBoxLayout();
         horizontalLayout_5->setObjectName("horizontalLayout_5");
-        spinBox_SETPOINT = new QDoubleSpinBox(centralwidget);
+        spinBox_SETPOINT = new QDoubleSpinBox(widget_controls);
         spinBox_SETPOINT->setObjectName("spinBox_SETPOINT");
         spinBox_SETPOINT->setMinimum(-180.000000000000000);
         spinBox_SETPOINT->setMaximum(180.000000000000000);
@@ -995,7 +1018,7 @@ public:
 
         horizontalLayout_5->addWidget(spinBox_SETPOINT);
 
-        pushButton_SETPOINT = new QPushButton(centralwidget);
+        pushButton_SETPOINT = new QPushButton(widget_controls);
         pushButton_SETPOINT->setObjectName("pushButton_SETPOINT");
         pushButton_SETPOINT->setMinimumSize(QSize(0, 0));
         pushButton_SETPOINT->setMaximumSize(QSize(60, 16777215));
@@ -1007,25 +1030,25 @@ public:
 
         gridLayout_DirectionButtons = new QGridLayout();
         gridLayout_DirectionButtons->setObjectName("gridLayout_DirectionButtons");
-        btn_UP = new QPushButton(centralwidget);
+        btn_UP = new QPushButton(widget_controls);
         btn_UP->setObjectName("btn_UP");
         btn_UP->setMinimumSize(QSize(45, 25));
 
         gridLayout_DirectionButtons->addWidget(btn_UP, 0, 1, 1, 1);
 
-        btn_LEFT = new QPushButton(centralwidget);
+        btn_LEFT = new QPushButton(widget_controls);
         btn_LEFT->setObjectName("btn_LEFT");
         btn_LEFT->setMinimumSize(QSize(45, 25));
 
         gridLayout_DirectionButtons->addWidget(btn_LEFT, 1, 0, 1, 1);
 
-        btn_RIGHT = new QPushButton(centralwidget);
+        btn_RIGHT = new QPushButton(widget_controls);
         btn_RIGHT->setObjectName("btn_RIGHT");
         btn_RIGHT->setMinimumSize(QSize(45, 25));
 
         gridLayout_DirectionButtons->addWidget(btn_RIGHT, 1, 2, 1, 1);
 
-        btn_DOWN = new QPushButton(centralwidget);
+        btn_DOWN = new QPushButton(widget_controls);
         btn_DOWN->setObjectName("btn_DOWN");
         btn_DOWN->setMinimumSize(QSize(45, 25));
 
@@ -1034,9 +1057,7 @@ public:
 
         verticalLayout_6->addLayout(gridLayout_DirectionButtons);
 
-
         splitter_main->addWidget(widget_controls);
-
 
         gridLayout->addWidget(splitter_main, 0, 0, 1, 1);
 
@@ -1092,17 +1113,21 @@ public:
         tabWidget_Graficas->setTabText(tabWidget_Graficas->indexOf(tab_Motors), QCoreApplication::translate("MainWindow", "Motores & PWM", nullptr));
         tabWidget_Graficas->setTabText(tabWidget_Graficas->indexOf(tab_System), QCoreApplication::translate("MainWindow", "Sistema", nullptr));
         textEdit_RAW->setHtml(QCoreApplication::translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /></head>"
-"<body style=\" font-family:'Consolas'; font-size:12px; font-weight:400; font-style:normal; background-color:transparent;\">\n"
-"<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(20,50,8,0.85); border-radius:5px;\">"
-"<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#78d878; letter-spacing:2px;\">&#x2191; DATO ENVIADO &#x2191;</span>"
-"</p></body></html>", nullptr));
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Consolas'; font-size:12px; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:12px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px; background-color:rgba(20,50,8,0.847059);\"><span style=\" font-size:13px; font-weight:700; color:#78d878;\">\342\206\221 DATO ENVIADO \342\206\221</span></p></body></html>", nullptr));
         textEdit_PROCCES->setHtml(QCoreApplication::translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /></head>"
-"<body style=\" font-family:'Consolas'; font-size:13px; font-weight:400; font-style:normal; background-color:transparent;\">\n"
-"<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(0,50,35,0.85); border-radius:5px;\">"
-"<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#44ffcc; letter-spacing:2px;\">&#x2193; DATO RECIBIDO &#x2193;</span>"
-"</p></body></html>", nullptr));
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Consolas'; font-size:13px; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:12px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px; background-color:rgba(0,50,35,0.847059);\"><span style=\" font-size:13px; font-weight:700; color:#44ffcc;\">\342\206\223 DATO RECIBIDO \342\206\223</span></p></body></html>", nullptr));
         pushButton_SEND->setText(QCoreApplication::translate("MainWindow", "Send CMD", nullptr));
         pushButton_BALANCE->setText(QCoreApplication::translate("MainWindow", "BALANCE", nullptr));
         pushButton_FOLLOW_LINE->setText(QCoreApplication::translate("MainWindow", "FOLLOW LINE", nullptr));
