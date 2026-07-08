@@ -3,3 +3,21 @@ AutoMicro.obj
 AutoMicro.mtl
 *.obj
 *.mtl
+
+# Artefactos de build (qmake / make)
+Makefile
+Makefile.Debug
+Makefile.Release
+.qmake.stash
+debug/
+release/
+ui_*.h
+moc_*.cpp
+qrc_*.cpp
+
+# Estado local del IDE / herramientas
+*.pro.user
+*.pro.user.*
+*.bak
+.claude/
+.obsidian/

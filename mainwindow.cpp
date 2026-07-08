@@ -15,6 +15,93 @@
 #include <QtMath>
 #include <cmath>
 #include <algorithm>
+#include <QStyle>
+#include <QTabBar>
+#include <QtCharts/QAbstractAxis>
+
+// ============================================================
+// Helpers de estética — el tema global de la app vive en theme.qss
+// (recurso :/style/theme.qss, cargado en main.cpp); acá va solamente
+// lo que un stylesheet no puede cubrir: QCharts y propiedades dinámicas.
+// ============================================================
+namespace {
+
+// Estado visual de los botones toggle (BALANCE / SEGUIR LÍNEA / Abrir UDP).
+// theme.qss define la apariencia para toggleState="on" (verde) y "off" (rojo);
+// re-polish fuerza a Qt a reevaluar el selector tras cambiar la propiedad.
+void setToggleState(QWidget *w, const char *state)
+{
+    w->setProperty("toggleState", QString::fromLatin1(state));
+    w->style()->unpolish(w);
+    w->style()->polish(w);
+}
+
+// Estilo unificado de todos los QChart, con los mismos colores del tema
+// (los QChart no son estilables por QSS — hay que pintarlos por API).
+void styleChart(QChart *chart)
+{
+    const QColor surface("#151b23");
+    const QColor plotBg("#0c1117");
+    const QColor text("#d8dfe8");
+    const QColor dim("#8a97a8");
+    const QColor grid("#232c38");
+
+    chart->setBackgroundBrush(surface);
+    chart->setBackgroundPen(Qt::NoPen);
+    chart->setBackgroundRoundness(8);
+    chart->setPlotAreaBackgroundBrush(plotBg);
+    chart->setPlotAreaBackgroundVisible(true);
+    chart->setTitleBrush(QBrush(text));
+    QFont titleFont = chart->titleFont();
+    titleFont.setPointSize(10);
+    titleFont.setBold(true);
+    chart->setTitleFont(titleFont);
+    chart->legend()->setLabelColor(dim);
+    const auto axes = chart->axes();
+    for (QAbstractAxis *axis : axes) {
+        axis->setLabelsBrush(QBrush(dim));
+        axis->setTitleBrush(QBrush(dim));
+        axis->setLinePen(QPen(grid));
+        axis->setGridLinePen(QPen(grid));
+        axis->setMinorGridLinePen(QPen(grid));
+    }
+}
+
+// Encabezados de las consolas de texto (mismos colores del tema) — usado al
+// limpiar pantallas tanto desde el botón como desde el watchdog UDP.
+void resetConsoleHeaders(QTextEdit *rawEdit, QTextEdit *procEdit)
+{
+    rawEdit->setHtml(
+        "<html><head><meta charset=\"utf-8\"/></head>"
+        "<body style=\"font-family:'Consolas'; font-size:12px;\">"
+        "<p align=\"center\" style=\"margin:8px 4px;\">"
+        "<span style=\"font-weight:bold; color:#8a97a8; letter-spacing:2px;\">&mdash; DATO ENVIADO &mdash;</span>"
+        "</p></body></html>"
+    );
+    procEdit->setHtml(
+        "<html><head><meta charset=\"utf-8\"/></head>"
+        "<body style=\"font-family:'Consolas'; font-size:13px;\">"
+        "<p align=\"center\" style=\"margin:8px 4px;\">"
+        "<span style=\"font-weight:bold; color:#79c0ff; letter-spacing:2px;\">&mdash; DATO RECIBIDO &mdash;</span>"
+        "</p></body></html>"
+    );
+}
+
+// Grupo plegable: el indicador del título del QGroupBox muestra/oculta todo
+// su contenido (los widgets ocultos no reservan espacio en el layout).
+void makeCollapsible(QGroupBox *box, bool startOpen)
+{
+    box->setCheckable(true);
+    auto apply = [box](bool open) {
+        const auto children = box->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly);
+        for (QWidget *w : children) w->setVisible(open);
+    };
+    QObject::connect(box, &QGroupBox::toggled, box, apply);
+    box->setChecked(startOpen);
+    apply(startOpen);
+}
+
+} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -69,10 +156,7 @@ MainWindow::MainWindow(QWidget *parent)
         toggleLayout->setContentsMargins(4, 2, 4, 2);
 
         auto *btnToggleRaw = new QPushButton("▾ Ver dato enviado", toggleBar);
-        btnToggleRaw->setStyleSheet(
-            "QPushButton { background-color: rgba(20,50,8,0.85); color: #78d878;"
-            " font-weight: bold; border-radius: 4px; padding: 3px; }"
-            );
+        btnToggleRaw->setObjectName("btnToggleRaw"); // apariencia definida en theme.qss
         toggleLayout->addWidget(btnToggleRaw);
         toggleBar->setFixedHeight(28);
 
@@ -85,44 +169,16 @@ MainWindow::MainWindow(QWidget *parent)
         ui->splitter_texts->insertWidget(0, toggleBar);
     }
 
-    // Paneles PID BALANCE / PID SEGUIDOR LÍNEA plegables: con el dashboard de
-    // salud embebido, el panel de controles quedó muy apretado. Arrancan
-    // colapsados (solo título + botón) y se despliegan al tocar el botón —
-    // los headers/valores/inputs de cada uno directamente se ocultan (en un
-    // QVBoxLayout, widgets ocultos no reservan espacio, así la sección
-    // colapsada ocupa casi nada).
-    auto makePidFoldable = [this](QVBoxLayout *sectionLayout,
-                                   const QList<QWidget*> &collapsible,
-                                   const QString &openText,
-                                   const QString &closedText) {
-        for (QWidget *w : collapsible) w->setVisible(false);
+    // Secciones plegables del panel de control: los grupos de tuning (PID
+    // Balance / PID Línea / Setpoint) arrancan colapsados — se despliegan con
+    // el indicador del título del grupo — para que conexión, comandos y
+    // control manual queden siempre a la vista sin scroll.
+    makeCollapsible(ui->groupBox_PID_Balance, false);
+    makeCollapsible(ui->groupBox_PID_Line, false);
+    makeCollapsible(ui->groupBox_Setpoint, false);
 
-        auto *btn = new QPushButton(closedText, this);
-        btn->setCheckable(true);
-        btn->setChecked(false);
-        btn->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; }");
-        connect(btn, &QPushButton::toggled, this, [collapsible, btn, openText, closedText](bool checked) {
-            for (QWidget *w : collapsible) w->setVisible(checked);
-            btn->setText(checked ? openText : closedText);
-        });
-        sectionLayout->insertWidget(1, btn); // índice 1 = justo debajo del título de la sección
-    };
-
-    makePidFoldable(ui->verticalLayout_13, {
-                        ui->label_13, ui->label_14, ui->label_5,
-                        ui->label_KP, ui->label_KD, ui->label_KI,
-                        ui->lineEdit_KP, ui->pushButton_SetKP,
-                        ui->lineEdit_KD, ui->pushButton_SetKD,
-                        ui->lineEdit_KI, ui->pushButton_SetKI
-                    }, "▴ Ocultar PID Balance", "▾ Ver PID Balance");
-
-    makePidFoldable(ui->verticalLayout_PID_LINE, {
-                        ui->label_PID_LINE_KP_hdr, ui->label_PID_LINE_KD_hdr, ui->label_PID_LINE_KI_hdr,
-                        ui->label_KP_LINE, ui->label_KD_LINE, ui->label_KI_LINE,
-                        ui->lineEdit_KP_LINE, ui->pushButton_SetKP_LINE,
-                        ui->lineEdit_KD_LINE, ui->pushButton_SetKD_LINE,
-                        ui->lineEdit_KI_LINE, ui->pushButton_SetKI_LINE
-                    }, "▴ Ocultar PID Línea", "▾ Ver PID Línea");
+    // Estado visual inicial del toggle de conexión (theme.qss: toggleState)
+    setToggleState(ui->pushButton_OPENUDP, "off");
 
     // Conectar botones D-PAD a control manual
     connect(ui->btn_UP, &QPushButton::pressed, this, [=](){
@@ -350,7 +406,7 @@ MainWindow::MainWindow(QWidget *parent)
     seriesP = new QLineSeries(); seriesP->setName("Proporcional"); seriesP->setColor(Qt::red);
     seriesI = new QLineSeries(); seriesI->setName("Integral"); seriesI->setColor(Qt::green);
     seriesD = new QLineSeries(); seriesD->setName("Derivativo"); seriesD->setColor(Qt::blue);
-    seriesOutput = new QLineSeries(); seriesOutput->setName("Output"); seriesOutput->setColor(Qt::black);
+    seriesOutput = new QLineSeries(); seriesOutput->setName("Output"); seriesOutput->setColor(QColor("#e6edf3")); // claro: visible sobre fondo oscuro
     seriesError = new QLineSeries(); seriesError->setName("Error"); seriesError->setColor(Qt::magenta);
 
     pidChart->addSeries(seriesP);
@@ -548,7 +604,7 @@ MainWindow::MainWindow(QWidget *parent)
     seriesLineP = new QLineSeries(); seriesLineP->setName("Proporcional"); seriesLineP->setColor(Qt::red);
     seriesLineI = new QLineSeries(); seriesLineI->setName("Integral"); seriesLineI->setColor(Qt::green);
     seriesLineD = new QLineSeries(); seriesLineD->setName("Derivativo"); seriesLineD->setColor(Qt::blue);
-    seriesLineSteering = new QLineSeries(); seriesLineSteering->setName("Ajuste Giro"); seriesLineSteering->setColor(Qt::black);
+    seriesLineSteering = new QLineSeries(); seriesLineSteering->setName("Ajuste Giro"); seriesLineSteering->setColor(QColor("#e6edf3")); // claro: visible sobre fondo oscuro
 
     lineFollowerPidChart->addSeries(seriesLineError);
     lineFollowerPidChart->addSeries(seriesLineP);
@@ -635,8 +691,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     odomTrailSeries = new QLineSeries();
     odomTrailSeries->setName("Trayectoria");
-    QPen trailPen(Qt::gray);
-    trailPen.setWidth(1);
+    QPen trailPen(QColor("#8a97a8"));
+    trailPen.setWidth(2);
     odomTrailSeries->setPen(trailPen);
 
     odomLostMarkers = new QScatterSeries();
@@ -651,7 +707,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     odomCurrentSeries = new QScatterSeries();
     odomCurrentSeries->setName("Posición actual");
-    odomCurrentSeries->setColor(Qt::blue);
+    odomCurrentSeries->setColor(QColor("#3d8bfd"));
     odomCurrentSeries->setMarkerSize(12.0);
 
     odomChart->addSeries(odomTrailSeries);
@@ -688,12 +744,12 @@ MainWindow::MainWindow(QWidget *parent)
     // Flecha de rumbo: dos QGraphicsItems sueltos (no forman parte de ninguna
     // serie) que indican hacia dónde apunta el robot en la posición actual.
     odomHeadingLine = new QGraphicsLineItem();
-    odomHeadingLine->setPen(QPen(Qt::blue, 2));
+    odomHeadingLine->setPen(QPen(QColor("#3d8bfd"), 2));
     odomChart->scene()->addItem(odomHeadingLine);
 
     odomHeadingArrowHead = new QGraphicsPolygonItem();
-    odomHeadingArrowHead->setPen(QPen(Qt::blue));
-    odomHeadingArrowHead->setBrush(QBrush(Qt::blue));
+    odomHeadingArrowHead->setPen(QPen(QColor("#3d8bfd")));
+    odomHeadingArrowHead->setBrush(QBrush(QColor("#3d8bfd")));
     odomChart->scene()->addItem(odomHeadingArrowHead);
 
     // Reposicionar las anotaciones de texto y la flecha de rumbo (QGraphicsItems
@@ -706,7 +762,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(btnOdomClear, &QPushButton::clicked, this, &MainWindow::clearOdomMap);
 
     layoutOdom->addWidget(odomChartView);
-    ui->tabWidget_Graficas->addTab(tabOdom, "Odometría (WiFi)");
+    ui->tabWidget_Graficas->addTab(tabOdom, "Odometría");
 
     // --- TAB MPU CRUDO: valores numéricos de acelerómetro y giroscopio ---
     {
@@ -737,8 +793,7 @@ MainWindow::MainWindow(QWidget *parent)
         hMain->setSpacing(40);
 
         // --- Bloque Acelerómetro ---
-        auto *grpAcc = new QGroupBox("Acelerómetro  (m/s²)", tabMpu);
-        grpAcc->setStyleSheet("QGroupBox { font-size:16px; font-weight:bold; }");
+        auto *grpAcc = new QGroupBox("ACELERÓMETRO (m/s²)", tabMpu);
         auto *gridAcc = new QGridLayout(grpAcc);
         gridAcc->setSpacing(16);
 
@@ -754,8 +809,7 @@ MainWindow::MainWindow(QWidget *parent)
         gridAcc->setRowStretch(3, 1);
 
         // --- Bloque Giroscopio ---
-        auto *grpGyro = new QGroupBox("Giroscopio  (°/s)", tabMpu);
-        grpGyro->setStyleSheet("QGroupBox { font-size:16px; font-weight:bold; }");
+        auto *grpGyro = new QGroupBox("GIROSCOPIO (°/s)", tabMpu);
         auto *gridGyro = new QGridLayout(grpGyro);
         gridGyro->setSpacing(16);
 
@@ -773,7 +827,7 @@ MainWindow::MainWindow(QWidget *parent)
         hMain->addWidget(grpAcc);
         hMain->addWidget(grpGyro);
 
-        ui->tabWidget_Graficas->insertTab(0, tabMpu, "MPU Crudo");
+        ui->tabWidget_Graficas->addTab(tabMpu, "MPU Crudo");
     }
 
     // --- TAB Vista 3D ---
@@ -782,7 +836,35 @@ MainWindow::MainWindow(QWidget *parent)
     layout3D->setContentsMargins(0, 0, 0, 0);
     robotViewer3D = new RobotViewer3D(tab3D);
     layout3D->addWidget(robotViewer3D);
-    ui->tabWidget_Graficas->insertTab(0, tab3D, "Vista 3D");
+    ui->tabWidget_Graficas->addTab(tab3D, "Vista 3D");
+
+    // --- Estilo unificado de todos los gráficos (colores del tema) ---
+    adcBarSet->setColor(QColor("#3d8bfd"));
+    for (QChart *c : {accChart, gyroChart, pidChart, motorsChart, systemChart,
+                      rawSensorsAccChart, rawSensorsGyroChart, adcChart,
+                      lineFollowerPidChart, lineFollowerAdcChart, odomChart}) {
+        styleChart(c);
+    }
+
+    // --- Orden final de pestañas: operación primero, diagnóstico después ---
+    // (las pestañas se crean en distintos lugares — .ui y código — así que el
+    // orden se fija al final, buscándolas por título)
+    {
+        const QStringList tabOrder = {
+            "Vista 3D", "IMU · Ángulos", "PID Balance", "Motores",
+            "Seguidor de Línea", "Odometría",
+            "Sensores Raw", "Valores ADC", "MPU Crudo", "Sistema"
+        };
+        QTabBar *bar = ui->tabWidget_Graficas->tabBar();
+        for (int target = 0; target < tabOrder.size() && target < bar->count(); ++target) {
+            for (int i = target; i < bar->count(); ++i) {
+                if (ui->tabWidget_Graficas->tabText(i) == tabOrder[target]) {
+                    bar->moveTab(i, target);
+                    break;
+                }
+            }
+        }
+    }
     ui->tabWidget_Graficas->setCurrentIndex(0);
 }
 
@@ -814,7 +896,7 @@ void MainWindow::openSerialPorts(){
         ui->pushButton_FOLLOW_LINE->setEnabled(true);
         ui->pushButton_SEND->setEnabled(true);
         ui->actionDisconnect_Device->setEnabled(true);
-        estadoSerial->setStyleSheet("QLabel { color : blue; }");
+        estadoSerial->setStyleSheet("QLabel { color: #58a6ff; }");
         estadoSerial->setText(tr("Connected to %1 : %2, %3, %4, %5, %6, %7")
                                   .arg(p.name)
                                   .arg(p.stringBaudRate)
@@ -1001,10 +1083,10 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
     // Toggle: si ya está abierto, cerramos y salimos
     if (UdpSocket1->state() != QAbstractSocket::UnconnectedState) {
         UdpSocket1->close();
-        ui->pushButton_OPENUDP->setText("Open UDP");
-        ui->pushButton_OPENUDP->setStyleSheet("background-color: #d32f2f; color: white;");
-        ui->pushButton_BALANCE->setStyleSheet("background-color: red; color: white;");
-        ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: red; color: white;");
+        ui->pushButton_OPENUDP->setText("Abrir UDP");
+        setToggleState(ui->pushButton_OPENUDP, "off");
+        setToggleState(ui->pushButton_BALANCE, "off");
+        setToggleState(ui->pushButton_FOLLOW_LINE, "off");
         isBalanceActive = false;
         isFollowLineActive = false;
         ui->pushButton_UDP->setEnabled(false);
@@ -1038,11 +1120,13 @@ void MainWindow::on_pushButton_OPENUDP_clicked()
         return;
     }
 
-    ui->pushButton_OPENUDP->setText("Close UDP");
-    ui->pushButton_OPENUDP->setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;"); // Estilo "Activo/Verde"
+    ui->pushButton_OPENUDP->setText("Cerrar UDP");
+    setToggleState(ui->pushButton_OPENUDP, "on");
     ui->pushButton_UDP->setEnabled(true);
     ui->pushButton_BALANCE->setEnabled(true);
     ui->pushButton_FOLLOW_LINE->setEnabled(true);
+    setToggleState(ui->pushButton_BALANCE, "off");
+    setToggleState(ui->pushButton_FOLLOW_LINE, "off");
 
     udpEverReceivedData = false;
     udpWatchdogTimer->start(1000);
@@ -2053,11 +2137,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         if(datosRx[2]==ACK){
             str="Se ha cambiado la bandera de balance correctamente!";
             isBalanceActive = !isBalanceActive;
-            if (isBalanceActive) {
-                ui->pushButton_BALANCE->setStyleSheet("background-color: #4CAF50; color: white;"); // Verde
-            } else {
-                ui->pushButton_BALANCE->setStyleSheet("background-color: red; color: white;"); // Rojo
-            }
+            setToggleState(ui->pushButton_BALANCE, isBalanceActive ? "on" : "off");
         }
         ui->textEdit_PROCCES->append(str);
         break;
@@ -2279,11 +2359,7 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         if(datosRx[2]==ACK){
             str="Se ha modificado el valor de la bandera de seguidor de LINEA correctamente!";
             isFollowLineActive = !isFollowLineActive;
-            if (isFollowLineActive) {
-                ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: #4CAF50; color: white;"); // Verde
-            } else {
-                ui->pushButton_FOLLOW_LINE->setStyleSheet("background-color: red; color: white;"); // Rojo
-            }
+            setToggleState(ui->pushButton_FOLLOW_LINE, isFollowLineActive ? "on" : "off");
         }
         ui->textEdit_PROCCES->append(str);
         break;
@@ -2321,22 +2397,9 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
     }
 }
 
-void MainWindow::on_pushButton_clicked()    // BOTON DE "CLEAR DISPLAYS"
+void MainWindow::on_pushButton_clicked()    // BOTON DE "LIMPIAR PANTALLAS"
 {
-    ui->textEdit_RAW->setHtml(
-        "<html><head><meta charset=\"utf-8\"/></head>"
-        "<body style=\"font-family:'Consolas'; font-size:12px;\">"
-        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(20,50,8,0.85); border-radius:5px;\">"
-        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#78d878; letter-spacing:2px;\">&#x2191; DATO ENVIADO &#x2191;</span>"
-        "</p></body></html>"
-    );
-    ui->textEdit_PROCCES->setHtml(
-        "<html><head><meta charset=\"utf-8\"/></head>"
-        "<body style=\"font-family:'Consolas'; font-size:13px;\">"
-        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(0,50,35,0.85); border-radius:5px;\">"
-        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#44ffcc; letter-spacing:2px;\">&#x2193; DATO RECIBIDO &#x2193;</span>"
-        "</p></body></html>"
-    );
+    resetConsoleHeaders(ui->textEdit_RAW, ui->textEdit_PROCCES);
 }
 
 void MainWindow::updatePlot() {
@@ -2400,7 +2463,7 @@ void MainWindow::updateOdomChart(float x, float y, float thetaDeg, bool lineDete
     if (lineDetected) {
         if (!odomTapeCurrent) {
             odomTapeCurrent = new QLineSeries();
-            QPen tapePen(Qt::black);
+            QPen tapePen(QColor("#e6edf3")); // clara: la "cinta" debe verse sobre el mapa oscuro
             tapePen.setWidth(6);
             tapePen.setCapStyle(Qt::RoundCap);
             odomTapeCurrent->setPen(tapePen);
@@ -2490,8 +2553,6 @@ void MainWindow::addOdomAnnotation(double x, double y, const QString &text, Odom
         odomLostMarkers->append(x, y);
     else
         odomObjMarkers->append(x, y);
-
-    healthDashboard->onEvent(text);
 
     repositionOdomAnnotations();
 }
@@ -2915,7 +2976,7 @@ void MainWindow::toggleRecording()
             stream << "t_ms,dt_us,dt_ctrl_us,accel_roll,accel_roll_f,gyro_y,gyro_f,roll_filt,dyn_sp,error,p,i,d,output,pwm_cmd,pwm_sat,sat,mR,mL,pitch,ax,ay,az,gx,gy,gz,line_error,p_line,i_line,d_line,steering_adjustment,adc1,adc2,adc3,adc4\n";
 
             isRecording = true;
-            ui->pushButton_RECORD->setText("STOP");
+            ui->pushButton_RECORD->setText("⏹ Detener grabación");
             ui->pushButton_RECORD->setChecked(true);
 
             // Mostrar ruta absoluta para que el usuario sepa dónde está
@@ -2933,7 +2994,7 @@ void MainWindow::toggleRecording()
             csvLogFile.close();
         }
         isRecording = false;
-        ui->pushButton_RECORD->setText("RECORD");
+        ui->pushButton_RECORD->setText("⏺ Grabar CSV");
         ui->pushButton_RECORD->setChecked(false);
         ui->textEdit_PROCCES->append("Grabación detenida.");
     }
@@ -3519,20 +3580,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
 void MainWindow::clearUdpScreens()
 {
-    ui->textEdit_RAW->setHtml(
-        "<html><head><meta charset=\"utf-8\"/></head>"
-        "<body style=\"font-family:'Consolas'; font-size:12px;\">"
-        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(20,50,8,0.85); border-radius:5px;\">"
-        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#78d878; letter-spacing:2px;\">&#x2191; DATO ENVIADO &#x2191;</span>"
-        "</p></body></html>"
-    );
-    ui->textEdit_PROCCES->setHtml(
-        "<html><head><meta charset=\"utf-8\"/></head>"
-        "<body style=\"font-family:'Consolas'; font-size:13px;\">"
-        "<p align=\"center\" style=\"margin:12px 4px 8px 4px; padding:6px; background-color:rgba(0,50,35,0.85); border-radius:5px;\">"
-        "<span style=\"font-family:'Consolas'; font-size:13px; font-weight:bold; color:#44ffcc; letter-spacing:2px;\">&#x2193; DATO RECIBIDO &#x2193;</span>"
-        "</p></body></html>"
-    );
+    resetConsoleHeaders(ui->textEdit_RAW, ui->textEdit_PROCCES);
 }
 
 void MainWindow::checkUdpInactivity()
@@ -3549,7 +3597,6 @@ void MainWindow::checkUdpInactivity()
 
         ui->spinBox_SETPOINT->setValue(0.0);
         ui->textEdit_PROCCES->append("WATCHDOG UDP: Timeout (15s sin datos). Reiniciando socket...");
-        healthDashboard->onEvent("Watchdog UDP: reconectando (timeout)");
 
         // Obtener el puerto local
         bool ok = false;

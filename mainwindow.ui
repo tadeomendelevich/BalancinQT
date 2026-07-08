@@ -6,847 +6,527 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1317</width>
-    <height>928</height>
+    <width>1360</width>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>BalancinQT — Panel de Control</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">/* ============ BalancinQT Global Theme ============ */
-#centralwidget {
-    background-color: #0d1a08;
-    background-image: url(:/img/logoUNERsolo.png);
-    background-repeat: no-repeat;
-    background-position: center;
-}
-QMenuBar {
-    background-color: #111e08;
-    color: #b8dfa0;
-    border-bottom: 1px solid #3a5f0b;
-    padding: 2px;
-}
-QMenuBar::item {
-    background-color: transparent;
-    padding: 4px 12px;
-    border-radius: 4px;
-}
-QMenuBar::item:selected { background-color: #2e4c07; }
-QMenu {
-    background-color: #182e08;
-    color: #d0ffcc;
-    border: 1px solid #4a6620;
-    padding: 4px;
-}
-QMenu::item {
-    padding: 5px 20px 5px 10px;
-    border-radius: 3px;
-}
-QMenu::item:selected { background-color: #3a5f0b; }
-QMenu::separator {
-    height: 1px;
-    background: #3a5f0b;
-    margin: 3px 8px;
-}
-QPushButton {
-    color: #e8ffe0;
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #4e6e18, stop:1 #2a4808);
-    border: 1px solid #3a5a10;
-    border-radius: 6px;
-    padding: 5px 12px;
-    font-weight: bold;
-    font-size: 11px;
-}
-QPushButton:hover {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #6b8e23, stop:1 #3a5f0b);
-    border-color: #7aaa28;
-}
-QPushButton:pressed {
-    background-color: #1e3506;
-    border-color: #8aab30;
-}
-QPushButton:disabled {
-    background-color: #1a2a10;
-    color: #4a5a3a;
-    border-color: #202e12;
-}
-QPushButton:checked {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #b01010, stop:1 #6a0808);
-    border: 2px solid #e04040;
-    color: white;
-}
-QPushButton#btn_UP,
-QPushButton#btn_DOWN,
-QPushButton#btn_LEFT,
-QPushButton#btn_RIGHT {
-    font-size: 20px;
-    padding: 8px;
-    border-radius: 10px;
-}
-QLabel {
-    color: #c8e6a0;
-    background-color: transparent;
-    border: none;
-    padding: 2px 4px;
-}
-QLabel#label_10, QLabel#label_11, QLabel#label {
-    color: #a0d060;
-    background-color: rgba(30, 60, 10, 0.45);
-    border: 1px solid #3a5f0b;
-    border-radius: 5px;
-    padding: 5px;
-}
-QLabel#label_inclination_Xvalue,
-QLabel#label_inclination_Yvalue {
-    color: #44ffcc;
-    background-color: rgba(0, 40, 30, 0.55);
-    border: 1px solid #207060;
-    border-radius: 5px;
-    font-family: Consolas;
-    font-weight: bold;
-    padding: 4px 8px;
-    min-width: 60px;
-}
-QLabel#label_KP, QLabel#label_KD, QLabel#label_KI,
-QLabel#label_KP_LINE, QLabel#label_KD_LINE, QLabel#label_KI_LINE {
-    color: #ffe080;
-    background-color: rgba(40, 30, 0, 0.55);
-    border: 1px solid #706010;
-    border-radius: 5px;
-    font-family: Consolas;
-    padding: 4px 8px;
-}
-QTextEdit {
-    border: 1px solid #3a5f0b;
-    border-radius: 8px;
-    background-color: rgba(8, 20, 4, 0.90);
-    color: #b8e8a0;
-    padding: 6px;
-    font-family: Consolas;
-    selection-background-color: #3a5f0b;
-    selection-color: #ffffff;
-}
-QTextEdit#textEdit_RAW {
-    font-size: 12px;
-    color: #78b878;
-    border-color: #2a4510;
-}
-QTextEdit#textEdit_PROCCES {
-    font-size: 13px;
-    color: #c0ffa0;
-    border-color: #5a8020;
-}
-QLineEdit {
-    color: #c8ffb0;
-    background-color: rgba(8, 25, 4, 0.85);
-    border: 1px solid #3a5f0b;
-    border-radius: 6px;
-    padding: 4px 8px;
-    selection-background-color: #3a5f0b;
-    selection-color: white;
-}
-QLineEdit:focus {
-    border-color: #7aaa28;
-    background-color: rgba(12, 35, 5, 0.95);
-}
-QLineEdit:read-only {
-    color: #78a870;
-    background-color: rgba(5, 18, 2, 0.75);
-}
-QDoubleSpinBox, QSpinBox {
-    color: #c8ffb0;
-    background-color: rgba(8, 25, 4, 0.85);
-    border: 1px solid #3a5f0b;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-family: Consolas;
-    font-size: 12px;
-}
-QDoubleSpinBox:focus, QSpinBox:focus {
-    border-color: #7aaa28;
-    background-color: rgba(12, 35, 5, 0.95);
-}
-QDoubleSpinBox::up-button, QSpinBox::up-button,
-QDoubleSpinBox::down-button, QSpinBox::down-button {
-    background-color: #2e4c07;
-    border: 1px solid #3a5f0b;
-    width: 16px;
-}
-QDoubleSpinBox::up-button:hover, QSpinBox::up-button:hover,
-QDoubleSpinBox::down-button:hover, QSpinBox::down-button:hover {
-    background-color: #4a7818;
-}
-QLabel#label_SETPOINT {
-    color: #44ffdd;
-    background-color: rgba(0, 40, 30, 0.55);
-    border: 1px solid #207060;
-    border-radius: 6px;
-    font-family: Consolas;
-    font-weight: bold;
-    font-size: 13px;
-    padding: 5px 10px;
-    qproperty-alignment: AlignCenter;
-}
-QComboBox {
-    color: #d0ffcc;
-    background-color: rgba(15, 40, 8, 0.90);
-    border: 1px solid #3a5f0b;
-    border-radius: 6px;
-    padding: 5px 8px;
-}
-QComboBox:hover { border-color: #6b8e23; }
-QComboBox::drop-down {
-    subcontrol-origin: padding;
-    subcontrol-position: top right;
-    width: 22px;
-    border-left: 1px solid #3a5f0b;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-}
-QComboBox QAbstractItemView {
-    background-color: #182e08;
-    border: 1px solid #4a6620;
-    color: #d0ffcc;
-    selection-background-color: #3a5f0b;
-    outline: none;
-}
-QTabWidget::pane {
-    border: 1px solid #3a5f0b;
-    border-radius: 5px;
-    background-color: rgba(8, 18, 4, 0.70);
-    top: -1px;
-}
-QTabBar::tab {
-    background-color: #162a08;
-    color: #7a9a60;
-    border: 1px solid #263a10;
-    border-bottom: none;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    padding: 6px 16px;
-    margin-right: 2px;
-    font-weight: bold;
-    font-size: 11px;
-}
-QTabBar::tab:selected {
-    background-color: rgba(8, 18, 4, 0.70);
-    color: #c0ffaa;
-    border-color: #5a8020;
-    border-bottom: 2px solid #8aab30;
-}
-QTabBar::tab:hover:!selected {
-    background-color: #1e3a0c;
-    color: #a0d080;
-}
-QScrollBar:vertical {
-    background-color: #0c180a;
-    width: 10px;
-    margin: 0;
-}
-QScrollBar::handle:vertical {
-    background-color: #2e5010;
-    border-radius: 5px;
-    min-height: 24px;
-}
-QScrollBar::handle:vertical:hover { background-color: #4a7818; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QScrollBar:horizontal {
-    background-color: #0c180a;
-    height: 10px;
-    margin: 0;
-}
-QScrollBar::handle:horizontal {
-    background-color: #2e5010;
-    border-radius: 5px;
-    min-width: 24px;
-}
-QScrollBar::handle:horizontal:hover { background-color: #4a7818; }
-QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
-QSplitter::handle {
-    background-color: #0d1a08;
-    image: none;
-    border: none;
-    width: 4px;
-    height: 4px;
-    margin: 0px;
-}
-QSplitter::handle:horizontal {
-    background-color: #0d1a08;
-    width: 4px;
-}
-QSplitter::handle:vertical {
-    background-color: #0d1a08;
-    height: 4px;
-}
-QSplitter::handle:hover {
-    background-color: rgba(90, 128, 32, 0.35);
-}
-QSplitter::handle:pressed {
-    background-color: rgba(138, 171, 48, 0.25);
-}
-QStatusBar {
-    background-color: #0d1a08;
-    color: #789060;
-    border-top: 1px solid #2a4010;
-    font-size: 11px;
-}
-QStatusBar QLabel {
-    border: none;
-    background: transparent;
-    padding: 2px 6px;
-}
-QWidget#widget_controls {
-    background-color: transparent;
-}
-QWidget {
-    background-color: transparent;
-}</string>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>6</number>
+    </property>
     <item row="0" column="0">
      <widget class="QSplitter" name="splitter_main">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
       <property name="handleWidth">
-       <number>2</number>
+       <number>3</number>
       </property>
       <widget class="QTabWidget" name="tabWidget_Graficas">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="currentIndex">
-         <number>0</number>
-        </property>
-        <widget class="QWidget" name="tab_IMU">
-         <attribute name="title">
-          <string>IMU &amp; Ángulos</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_TabIMU">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_Angles">
-            <item>
-             <widget class="QLabel" name="label_inclination_X">
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Roll:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_inclination_Xvalue">
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>0.00 °</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_inclination_Y">
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Pitch:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_inclination_Yvalue">
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>0.00 °</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_LogDir">
-            <item>
-             <widget class="QLabel" name="label_LogDir">
-              <property name="font">
-               <font>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Log Dir:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="lineEdit_LogDir">
-              <property name="readOnly">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="btnSelectLogDir">
-              <property name="maximumSize">
-               <size>
-                <width>30</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>…</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_10">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>ACELERACIÓN</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QChartView" name="accelerationWidget" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>20</width>
-              <height>200</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_11">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>GIROSCOPIO</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QChartView" name="gyroscopeWidget" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>50</width>
-              <height>200</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_PID">
-         <attribute name="title">
-          <string>PID Control</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_TabPID">
-          <item>
-           <widget class="QChartView" name="pidWidget" native="true"/>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_Motors">
-         <attribute name="title">
-          <string>Motores &amp; PWM</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_TabMotors">
-          <item>
-           <widget class="QChartView" name="motorsWidget" native="true"/>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="tab_System">
-         <attribute name="title">
-          <string>Sistema</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_TabSystem">
-          <item>
-           <widget class="QChartView" name="systemWidget" native="true"/>
-          </item>
-         </layout>
-        </widget>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="tab_IMU">
+        <attribute name="title">
+         <string>IMU · Ángulos</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_TabIMU">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_Angles">
+           <item>
+            <widget class="QLabel" name="label_inclination_X">
+             <property name="font">
+              <font>
+               <pointsize>11</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Roll</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_inclination_Xvalue">
+             <property name="font">
+              <font>
+               <family>Consolas</family>
+               <pointsize>12</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>0.00 °</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_inclination_Y">
+             <property name="font">
+              <font>
+               <pointsize>11</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Pitch</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_inclination_Yvalue">
+             <property name="font">
+              <font>
+               <family>Consolas</family>
+               <pointsize>12</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>0.00 °</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_LogDir">
+             <property name="text">
+              <string>Log:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_LogDir">
+             <property name="maximumSize">
+              <size>
+               <width>260</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnSelectLogDir">
+             <property name="maximumSize">
+              <size>
+               <width>30</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>…</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_10">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>ACELERACIÓN / ÁNGULO</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QChartView" name="accelerationWidget" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>20</width>
+             <height>200</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_11">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>GIROSCOPIO</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QChartView" name="gyroscopeWidget" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>200</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
+       <widget class="QWidget" name="tab_PID">
+        <attribute name="title">
+         <string>PID Balance</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_TabPID">
+         <item>
+          <widget class="QChartView" name="pidWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_Motors">
+        <attribute name="title">
+         <string>Motores</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_TabMotors">
+         <item>
+          <widget class="QChartView" name="motorsWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_System">
+        <attribute name="title">
+         <string>Sistema</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_TabSystem">
+         <item>
+          <widget class="QChartView" name="systemWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
       <widget class="QSplitter" name="splitter_texts">
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>0</height>
-         </size>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>300</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="handleWidth">
+        <number>3</number>
+       </property>
+       <widget class="QTextEdit" name="textEdit_RAW">
+        <property name="font">
+         <font>
+          <family>Consolas</family>
+         </font>
         </property>
-        <property name="maximumSize">
-         <size>
-          <width>300</width>
-          <height>16777215</height>
-         </size>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
         </property>
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="handleWidth">
-         <number>2</number>
-        </property>
-        <widget class="QTextEdit" name="textEdit_RAW">
-         <property name="font">
-          <font>
-           <family>Consolas</family>
-           <pointsize>-1</pointsize>
-           <italic>false</italic>
-           <bold>false</bold>
-          </font>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
-         </property>
-         <property name="html">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <property name="html">
+         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:12px; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px; background-color:rgba(20,50,8,0.847059);&quot;&gt;&lt;span style=&quot; font-size:13px; font-weight:700; color:#78d878;&quot;&gt;↑ DATO ENVIADO ↑&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-        <widget class="QTextEdit" name="textEdit_PROCCES">
-         <property name="font">
-          <font>
-           <family>Consolas</family>
-           <pointsize>-1</pointsize>
-           <italic>false</italic>
-           <bold>false</bold>
-          </font>
-         </property>
-         <property name="html">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:8px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:700; color:#8a97a8;&quot;&gt;— DATO ENVIADO —&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+       <widget class="QTextEdit" name="textEdit_PROCCES">
+        <property name="font">
+         <font>
+          <family>Consolas</family>
+         </font>
+        </property>
+        <property name="html">
+         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Consolas'; font-size:13px; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px; background-color:rgba(0,50,35,0.847059);&quot;&gt;&lt;span style=&quot; font-size:13px; font-weight:700; color:#44ffcc;&quot;&gt;↓ DATO RECIBIDO ↓&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
+&lt;p align=&quot;center&quot; style=&quot; margin-top:8px; margin-bottom:8px; margin-left:4px; margin-right:4px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:700; color:#79c0ff;&quot;&gt;— DATO RECIBIDO —&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
        </widget>
-      <widget class="QWidget" name="widget_controls">
-       <layout class="QVBoxLayout" name="verticalLayout_6">
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
-          <item>
-           <widget class="QComboBox" name="comboBox_CMD"/>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <item>
-             <widget class="QPushButton" name="pushButton_SEND">
-              <property name="text">
-               <string>Send CMD</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_BALANCE">
-              <property name="text">
-               <string>BALANCE</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_FOLLOW_LINE">
-              <property name="text">
-               <string>FOLLOW LINE</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_UDP">
-              <property name="text">
-               <string>Send UDP</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_RECORD">
-              <property name="text">
-               <string>⏺ RECORD</string>
-              </property>
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
+      </widget>
+      <widget class="QScrollArea" name="scrollArea_controls">
+       <property name="minimumSize">
+        <size>
+         <width>310</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>400</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+       <widget class="QWidget" name="widget_controls">
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <property name="leftMargin">
+          <number>6</number>
+         </property>
+         <property name="topMargin">
+          <number>4</number>
+         </property>
+         <property name="rightMargin">
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QGroupBox" name="groupBox_Conexion">
+           <property name="title">
+            <string>CONEXIÓN</string>
+           </property>
            <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>6</number>
+            </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
-              <item>
+             <layout class="QGridLayout" name="gridLayout_Conexion">
+              <property name="horizontalSpacing">
+               <number>6</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>5</number>
+              </property>
+              <item row="0" column="0">
                <widget class="QLabel" name="label_9">
-                <property name="font">
-                 <font>
-                  <bold>true</bold>
-                 </font>
-                </property>
                 <property name="text">
-                 <string>Local PORT:</string>
+                 <string>Puerto local</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="0" column="1">
                <widget class="QLineEdit" name="lineEdit_LOCALPORT">
                 <property name="text">
                  <string>30010</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="0" column="2">
                <widget class="QPushButton" name="pushButton_OPENUDP">
                 <property name="minimumSize">
                  <size>
-                  <width>80</width>
-                  <height>30</height>
+                  <width>84</width>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="text">
-                 <string>Open UDP</string>
+                 <string>Abrir UDP</string>
                 </property>
                </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_8">
-              <item>
+              <item row="1" column="0">
                <widget class="QLabel" name="label_7">
-                <property name="font">
-                 <font>
-                  <bold>true</bold>
-                 </font>
-                </property>
                 <property name="text">
-                 <string>Device IP:</string>
+                 <string>IP robot</string>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QLineEdit" name="lineEdit_IP_REMOTA"/>
+              <item row="1" column="1" colspan="2">
+               <widget class="QLineEdit" name="lineEdit_IP_REMOTA">
+                <property name="placeholderText">
+                 <string>auto (primer paquete)</string>
+                </property>
+               </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <item>
+              <item row="2" column="0">
                <widget class="QLabel" name="label_8">
-                <property name="font">
-                 <font>
-                  <bold>true</bold>
-                 </font>
-                </property>
                 <property name="text">
-                 <string>Device PORT:</string>
+                 <string>Puerto robot</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="2" column="1" colspan="2">
                <widget class="QLineEdit" name="lineEdit_DEVICEPORT">
-                <property name="text">
-                 <string/>
+                <property name="placeholderText">
+                 <string>auto (primer paquete)</string>
                 </property>
                </widget>
               </item>
              </layout>
             </item>
            </layout>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_13">
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_16">
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_Comandos">
+           <property name="title">
+            <string>COMANDOS</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>6</number>
+            </property>
             <item>
-             <widget class="QLabel" name="label">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
+             <widget class="QComboBox" name="comboBox_CMD"/>
+            </item>
+            <item>
+             <layout class="QGridLayout" name="gridLayout_Comandos">
+              <property name="horizontalSpacing">
+               <number>6</number>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>14</pointsize>
-                <bold>true</bold>
-               </font>
+              <property name="verticalSpacing">
+               <number>6</number>
               </property>
-              <property name="text">
-               <string>PID BALANCE</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="pushButton_SEND">
+                <property name="toolTip">
+                 <string>Enviar el comando seleccionado por puerto serie</string>
+                </property>
+                <property name="text">
+                 <string>Enviar Serial</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="pushButton_UDP">
+                <property name="toolTip">
+                 <string>Enviar el comando seleccionado por WiFi (UDP)</string>
+                </property>
+                <property name="text">
+                 <string>Enviar UDP</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="pushButton_BALANCE">
+                <property name="toolTip">
+                 <string>Activar / desactivar el control de balance</string>
+                </property>
+                <property name="text">
+                 <string>BALANCE</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="pushButton_FOLLOW_LINE">
+                <property name="toolTip">
+                 <string>Activar / desactivar el seguidor de línea</string>
+                </property>
+                <property name="text">
+                 <string>SEGUIR LÍNEA</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <widget class="QPushButton" name="pushButton_RECORD">
+                <property name="toolTip">
+                 <string>Grabar la telemetría recibida a un archivo CSV local</string>
+                </property>
+                <property name="text">
+                 <string>⏺ Grabar CSV</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_16">
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_PID_Balance">
+           <property name="title">
+            <string>PID BALANCE</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <property name="spacing">
+             <number>4</number>
+            </property>
             <item>
-             <widget class="QLabel" name="label_13">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
+             <layout class="QGridLayout" name="gridLayout_PidBalance">
+              <property name="horizontalSpacing">
+               <number>6</number>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
+              <property name="verticalSpacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>KP</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_14">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>KD</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_5">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>KI</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_14">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_15">
-              <item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>KP</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>KD</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>KI</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
                <widget class="QLabel" name="label_KP">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Consolas</family>
-                  <pointsize>11</pointsize>
-                 </font>
-                </property>
                 <property name="text">
                  <string>0.000</string>
                 </property>
@@ -855,20 +535,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="1" column="1">
                <widget class="QLabel" name="label_KD">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Consolas</family>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
                 <property name="text">
                  <string>0.000</string>
                 </property>
@@ -877,20 +545,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="1" column="2">
                <widget class="QLabel" name="label_KI">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <family>Consolas</family>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
                 <property name="text">
                  <string>0.000</string>
                 </property>
@@ -899,95 +555,43 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </property>
                </widget>
               </item>
-             </layout>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_PID_Inputs">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_KP">
-              <item>
+              <item row="2" column="0">
                <widget class="QLineEdit" name="lineEdit_KP">
                 <property name="placeholderText">
-                 <string>Nuevo KP</string>
+                 <string>KP</string>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_SetKP">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>-1</pointsize>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>SET</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_KD">
-              <item>
+              <item row="2" column="1">
                <widget class="QLineEdit" name="lineEdit_KD">
                 <property name="placeholderText">
-                 <string>Nuevo KD</string>
+                 <string>KD</string>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_SetKD">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>-1</pointsize>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>SET</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_KI">
-              <item>
+              <item row="2" column="2">
                <widget class="QLineEdit" name="lineEdit_KI">
                 <property name="placeholderText">
-                 <string>Nuevo KI</string>
+                 <string>KI</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="3" column="0">
+               <widget class="QPushButton" name="pushButton_SetKP">
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="pushButton_SetKD">
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
                <widget class="QPushButton" name="pushButton_SetKI">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>-1</pointsize>
-                  <bold>true</bold>
-                 </font>
-                </property>
                 <property name="text">
                  <string>SET</string>
                 </property>
@@ -996,228 +600,125 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </layout>
             </item>
            </layout>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_PID_LINE">
-          <item>
-           <widget class="QLabel" name="label_PID_LINE_title">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_PID_Line">
+           <property name="title">
+            <string>PID SEGUIDOR DE LÍNEA</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_PID_LINE">
+            <property name="spacing">
+             <number>4</number>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>14</pointsize>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>PID SEGUIDOR LÍNEA</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_PID_LINE_headers">
             <item>
-             <widget class="QLabel" name="label_PID_LINE_KP_hdr">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
+             <layout class="QGridLayout" name="gridLayout_PidLine">
+              <property name="horizontalSpacing">
+               <number>6</number>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
+              <property name="verticalSpacing">
+               <number>4</number>
               </property>
-              <property name="text">
-               <string>KP</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_PID_LINE_KD_hdr">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>KD</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_PID_LINE_KI_hdr">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>12</pointsize>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>KI</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_PID_LINE_values">
-            <item>
-             <widget class="QLabel" name="label_KP_LINE">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0.000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_KD_LINE">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0.000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_KI_LINE">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Consolas</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>0.000</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_PID_LINE_inputs">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_KP_LINE">
-              <item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_PID_LINE_KP_hdr">
+                <property name="text">
+                 <string>KP</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_PID_LINE_KD_hdr">
+                <property name="text">
+                 <string>KD</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_PID_LINE_KI_hdr">
+                <property name="text">
+                 <string>KI</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_KP_LINE">
+                <property name="text">
+                 <string>0.000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="label_KD_LINE">
+                <property name="text">
+                 <string>0.000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QLabel" name="label_KI_LINE">
+                <property name="text">
+                 <string>0.000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
                <widget class="QLineEdit" name="lineEdit_KP_LINE">
                 <property name="placeholderText">
-                 <string>Nuevo KP</string>
+                 <string>KP</string>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_SetKP_LINE">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>-1</pointsize>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>SET</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_KD_LINE">
-              <item>
+              <item row="2" column="1">
                <widget class="QLineEdit" name="lineEdit_KD_LINE">
                 <property name="placeholderText">
-                 <string>Nuevo KD</string>
+                 <string>KD</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="2" column="2">
+               <widget class="QLineEdit" name="lineEdit_KI_LINE">
+                <property name="placeholderText">
+                 <string>KI</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QPushButton" name="pushButton_SetKP_LINE">
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
                <widget class="QPushButton" name="pushButton_SetKD_LINE">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>20</height>
-                 </size>
+                <property name="text">
+                 <string>SET</string>
                 </property>
-                <property name="font">
-                 <font>
-                  <pointsize>-1</pointsize>
-                  <bold>true</bold>
-                 </font>
-                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QPushButton" name="pushButton_SetKI_LINE">
                 <property name="text">
                  <string>SET</string>
                 </property>
@@ -1225,28 +726,40 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </item>
              </layout>
             </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_Setpoint">
+           <property name="title">
+            <string>SETPOINT (°)</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_Setpoint">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_KI_LINE">
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
-               <widget class="QLineEdit" name="lineEdit_KI_LINE">
-                <property name="placeholderText">
-                 <string>Nuevo KI</string>
+               <widget class="QDoubleSpinBox" name="spinBox_SETPOINT">
+                <property name="minimum">
+                 <double>-180.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>180.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.250000000000000</double>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_SetKI_LINE">
-                <property name="minimumSize">
+               <widget class="QPushButton" name="pushButton_SETPOINT">
+                <property name="maximumSize">
                  <size>
-                  <width>0</width>
-                  <height>20</height>
+                  <width>60</width>
+                  <height>16777215</height>
                  </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>-1</pointsize>
-                  <bold>true</bold>
-                 </font>
                 </property>
                 <property name="text">
                  <string>SET</string>
@@ -1256,118 +769,107 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </layout>
             </item>
            </layout>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_SETPOINT">
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>20</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>⦿ Setpoint</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_5">
-          <item>
-           <widget class="QDoubleSpinBox" name="spinBox_SETPOINT">
-            <property name="minimum">
-             <double>-180.000000000000000</double>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_Manual">
+           <property name="title">
+            <string>CONTROL MANUAL</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_Manual">
+            <property name="spacing">
+             <number>4</number>
             </property>
-            <property name="maximum">
-             <double>180.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.250000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="pushButton_SETPOINT">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>60</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>SET</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_DirectionButtons">
-          <item row="0" column="1">
-           <widget class="QPushButton" name="btn_UP">
-            <property name="minimumSize">
-             <size>
-              <width>45</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>▲</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="btn_LEFT">
-            <property name="minimumSize">
-             <size>
-              <width>45</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>◀</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QPushButton" name="btn_RIGHT">
-            <property name="minimumSize">
-             <size>
-              <width>45</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>▶</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QPushButton" name="btn_DOWN">
-            <property name="minimumSize">
-             <size>
-              <width>45</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>▼</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
+            <item>
+             <layout class="QGridLayout" name="gridLayout_DirectionButtons">
+              <property name="horizontalSpacing">
+               <number>6</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>6</number>
+              </property>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="btn_UP">
+                <property name="minimumSize">
+                 <size>
+                  <width>45</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>▲</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="btn_LEFT">
+                <property name="minimumSize">
+                 <size>
+                  <width>45</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>◀</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="btn_RIGHT">
+                <property name="minimumSize">
+                 <size>
+                  <width>45</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>▶</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="btn_DOWN">
+                <property name="minimumSize">
+                 <size>
+                  <width>45</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>▼</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblManualHint">
+              <property name="text">
+               <string>También con WASD / flechas del teclado</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_controls">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>10</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -1376,11 +878,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>30</height>
+        <height>28</height>
        </size>
       </property>
       <property name="text">
-       <string>CLEAR DISPLAYS</string>
+       <string>LIMPIAR PANTALLAS</string>
       </property>
      </widget>
     </item>
@@ -1391,13 +893,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1317</width>
+     <width>1360</width>
      <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDevice">
     <property name="title">
-     <string>Device</string>
+     <string>Dispositivo</string>
     </property>
     <addaction name="actionScanPorts"/>
     <addaction name="actionConnect_Device"/>
@@ -1410,22 +912,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionScanPorts">
    <property name="text">
-    <string>Scan Ports</string>
+    <string>Buscar puertos…</string>
    </property>
   </action>
   <action name="actionConnect_Device">
    <property name="text">
-    <string>Connect Device</string>
+    <string>Conectar serial</string>
    </property>
   </action>
   <action name="actionDisconnect_Device">
    <property name="text">
-    <string>Disconnect Device</string>
+    <string>Desconectar serial</string>
    </property>
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>Salir</string>
    </property>
   </action>
  </widget>

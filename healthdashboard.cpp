@@ -26,15 +26,10 @@ HealthDashboard::HealthDashboard(QWidget *parent) : QFrame(parent)
 {
     // Embebido en el panel de controles (debajo de Device PORT), no flotante —
     // compacto a propósito para no competir por espacio con el resto de la UI.
+    // La apariencia del panel (fondo, borde, color de labels) la define el
+    // tema global en theme.qss (selector "HealthDashboard") — acá no se
+    // setea ningún estilo propio para no pisarlo.
     setFrameShape(QFrame::StyledPanel);
-    setStyleSheet(
-        "HealthDashboard {"
-        "  background-color: rgba(20, 20, 25, 200);"
-        "  border: 1px solid rgba(255,255,255,50);"
-        "  border-radius: 6px;"
-        "}"
-        "QLabel { color: #cfcfcf; background: transparent; }"
-        );
 
     QFont f = font();
     f.setPointSize(8);
@@ -60,8 +55,6 @@ HealthDashboard::HealthDashboard(QWidget *parent) : QFrame(parent)
     m_lblLoss      = new QLabel("Pérdida: --", this);
     m_lblLatency   = new QLabel("Lat: -- ms", this);
     m_lblLastData  = new QLabel("Últ. dato: --", this);
-    m_lblLastAlarm = new QLabel("Alarma: (ninguna)", this);
-    m_lblLastAlarm->setWordWrap(true);
 
     auto *connRow = new QHBoxLayout();
     connRow->setSpacing(4);
@@ -82,7 +75,6 @@ HealthDashboard::HealthDashboard(QWidget *parent) : QFrame(parent)
     outer->addWidget(m_lblMode);
     outer->addLayout(connRow);
     outer->addLayout(statsGrid);
-    outer->addWidget(m_lblLastAlarm);
     outer->setContentsMargins(6, 5, 6, 5);
     outer->setSpacing(2);
 
@@ -139,13 +131,13 @@ void HealthDashboard::onRobotState(quint8 robotState)
     // un vistazo, sin tener que leer el texto.
     QString bg;
     switch (robotState) {
-    case 0: bg = "#555555"; break; // IDLE
+    case 0: bg = "#3d444d"; break; // IDLE (gris)
     case 1:
-    case 2: bg = "#1b5e20"; break; // BALANCE / BALANCE+VEL (verde)
-    case 3: bg = "#0d47a1"; break; // SEGUIDOR LINEA (azul)
-    case 4: bg = "#e65100"; break; // MANUAL (naranja)
-    case 5: bg = "#4a148c"; break; // TEST MOTORES (violeta)
-    default: bg = "#555555"; break;
+    case 2: bg = "#238636"; break; // BALANCE / BALANCE+VEL (verde)
+    case 3: bg = "#1f6feb"; break; // SEGUIDOR LINEA (azul)
+    case 4: bg = "#c46b12"; break; // MANUAL (naranja)
+    case 5: bg = "#8957e5"; break; // TEST MOTORES (violeta)
+    default: bg = "#3d444d"; break;
     }
     m_lblMode->setStyleSheet(QString("color: #ffffff; padding: 2px; background-color: %1; border-radius: 4px;").arg(bg));
 }
@@ -154,14 +146,6 @@ void HealthDashboard::onAlivePong(qint64 rttMs)
 {
     m_lastLatencyMs = rttMs;
     m_lblLatency->setText(QString("Lat: ~%1 ms").arg(rttMs));
-}
-
-void HealthDashboard::onEvent(const QString &text)
-{
-    m_lastAlarmText = text;
-    m_hasAlarm       = true;
-    m_lastAlarmTimer.start();
-    m_lblLastAlarm->setText("Alarma: " + text + " (recién)");
 }
 
 void HealthDashboard::setConnectionOpen(bool open)
@@ -213,10 +197,5 @@ void HealthDashboard::tick()
             setDotColor(m_dotConn, Qt::red);
             m_lblConn->setText("Desconectado");
         }
-    }
-
-    if (m_hasAlarm) {
-        m_lblLastAlarm->setText("Alarma: " + m_lastAlarmText
-                                 + " (hace " + formatElapsedShort(m_lastAlarmTimer.elapsed()) + ")");
     }
 }

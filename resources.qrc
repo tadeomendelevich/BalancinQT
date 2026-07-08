@@ -2,5 +2,7 @@
     <qresource prefix="/img">
         <file>logoUNERsolo.png</file>
     </qresource>
-
+    <qresource prefix="/style">
+        <file>theme.qss</file>
+    </qresource>
 </RCC>

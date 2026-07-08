@@ -7,11 +7,11 @@
 #include <QElapsedTimer>
 
 // Panel de salud del sistema: estado de conexión WiFi, paquetes recibidos +
-// tasa, pérdida de paquetes, latencia, tiempo desde el último dato, modo
-// actual del robot (destacado, es el dato más importante para el usuario) y
-// última alarma/evento. Diseñado compacto para vivir embebido en el panel de
-// controles (debajo de Device PORT), no como overlay flotante — ver
-// MainWindow::MainWindow() donde se hace `ui->verticalLayout->addWidget(...)`.
+// tasa, pérdida de paquetes, latencia, tiempo desde el último dato y modo
+// actual del robot (destacado, es el dato más importante para el usuario).
+// Diseñado compacto para vivir embebido en el panel de controles (debajo de
+// Device PORT), no como overlay flotante — ver MainWindow::MainWindow()
+// donde se hace `ui->verticalLayout->addWidget(...)`.
 class HealthDashboard : public QFrame
 {
     Q_OBJECT
@@ -22,7 +22,6 @@ public:
     void onOdomSeq(quint16 seq);         // seq del paquete WIFI_ODOM_DATA=0xDC, para medir pérdida
     void onRobotState(quint8 robotState); // robot_state del mismo paquete (eRobotState del firmware)
     void onAlivePong(qint64 rttMs);      // round-trip de un ping GETALIVE
-    void onEvent(const QString &text);   // "última alarma": línea perdida, objeto, watchdog, etc.
     void setConnectionOpen(bool open);   // el usuario abrió/cerró el socket UDP manualmente
 
 private slots:
@@ -40,7 +39,6 @@ private:
     QLabel *m_lblLatency;
     QLabel *m_lblLastData;
     QLabel *m_lblMode;
-    QLabel *m_lblLastAlarm;
 
     QTimer        m_tickTimer;
     QElapsedTimer m_lastPacketTimer;
@@ -56,10 +54,6 @@ private:
     quint64 m_lostTotal     = 0;
 
     qint64 m_lastLatencyMs = -1;
-
-    QString       m_lastAlarmText;
-    QElapsedTimer m_lastAlarmTimer;
-    bool          m_hasAlarm = false;
 };
 
 #endif // HEALTHDASHBOARD_H
