@@ -81,11 +81,17 @@ private slots:
     void updatePlot();
 
     void updatePosition();
-    void updateOdomChart(float x, float y, float thetaDeg, bool lineDetected, uint8_t lineState);
+    void updateOdomChart(float x, float y, float thetaDeg, bool lineDetected, uint8_t lineState,
+                         uint16_t adc5, uint16_t adc6, uint16_t adc7, uint16_t adc8, uint32_t t_ms);
     void addOdomAnnotation(double x, double y, const QString &text, OdomEventType type);
     void repositionOdomAnnotations();
     void updateHeadingArrow(double x, double y, double thetaDeg);
+    void updateOdomScaleBar();
     void clearOdomMap();
+    QPointF odomViewPosToValue(const QPointF &viewPos) const;  // viewport → metros (ejes del mapa)
+    void onOdomHover(const QPointF &viewPos);
+    void onOdomMeasureClick(const QPointF &viewPos);
+    void saveOdomMapPng();
 
     void on_pushButton_SetKP_clicked();
 
@@ -233,6 +239,11 @@ private:
         uint8_t  line_detected;
         uint8_t  robot_state;
         uint8_t  line_state;
+        uint16_t adc5;            // sensores de objeto: menos = más cerca, ~4095 = nada
+        uint16_t adc6;            // adelante — para dibujar la barrera/objeto frente al
+        uint16_t adc7;            // robot en el mapa de odometría (adc7 es el lateral)
+        uint16_t adc8;
+        float    roll_deg;        // ángulo de balanceo (filtrado) — alimenta la Vista 3D
     };
     #pragma pack(pop)
 
@@ -408,9 +419,26 @@ private:
     QScatterSeries *odomLostMarkers;      // marcador en cada punto donde se perdió la línea
     QScatterSeries *odomObjMarkers;       // marcador en cada punto donde se detectó un objeto
     QScatterSeries *odomCurrentSeries;    // posición actual (único punto)
+    QLineSeries    *odomBarrierSeries;    // "barrera" viva frente al robot cuando los sensores ven algo (2 puntos, roja gruesa)
+    QScatterSeries *odomObstaclePts;      // rastro persistente de dónde se estimó el obstáculo (frontal + lateral)
+    QLineSeries    *odomOriginH = nullptr;   // cruz del origen (0,0): segmento horizontal
+    QLineSeries    *odomOriginV = nullptr;   // cruz del origen (0,0): segmento vertical
+    QLineSeries    *odomMeasureSeries = nullptr;        // línea de medición (modo "Medir")
+    QGraphicsSimpleTextItem *odomMeasureText = nullptr; // distancia medida, flotante en el mapa
+    QGraphicsLineItem       *odomScaleLine = nullptr;   // barra de escala (px ↔ metros)
+    QGraphicsSimpleTextItem *odomScaleText = nullptr;
     QValueAxis     *odomAxisX, *odomAxisY;
     QLabel         *lblOdomInfo;
+    QLabel         *lblOdomCursor = nullptr; // coordenadas del cursor en metros
     double odomMinX = -0.5, odomMaxX = 0.5, odomMinY = -0.5, odomMaxY = 0.5;
+
+    bool     odomFollowRobot = false;   // "Seguir robot": la vista se recentra sola en la posición actual
+    bool     odomMeasureHasP1 = false;  // estado del modo medición (primer punto fijado)
+    bool     odomMeasureDone  = false;  // medición cerrada (dos puntos fijos)
+    QPointF  odomMeasureP1;
+    double   odomTotalDist = 0.0;       // odómetro: distancia total recorrida [m]
+    quint32  odomPrevTms   = 0;         // t_ms del paquete anterior (para velocidad)
+    double   odomSpeed     = 0.0;       // velocidad estimada entre paquetes [m/s]
 
     QList<OdomAnnotation> odomAnnotations;   // textos flotantes ("Línea perdida", "Objeto")
     bool    odomHasPrev         = false;     // false hasta el primer paquete recibido

@@ -677,17 +677,46 @@ MainWindow::MainWindow(QWidget *parent)
     layoutOdom->addWidget(lblOdomInfo);
 
     QHBoxLayout *layoutOdomButtons = new QHBoxLayout();
-    QPushButton *btnOdomReset = new QPushButton("Reset vista (o doble click en el mapa)");
-    QPushButton *btnOdomClear = new QPushButton("Borrar mapa");
+    QPushButton *btnOdomReset  = new QPushButton("Reset vista");
+    QPushButton *btnOdomClear  = new QPushButton("Borrar mapa");
+    QPushButton *btnOdomFollow = new QPushButton("Seguir robot");
+    QPushButton *btnOdomMeasure = new QPushButton("Medir");
+    QPushButton *btnOdomPng    = new QPushButton("Guardar PNG");
+    btnOdomFollow->setCheckable(true);
+    btnOdomMeasure->setCheckable(true);
+    btnOdomReset->setToolTip("Vuelve la vista al encuadre automático (también: doble click en el mapa)");
+    btnOdomFollow->setToolTip("La vista se recentra sola en el robot a cada muestra (paneo automático)");
+    btnOdomMeasure->setToolTip("Medición estilo CAD: click en dos puntos del mapa para medir la distancia en metros");
+    btnOdomPng->setToolTip("Guarda una captura del mapa como imagen PNG");
     layoutOdomButtons->addWidget(btnOdomReset);
     layoutOdomButtons->addWidget(btnOdomClear);
+    layoutOdomButtons->addWidget(btnOdomFollow);
+    layoutOdomButtons->addWidget(btnOdomMeasure);
+    layoutOdomButtons->addWidget(btnOdomPng);
+    layoutOdomButtons->addStretch();
+    lblOdomCursor = new QLabel("( --.-- , --.-- ) m");
+    {
+        QFont cf = lblOdomCursor->font();
+        cf.setFamily("Courier");
+        cf.setBold(true);
+        lblOdomCursor->setFont(cf);
+    }
+    layoutOdomButtons->addWidget(lblOdomCursor);
     layoutOdom->addLayout(layoutOdomButtons);
 
     odomChartView = new OdomChartView();
     odomChart = new QChart();
     odomChartView->setChart(odomChart);
     odomChartView->setRenderHint(QPainter::Antialiasing);
-    odomChart->setTitle("Mapa XY (odometría) — rueda: zoom, arrastre: paneo, doble click: reset");
+
+    // Estética: mapa oscuro (mismo clima que la Vista 3D), sin título — las
+    // instrucciones de navegación van como tooltip para no gastar espacio.
+    odomChartView->setToolTip("Rueda: zoom (centrado en el cursor) · Arrastre: paneo · Doble click: reset de vista");
+    odomChart->setBackgroundBrush(QBrush(QColor(10, 14, 8)));
+    odomChart->setBackgroundRoundness(0);
+    odomChart->setPlotAreaBackgroundBrush(QBrush(QColor(14, 20, 11)));
+    odomChart->setPlotAreaBackgroundVisible(true);
+    odomChart->setMargins(QMargins(4, 4, 4, 4));
 
     odomTrailSeries = new QLineSeries();
     odomTrailSeries->setName("Trayectoria");
@@ -710,10 +739,55 @@ MainWindow::MainWindow(QWidget *parent)
     odomCurrentSeries->setColor(QColor("#3d8bfd"));
     odomCurrentSeries->setMarkerSize(12.0);
 
+    // Barrera "viva": segmento rojo grueso perpendicular al rumbo, dibujado frente
+    // al robot mientras los sensores de objeto (ADC5/6/8) están viendo algo.
+    odomBarrierSeries = new QLineSeries();
+    odomBarrierSeries->setName("Objeto adelante");
+    QPen barrierPen(QColor("#e5484d"));
+    barrierPen.setWidth(5);
+    barrierPen.setCapStyle(Qt::RoundCap);
+    odomBarrierSeries->setPen(barrierPen);
+
+    // Rastro persistente: puntito donde se estimó el obstáculo en cada muestra
+    // (frontal por ADC5/6/8, lateral izquierdo por ADC7) — al bordear el objeto
+    // va quedando dibujado su contorno aproximado.
+    odomObstaclePts = new QScatterSeries();
+    odomObstaclePts->setName("Obstáculo visto");
+    odomObstaclePts->setColor(QColor(229, 72, 77, 140)); // rojo semitransparente
+    odomObstaclePts->setBorderColor(Qt::transparent);
+    odomObstaclePts->setMarkerSize(6.0);
+
+    // Cruz del origen (0,0): referencia fija sutil, fuera de la leyenda.
+    odomOriginH = new QLineSeries();
+    odomOriginV = new QLineSeries();
+    {
+        QPen originPen(QColor(90, 110, 90));
+        originPen.setWidth(1);
+        odomOriginH->setPen(originPen);
+        odomOriginV->setPen(originPen);
+        odomOriginH->append(-0.06, 0.0); odomOriginH->append(0.06, 0.0);
+        odomOriginV->append(0.0, -0.06); odomOriginV->append(0.0, 0.06);
+    }
+
+    // Línea de medición (modo "Medir"): amarilla punteada, con la distancia
+    // flotando en el punto medio (ver odomMeasureText más abajo).
+    odomMeasureSeries = new QLineSeries();
+    {
+        QPen measurePen(QColor(255, 210, 70));
+        measurePen.setWidth(2);
+        measurePen.setStyle(Qt::DashLine);
+        odomMeasureSeries->setPen(measurePen);
+    }
+
+    odomChart->addSeries(odomOriginH);
+    odomChart->addSeries(odomOriginV);
     odomChart->addSeries(odomTrailSeries);
     odomChart->addSeries(odomLostMarkers);
     odomChart->addSeries(odomObjMarkers);
+    odomChart->addSeries(odomObstaclePts);
+    odomChart->addSeries(odomBarrierSeries);
     odomChart->addSeries(odomCurrentSeries);
+    odomChart->addSeries(odomMeasureSeries);
 
     // Mapa limpio: sin título de eje, sin líneas de referencia (grilla) ni línea/
     // números de eje — solo queda dibujado el recorrido en sí. Los ejes se
@@ -721,7 +795,12 @@ MainWindow::MainWindow(QWidget *parent)
     odomAxisX = new QValueAxis();
     odomAxisY = new QValueAxis();
     odomAxisX->setTitleText(""); odomAxisY->setTitleText("");
-    odomAxisX->setGridLineVisible(false); odomAxisY->setGridLineVisible(false);
+    // Grilla sutil: da percepción de escala sin números de eje (la escala exacta
+    // la muestra la barra de abajo a la izquierda).
+    QPen gridPen(QColor(28, 40, 24));
+    gridPen.setWidth(1);
+    odomAxisX->setGridLineVisible(true);  odomAxisY->setGridLineVisible(true);
+    odomAxisX->setGridLinePen(gridPen);   odomAxisY->setGridLinePen(gridPen);
     odomAxisX->setMinorGridLineVisible(false); odomAxisY->setMinorGridLineVisible(false);
     odomAxisX->setLabelsVisible(false); odomAxisY->setLabelsVisible(false);
     odomAxisX->setLineVisible(false); odomAxisY->setLineVisible(false);
@@ -730,16 +809,29 @@ MainWindow::MainWindow(QWidget *parent)
     odomAxisX->setRange(odomMinX, odomMaxX);
     odomAxisY->setRange(odomMinY, odomMaxY);
 
-    for (auto *s : {static_cast<QAbstractSeries*>(odomTrailSeries),
+    for (auto *s : {static_cast<QAbstractSeries*>(odomOriginH),
+                     static_cast<QAbstractSeries*>(odomOriginV),
+                     static_cast<QAbstractSeries*>(odomTrailSeries),
                      static_cast<QAbstractSeries*>(odomLostMarkers),
                      static_cast<QAbstractSeries*>(odomObjMarkers),
-                     static_cast<QAbstractSeries*>(odomCurrentSeries)}) {
+                     static_cast<QAbstractSeries*>(odomObstaclePts),
+                     static_cast<QAbstractSeries*>(odomBarrierSeries),
+                     static_cast<QAbstractSeries*>(odomCurrentSeries),
+                     static_cast<QAbstractSeries*>(odomMeasureSeries)}) {
         s->attachAxis(odomAxisX);
         s->attachAxis(odomAxisY);
     }
 
     odomChart->legend()->setVisible(true);
     odomChart->legend()->setAlignment(Qt::AlignBottom);
+    odomChart->legend()->setLabelColor(QColor(190, 205, 185));
+    // Series auxiliares (origen, medición) fuera de la leyenda.
+    for (auto *aux : {static_cast<QAbstractSeries*>(odomOriginH),
+                       static_cast<QAbstractSeries*>(odomOriginV),
+                       static_cast<QAbstractSeries*>(odomMeasureSeries)}) {
+        const auto markers = odomChart->legend()->markers(aux);
+        if (!markers.isEmpty()) markers.first()->setVisible(false);
+    }
 
     // Flecha de rumbo: dos QGraphicsItems sueltos (no forman parte de ninguna
     // serie) que indican hacia dónde apunta el robot en la posición actual.
@@ -752,14 +844,54 @@ MainWindow::MainWindow(QWidget *parent)
     odomHeadingArrowHead->setBrush(QBrush(QColor("#3d8bfd")));
     odomChart->scene()->addItem(odomHeadingArrowHead);
 
+    // Barra de escala (abajo a la izquierda): como los ejes no tienen números,
+    // es la referencia de cuántos metros representa lo que se ve. Se recalcula
+    // a un largo "redondo" (0.1/0.2/0.5/1/2/5 m) en cada zoom/paneo/autoescala.
+    odomScaleLine = new QGraphicsLineItem();
+    odomScaleLine->setPen(QPen(QColor(190, 205, 185), 2));
+    odomChart->scene()->addItem(odomScaleLine);
+    odomScaleText = new QGraphicsSimpleTextItem();
+    odomScaleText->setBrush(QBrush(QColor(190, 205, 185)));
+    {
+        QFont sf = odomScaleText->font();
+        sf.setPointSize(8);
+        sf.setBold(true);
+        odomScaleText->setFont(sf);
+    }
+    odomChart->scene()->addItem(odomScaleText);
+
+    // Texto flotante de la medición (distancia en metros sobre la línea amarilla).
+    odomMeasureText = new QGraphicsSimpleTextItem();
+    odomMeasureText->setBrush(QBrush(QColor(255, 210, 70)));
+    {
+        QFont mf = odomMeasureText->font();
+        mf.setPointSize(9);
+        mf.setBold(true);
+        odomMeasureText->setFont(mf);
+    }
+    odomChart->scene()->addItem(odomMeasureText);
+
     // Reposicionar las anotaciones de texto y la flecha de rumbo (QGraphicsItems
     // sueltos, fuera de las series) cada vez que el usuario hace zoom/paneo.
     connect(odomChartView, &OdomChartView::viewChanged, this, &MainWindow::repositionOdomAnnotations);
+    connect(odomChartView, &OdomChartView::hoverAt, this, &MainWindow::onOdomHover);
+    connect(odomChartView, &OdomChartView::measureClick, this, &MainWindow::onOdomMeasureClick);
     connect(btnOdomReset, &QPushButton::clicked, this, [this]() {
         odomChart->zoomReset();
         repositionOdomAnnotations();
     });
     connect(btnOdomClear, &QPushButton::clicked, this, &MainWindow::clearOdomMap);
+    connect(btnOdomFollow, &QPushButton::toggled, this, [this](bool on) {
+        odomFollowRobot = on;
+    });
+    connect(btnOdomMeasure, &QPushButton::toggled, this, [this](bool on) {
+        odomChartView->setMeasureMode(on);
+        odomMeasureHasP1 = false;
+        odomMeasureDone  = false;
+        odomMeasureSeries->clear();
+        if (odomMeasureText) odomMeasureText->setText("");
+    });
+    connect(btnOdomPng, &QPushButton::clicked, this, &MainWindow::saveOdomMapPng);
 
     layoutOdom->addWidget(odomChartView);
     ui->tabWidget_Graficas->addTab(tabOdom, "Odometría");
@@ -1952,7 +2084,15 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         WifiOdomData_t *odata = reinterpret_cast<WifiOdomData_t*>(&datosRx[2]);
         healthDashboard->onOdomSeq(odata->seq);
         healthDashboard->onRobotState(odata->robot_state);
-        updateOdomChart(odata->x_m, odata->y_m, odata->theta_deg, odata->line_detected != 0, odata->line_state);
+        updateOdomChart(odata->x_m, odata->y_m, odata->theta_deg, odata->line_detected != 0, odata->line_state,
+                        odata->adc5, odata->adc6, odata->adc7, odata->adc8, odata->t_ms);
+        // Balanceo + rumbo → Vista 3D: el modelo se inclina Y gira como el robot
+        // real siempre que haya WiFi, sin necesidad de activar el log de control
+        // (que sigue alimentando solo el pitch, a 10 Hz, y conserva este rumbo).
+        // Si el modelo gira al revés que el robot, negar theta acá (misma
+        // incógnita de signo que ODOM_THETA_SIGN, aún sin validar).
+        robotViewer3D->setPose(odata->roll_deg, odata->theta_deg);
+        ui->label_inclination_Xvalue->setText(QString::number(odata->roll_deg, 'f', 2) + " °");
         break;
     }
     case RESET_ODOMETRY: // RESET_ODOMETRY=0xDB — respuesta: ACK
@@ -2452,9 +2592,53 @@ void MainWindow::updatePosition()
 }
 
 
-void MainWindow::updateOdomChart(float x, float y, float thetaDeg, bool lineDetected, uint8_t lineState)
+void MainWindow::updateOdomChart(float x, float y, float thetaDeg, bool lineDetected, uint8_t lineState,
+                                 uint16_t adc5, uint16_t adc6, uint16_t adc7, uint16_t adc8, uint32_t t_ms)
 {
+    // Odómetro + velocidad estimada entre paquetes (con piso de 3 mm por muestra
+    // para no acumular el ruido de cuantización de la odometría con el robot quieto).
+    if (odomHasPrev) {
+        const double step = std::hypot((double)x - odomLastX, (double)y - odomLastY);
+        if (step > 0.003)
+            odomTotalDist += step;
+        const quint32 dt_ms = t_ms - odomPrevTms;
+        odomSpeed = (dt_ms > 0 && dt_ms < 5000) ? (step / (dt_ms / 1000.0)) : 0.0;
+    }
+    odomPrevTms = t_ms;
+
     odomTrailSeries->append(x, y);
+
+    // ─── Barrera/obstáculo frente al robot, desde los sensores de objeto ───
+    // Convención de los sensores: menos ADC = más cerca, ~4095 = nada.
+    // ADC5/6/8 miran adelante; ADC7 es el lateral (izquierdo tras el giro de esquive).
+    // La distancia real no está calibrada: se usa un mapeo lineal crudo ADC→metros
+    // (0.06m pegado, ~0.35m en el umbral de detección) — suficiente para VISUALIZAR
+    // que está viendo algo y de qué lado, no para medir.
+    {
+        const uint16_t OBJ_SEEN_ADC  = 3200;   // mismo umbral de detección del firmware
+        const uint16_t WALL_SEEN_ADC = 3600;   // mismo umbral de pared visible (ADC7)
+        const float th = qDegreesToRadians(thetaDeg);
+        const float fx = qCos(th),  fy = qSin(th);    // adelante
+        const float lx = -qSin(th), ly = qCos(th);    // izquierda (si el lateral aparece del lado equivocado, invertir este signo junto con ODOM_THETA_SIGN)
+        auto adcToDist = [](uint16_t a) { return 0.06f + 0.30f * (float)a / 4095.0f; };
+
+        uint16_t frontMin = qMin(adc5, qMin(adc6, adc8));
+        odomBarrierSeries->clear();
+        if (frontMin < OBJ_SEEN_ADC) {
+            float d  = adcToDist(frontMin);
+            float bx = x + d * fx, by = y + d * fy;
+            odomBarrierSeries->append(bx - 0.10f * lx, by - 0.10f * ly);
+            odomBarrierSeries->append(bx + 0.10f * lx, by + 0.10f * ly);
+            odomObstaclePts->append(bx, by);
+        }
+        if (adc7 < WALL_SEEN_ADC) {
+            float d7 = adcToDist(adc7);
+            odomObstaclePts->append(x + d7 * lx, y + d7 * ly);
+        }
+        // Cap para que el rastro no crezca sin límite en sesiones largas
+        if (odomObstaclePts->count() > 3000)
+            odomObstaclePts->removePoints(0, odomObstaclePts->count() - 3000);
+    }
 
     // "Cinta": mientras hay línea detectada se va agregando al segmento en curso
     // (grueso y negro); al perderla se cierra el segmento (nullptr) para que la
@@ -2511,23 +2695,34 @@ void MainWindow::updateOdomChart(float x, float y, float thetaDeg, bool lineDete
     odomLastY     = y;
     odomLastTheta = thetaDeg;
 
-    // Autoescala con margen, igual que el mapa 2D del display OLED (P7): el rango
-    // solo crece, nunca se achica, para no reescalar el gráfico constantemente.
-    bool rescale = false;
-    if (x - 0.3 < odomMinX) { odomMinX = x - 0.3; rescale = true; }
-    if (x + 0.3 > odomMaxX) { odomMaxX = x + 0.3; rescale = true; }
-    if (y - 0.3 < odomMinY) { odomMinY = y - 0.3; rescale = true; }
-    if (y + 0.3 > odomMaxY) { odomMaxY = y + 0.3; rescale = true; }
-    if (rescale) {
-        odomAxisX->setRange(odomMinX, odomMaxX);
-        odomAxisY->setRange(odomMinY, odomMaxY);
+    if (odomFollowRobot) {
+        // "Seguir robot": la vista se recentra en la posición actual conservando
+        // el ancho de ventana que haya elegido el usuario con el zoom.
+        const double spanX = odomAxisX->max() - odomAxisX->min();
+        const double spanY = odomAxisY->max() - odomAxisY->min();
+        odomAxisX->setRange(x - spanX / 2.0, x + spanX / 2.0);
+        odomAxisY->setRange(y - spanY / 2.0, y + spanY / 2.0);
+    } else {
+        // Autoescala con margen, igual que el mapa 2D del display OLED (P7): el rango
+        // solo crece, nunca se achica, para no reescalar el gráfico constantemente.
+        bool rescale = false;
+        if (x - 0.3 < odomMinX) { odomMinX = x - 0.3; rescale = true; }
+        if (x + 0.3 > odomMaxX) { odomMaxX = x + 0.3; rescale = true; }
+        if (y - 0.3 < odomMinY) { odomMinY = y - 0.3; rescale = true; }
+        if (y + 0.3 > odomMaxY) { odomMaxY = y + 0.3; rescale = true; }
+        if (rescale) {
+            odomAxisX->setRange(odomMinX, odomMaxX);
+            odomAxisY->setRange(odomMinY, odomMaxY);
+        }
     }
 
-    lblOdomInfo->setText(QString("X: %1 m   Y: %2 m   Theta: %3°   Línea: %4")
+    lblOdomInfo->setText(QString::fromUtf8("X: %1 m   Y: %2 m   θ: %3°   Línea: %4   |   Recorrido: %5 m   Vel: %6 m/s")
                               .arg(x, 0, 'f', 2)
                               .arg(y, 0, 'f', 2)
                               .arg(thetaDeg, 0, 'f', 1)
-                              .arg(lineDetected ? "SI" : "NO"));
+                              .arg(lineDetected ? "SI" : "NO")
+                              .arg(odomTotalDist, 0, 'f', 2)
+                              .arg(odomSpeed, 0, 'f', 2));
 
     // Cualquier cambio de rango de ejes (autoescala de arriba) mueve en pantalla
     // los puntos de las anotaciones; recalcular sus posiciones siempre al final.
@@ -2567,6 +2762,120 @@ void MainWindow::repositionOdomAnnotations()
 
     if (odomHasPrev)
         updateHeadingArrow(odomLastX, odomLastY, odomLastTheta);
+
+    updateOdomScaleBar();
+
+    // Texto de la medición: sigue al punto medio de la línea amarilla.
+    if (odomMeasureText && odomMeasureSeries->count() == 2) {
+        const QPointF a = odomMeasureSeries->at(0);
+        const QPointF b = odomMeasureSeries->at(1);
+        const QPointF midScene = odomChart->mapToPosition(
+            QPointF((a.x() + b.x()) / 2.0, (a.y() + b.y()) / 2.0), odomTrailSeries);
+        odomMeasureText->setPos(midScene.x() + 8, midScene.y() - 18);
+    }
+}
+
+// Barra de escala abajo a la izquierda del plot area: elige un largo "redondo"
+// en metros (0.1/0.2/0.5/1/2/5...) que ocupe entre ~60 y ~150 px en pantalla.
+void MainWindow::updateOdomScaleBar()
+{
+    if (!odomScaleLine || !odomScaleText)
+        return;
+
+    const QRectF plot = odomChart->plotArea();
+    if (plot.width() < 50) return;
+
+    // px por metro con la escala actual del eje X
+    const QPointF p0 = odomChart->mapToPosition(QPointF(0.0, 0.0), odomTrailSeries);
+    const QPointF p1 = odomChart->mapToPosition(QPointF(1.0, 0.0), odomTrailSeries);
+    const double pxPerM = std::abs(p1.x() - p0.x());
+    if (pxPerM <= 0.0) return;
+
+    static const double niceSteps[] = {0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0};
+    double best = niceSteps[0];
+    for (double s : niceSteps) {
+        if (s * pxPerM <= 150.0) best = s;   // el más grande que entre en 150 px
+    }
+    const double lenPx = best * pxPerM;
+
+    const double xLeft  = plot.left() + 12;
+    const double yBase  = plot.bottom() - 14;
+    odomScaleLine->setLine(QLineF(xLeft, yBase, xLeft + lenPx, yBase));
+    odomScaleText->setText(best < 1.0 ? QString("%1 cm").arg(best * 100.0, 0, 'f', 0)
+                                      : QString("%1 m").arg(best, 0, 'f', 0));
+    odomScaleText->setPos(xLeft, yBase - 16);
+}
+
+// viewport de la vista → valores de ejes (metros) del mapa.
+QPointF MainWindow::odomViewPosToValue(const QPointF &viewPos) const
+{
+    const QPointF scenePos = odomChartView->mapToScene(viewPos.toPoint());
+    const QPointF chartPos = odomChart->mapFromScene(scenePos);
+    return odomChart->mapToValue(chartPos, odomTrailSeries);
+}
+
+void MainWindow::onOdomHover(const QPointF &viewPos)
+{
+    if (!lblOdomCursor)
+        return;
+    const QPointF scenePos = odomChartView->mapToScene(viewPos.toPoint());
+    if (!odomChart->plotArea().contains(odomChart->mapFromScene(scenePos))) {
+        lblOdomCursor->setText("( --.-- , --.-- ) m");
+        return;
+    }
+    const QPointF v = odomViewPosToValue(viewPos);
+    lblOdomCursor->setText(QString("( %1 , %2 ) m")
+                               .arg(v.x(), 6, 'f', 2)
+                               .arg(v.y(), 6, 'f', 2));
+
+    // Vista previa de la medición: con el primer punto fijado, la línea sigue
+    // al cursor hasta el segundo click (igual que la herramienta de un CAD).
+    if (odomChartView->measureMode() && odomMeasureHasP1 && !odomMeasureDone) {
+        odomMeasureSeries->clear();
+        odomMeasureSeries->append(odomMeasureP1);
+        odomMeasureSeries->append(v);
+        const double dist = std::hypot(v.x() - odomMeasureP1.x(), v.y() - odomMeasureP1.y());
+        odomMeasureText->setText(QString("%1 m").arg(dist, 0, 'f', 3));
+        repositionOdomAnnotations();
+    }
+}
+
+void MainWindow::onOdomMeasureClick(const QPointF &viewPos)
+{
+    const QPointF v = odomViewPosToValue(viewPos);
+
+    if (!odomMeasureHasP1 || odomMeasureDone) {
+        // Primer punto (o arranque de una medición nueva sobre una cerrada)
+        odomMeasureP1     = v;
+        odomMeasureHasP1  = true;
+        odomMeasureDone   = false;
+        odomMeasureSeries->clear();
+        odomMeasureSeries->append(v);
+        odomMeasureSeries->append(v);
+        odomMeasureText->setText("");
+        return;
+    }
+
+    // Segundo punto: cerrar la medición
+    odomMeasureSeries->clear();
+    odomMeasureSeries->append(odomMeasureP1);
+    odomMeasureSeries->append(v);
+    const double dist = std::hypot(v.x() - odomMeasureP1.x(), v.y() - odomMeasureP1.y());
+    odomMeasureText->setText(QString("%1 m").arg(dist, 0, 'f', 3));
+    odomMeasureDone = true;
+    repositionOdomAnnotations();
+}
+
+void MainWindow::saveOdomMapPng()
+{
+    const QString path = QFileDialog::getSaveFileName(
+        this, "Guardar mapa como PNG",
+        QString("mapa_odometria_%1.png").arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss")),
+        "Imagen PNG (*.png)");
+    if (path.isEmpty())
+        return;
+    odomChartView->grab().save(path, "PNG");
+    ui->textEdit_PROCCES->append("Mapa guardado en: " + path);
 }
 
 void MainWindow::updateHeadingArrow(double x, double y, double thetaDeg)
@@ -2604,6 +2913,8 @@ void MainWindow::clearOdomMap()
     odomCurrentSeries->clear();
     odomLostMarkers->clear();
     odomObjMarkers->clear();
+    odomBarrierSeries->clear();
+    odomObstaclePts->clear();
 
     for (QLineSeries *seg : qAsConst(odomTapeSegments)) {
         odomChart->removeSeries(seg);
@@ -2629,6 +2940,14 @@ void MainWindow::clearOdomMap()
 
     odomHeadingLine->setLine(QLineF());
     odomHeadingArrowHead->setPolygon(QPolygonF());
+
+    odomTotalDist = 0.0;
+    odomSpeed     = 0.0;
+    odomPrevTms   = 0;
+    odomMeasureHasP1 = false;
+    odomMeasureDone  = false;
+    odomMeasureSeries->clear();
+    if (odomMeasureText) odomMeasureText->setText("");
 
     lblOdomInfo->setText("Odometría: esperando datos por WiFi...");
 }

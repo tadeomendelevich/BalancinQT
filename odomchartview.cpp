@@ -9,6 +9,13 @@ OdomChartView::OdomChartView(QWidget *parent) : QChartView(parent)
     setMouseTracking(true);
 }
 
+void OdomChartView::setMeasureMode(bool on)
+{
+    m_measureMode = on;
+    m_panning = false;
+    setCursor(on ? Qt::CrossCursor : Qt::ArrowCursor);
+}
+
 void OdomChartView::wheelEvent(QWheelEvent *event)
 {
     if (!chart()) { QChartView::wheelEvent(event); return; }
@@ -44,6 +51,11 @@ void OdomChartView::wheelEvent(QWheelEvent *event)
 void OdomChartView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && chart()) {
+        if (m_measureMode) {
+            emit measureClick(event->position());
+            event->accept();
+            return;
+        }
         m_panning     = true;
         m_lastMousePos = event->position().toPoint();
         setCursor(Qt::ClosedHandCursor);
@@ -55,6 +67,8 @@ void OdomChartView::mousePressEvent(QMouseEvent *event)
 
 void OdomChartView::mouseMoveEvent(QMouseEvent *event)
 {
+    emit hoverAt(event->position());
+
     if (m_panning && chart()) {
         const QPoint currentPos = event->position().toPoint();
         const QPoint delta = currentPos - m_lastMousePos;
@@ -73,7 +87,8 @@ void OdomChartView::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         m_panning = false;
-        setCursor(Qt::ArrowCursor);
+        if (!m_measureMode)
+            setCursor(Qt::ArrowCursor);
         event->accept();
         return;
     }
