@@ -9,6 +9,7 @@
 #include <QEasingCurve>
 #include <QCoreApplication>
 #include <QQuaternion>
+#include <QMatrix4x4>
 #include <QVector3D>
 #include <QColor>
 #include <QSizePolicy>
@@ -18,6 +19,7 @@
 #include <Qt3DExtras/QForwardRenderer>
 #include <Qt3DExtras/QOrbitCameraController>
 #include <Qt3DExtras/QPhongMaterial>
+#include <Qt3DExtras/QPhongAlphaMaterial>
 #include <Qt3DExtras/QPlaneMesh>
 #include <Qt3DExtras/QCuboidMesh>
 
@@ -168,13 +170,36 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     addAxisLine(root, QVector3D(0, 1, 0), QColor( 60, 180,  60), 70.0f);
     addAxisLine(root, QVector3D(0, 0, 1), QColor( 70, 110, 220), 70.0f);
 
+    // --- Obstáculo frente al robot (sensores ADC 5/6/8) ---
+    // Pared roja semitransparente apoyada en el piso; posición/visibilidad las
+    // maneja applyModelTransform() según pose + setFrontObstacle().
+    {
+        m_obstacleEntity = new Qt3DCore::QEntity(root);
+        auto *wall = new Qt3DExtras::QCuboidMesh(m_obstacleEntity);
+        wall->setXExtent(4.0f);     // fina, de frente al robot (a yaw 0 el frente es +X)
+        wall->setYExtent(60.0f);    // alto
+        wall->setZExtent(140.0f);   // ancho
+        m_obstacleTransform = new Qt3DCore::QTransform(m_obstacleEntity);
+        m_obstacleMaterial  = new Qt3DExtras::QPhongAlphaMaterial(m_obstacleEntity);
+        m_obstacleMaterial->setAmbient(QColor(120, 20, 20));
+        m_obstacleMaterial->setDiffuse(QColor(220, 50, 50));
+        m_obstacleMaterial->setSpecular(QColor(60, 20, 20));
+        m_obstacleMaterial->setAlpha(0.45f);
+        m_obstacleEntity->addComponent(wall);
+        m_obstacleEntity->addComponent(m_obstacleTransform);
+        m_obstacleEntity->addComponent(m_obstacleMaterial);
+        m_obstacleEntity->setEnabled(false);   // oculto hasta que haya detección
+    }
+
     // --- Entidad base: escala + orientación estática del modelo ---
     auto *robotBaseEntity = new Qt3DCore::QEntity(root);
     m_baseTransform = new Qt3DCore::QTransform(robotBaseEntity);
     m_baseTransform->setScale(12.0f);
     m_baseTransform->setRotation(
         QQuaternion::fromAxisAndAngle(QVector3D(1.0f, 0.0f, 0.0f), -90.0f));
-    m_baseTransform->setTranslation(QVector3D(0.0f, 25.0f, 0.0f)); // altura base
+    // Altura inicial hasta que carga el mesh; después applyModelTransform() la
+    // recalcula en cada pose para que el modelo siempre apoye en el piso (Y=0).
+    m_baseTransform->setTranslation(QVector3D(0.0f, 25.0f, 0.0f));
     robotBaseEntity->addComponent(m_baseTransform);
 
     // --- Entidad de pose dinámica (pitch de balanceo + yaw de odometría) ---
@@ -208,6 +233,8 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
             if (minPt == maxPt) return; // mesh aún no cargado, esperar
 
             m_modelCenter = (minPt + maxPt) / 2.0f;
+            m_modelMin    = minPt;   // bbox local: base del apoyo en el piso
+            m_modelMax    = maxPt;
             applyModelTransform();
 
             QObject::disconnect(*conn);
@@ -306,14 +333,47 @@ void RobotViewer3D::applyModelTransform()
     if (!m_robotTransform)
         return;
 
+    // Tres ejes (orden yaw∘pitch∘lat): primero banking alrededor del eje de
+    // avance (X local), después balanceo sobre el eje de ruedas (Y local),
+    // después el rumbo (Z local = vertical del mundo tras la base de -90°X).
     QQuaternion q =
         QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 0.0f, 1.0f), m_dispYaw) *
-        QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), m_dispPitch);
+        QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), m_dispPitch) *
+        QQuaternion::fromAxisAndAngle(QVector3D(1.0f, 0.0f, 0.0f), m_dispLat);
 
     // QTransform aplica T·R·S: rotar también la traslación de centrado
     // (p' = R·(p - c)) deja el pivote exactamente en el centro del modelo.
     m_robotTransform->setRotation(q);
     m_robotTransform->setTranslation(-q.rotatedVector(m_modelCenter));
+
+    // Apoyo en el piso (2026-07-10): la altura de la base ya no es fija — se
+    // calcula el punto más bajo del bounding box del modelo YA rotado y se
+    // corrige la traslación de la base para que ese punto quede en Y=0. Con
+    // altura fija (25), a ±90° o volcado el modelo atravesaba el piso.
+    // 2026-07-10 bis: la composición base·hijo ahora usa las MATRICES REALES
+    // de Qt3D (`matrix()` de ambos QTransform, ya con la rotación/centrado del
+    // hijo aplicados arriba) en vez de derivarla a mano con quaterniones —
+    // la versión manual dejaba pasar el piso con ángulos negativos (error de
+    // convención en la composición). Como la traslación de la base entra
+    // lineal en la Y del mundo, corregir con el delta (-minY) es exacto.
+    // Se usan las 8 esquinas del bbox: cota conservadora (el mesh puede quedar
+    // apenas por encima del piso en poses intermedias, nunca por debajo).
+    if (m_baseTransform && m_modelMin != m_modelMax) {
+        const QMatrix4x4 M = m_baseTransform->matrix() * m_robotTransform->matrix();
+        float minY = 0.0f;
+        bool  first = true;
+        for (int i = 0; i < 8; ++i) {
+            const QVector3D corner((i & 1) ? m_modelMax.x() : m_modelMin.x(),
+                                   (i & 2) ? m_modelMax.y() : m_modelMin.y(),
+                                   (i & 4) ? m_modelMax.z() : m_modelMin.z());
+            const float wy = M.map(corner).y();
+            if (first || wy < minY) { minY = wy; first = false; }
+        }
+        // +0.6 de margen: la grilla del piso llega a Y≈0.5 — evita z-fighting
+        // entre las ruedas y las líneas de la grilla.
+        const QVector3D t = m_baseTransform->translation();
+        m_baseTransform->setTranslation(QVector3D(t.x(), t.y() - minY + 0.6f, t.z()));
+    }
 
     // Tinte por inclinación: plateado en equilibrio → rojo cerca del ángulo de
     // caída. Es feedback inmediato de "qué tan al límite está" sin mirar números.
@@ -325,35 +385,83 @@ void RobotViewer3D::applyModelTransform()
     }
 
     if (m_hudLabel) {
-        m_hudLabel->setText(QString::fromUtf8("Roll: %1°   Rumbo: %2°")
+        m_hudLabel->setText(QString::fromUtf8("Roll: %1°   Lat: %2°   Rumbo: %3°")
                                 .arg((double)m_dispPitch, 5, 'f', 1)
+                                .arg((double)m_dispLat,   5, 'f', 1)
                                 .arg((double)m_dispYaw,   4, 'f', 0));
+    }
+
+    // Obstáculo frente al robot: visible solo si hay detección Y el roll está en
+    // [-90°, +30°] (fuera de ese rango los sensores no miran al frente / el robot
+    // está volcado y el dato no representa "algo adelante").
+    if (m_obstacleEntity && m_obstacleTransform) {
+        const bool visible = m_obsPresent &&
+                             m_dispPitch >= -90.0f && m_dispPitch <= 30.0f;
+        m_obstacleEntity->setEnabled(visible);
+        if (visible) {
+            // Media longitud del robot en escena: la pared arranca delante del
+            // cuerpo, no del centro. La distancia ADC (0.06–0.36 m, mapeo crudo
+            // NO calibrado — es para visualizar, no para medir) se estira a
+            // escena con 400 unidades/m.
+            const float scale = m_baseTransform ? m_baseTransform->scale() : 12.0f;
+            const QVector3D ext = (m_modelMax - m_modelMin) * 0.5f * scale;
+            const float halfR = qMax(ext.x(), qMax(ext.y(), ext.z()));
+            const float sceneDist = halfR + 8.0f + (m_obsDistM - 0.06f) * 400.0f;
+
+            // Frente del robot en el mundo: +X a yaw 0, girado por el rumbo
+            // mostrado (yaw local Z == mundo +Y, mismo signo). Si la pared
+            // aparece DETRÁS del modelo, negar dir (misma incógnita de signo
+            // que ODOM_THETA_SIGN).
+            const float yawRad = qDegreesToRadians(m_dispYaw);
+            const QVector3D dir(qCos(yawRad), 0.0f, -qSin(yawRad));
+            m_obstacleTransform->setTranslation(
+                QVector3D(dir.x() * sceneDist, 30.0f, dir.z() * sceneDist));
+            m_obstacleTransform->setRotation(
+                QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), m_dispYaw));
+
+            if (m_obstacleMaterial) {
+                // Más cerca = más opaca (feedback de proximidad sin números)
+                float prox = 1.0f - qBound(0.0f, (m_obsDistM - 0.06f) / 0.30f, 1.0f);
+                m_obstacleMaterial->setAlpha(0.25f + 0.45f * prox);
+            }
+        }
     }
 }
 
-void RobotViewer3D::animatePoseTo(float pitchDeg, float yawDeg)
+void RobotViewer3D::setFrontObstacle(bool present, float distMeters)
+{
+    m_obsPresent = present;
+    m_obsDistM   = distMeters;
+    applyModelTransform();   // re-evalúa visibilidad/posición con la pose actual
+}
+
+void RobotViewer3D::animatePoseTo(float pitchDeg, float yawDeg, float latDeg)
 {
     m_pitchDeg = pitchDeg;
     m_yawDeg   = yawDeg;
+    m_latDeg   = latDeg;
 
     const float p0 = m_dispPitch;
     const float y0 = m_dispYaw;
+    const float l0 = m_dispLat;
 
     // Yaw por el camino corto (no dar la vuelta larga al cruzar ±180°).
     float dy = yawDeg - y0;
     while (dy >  180.0f) dy -= 360.0f;
     while (dy < -180.0f) dy += 360.0f;
     const float dp = pitchDeg - p0;
+    const float dl = latDeg   - l0;
 
     m_poseAnim->stop();
     m_poseAnim->disconnect();
     m_poseAnim->setStartValue(0.0f);
     m_poseAnim->setEndValue(1.0f);
     connect(m_poseAnim, &QVariantAnimation::valueChanged, this,
-        [this, p0, y0, dp, dy](const QVariant &v) {
+        [this, p0, y0, l0, dp, dy, dl](const QVariant &v) {
             float t = v.toFloat();
             m_dispPitch = p0 + dp * t;
             m_dispYaw   = y0 + dy * t;
+            m_dispLat   = l0 + dl * t;
             if (m_dispYaw >  180.0f) m_dispYaw -= 360.0f;
             if (m_dispYaw < -180.0f) m_dispYaw += 360.0f;
             applyModelTransform();
@@ -363,12 +471,12 @@ void RobotViewer3D::animatePoseTo(float pitchDeg, float yawDeg)
 
 void RobotViewer3D::setPitch(float degrees)
 {
-    animatePoseTo(degrees, m_yawDeg);   // conserva el rumbo actual
+    animatePoseTo(degrees, m_yawDeg, m_latDeg);   // conserva rumbo y banking actuales
 }
 
-void RobotViewer3D::setPose(float pitchDeg, float yawDeg)
+void RobotViewer3D::setPose(float pitchDeg, float yawDeg, float latDeg)
 {
-    animatePoseTo(pitchDeg, yawDeg);
+    animatePoseTo(pitchDeg, yawDeg, latDeg);
 }
 
 void RobotViewer3D::goToView(const QVector3D &pos, const QVector3D &center,

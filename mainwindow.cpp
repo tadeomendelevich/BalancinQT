@@ -998,6 +998,20 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
     ui->tabWidget_Graficas->setCurrentIndex(0);
+
+    // --- UDP abierto por defecto al iniciar (2026-07-10) ---
+    // Mismo camino que el botón "Abrir UDP" (bind al puerto local por defecto,
+    // 30010, watchdog + ping alive incluidos). Diferido con singleShot(0) para
+    // que corra con la ventana ya construida; solo si el puerto de la UI es
+    // válido y el socket sigue cerrado (no pisa nada si el usuario fue más rápido).
+    QTimer::singleShot(0, this, [this]() {
+        bool okPort = false;
+        const int p = ui->lineEdit_LOCALPORT->text().toInt(&okPort, 10);
+        if (okPort && p > 0 && p <= 65535 &&
+            UdpSocket1->state() == QAbstractSocket::UnconnectedState) {
+            on_pushButton_OPENUDP_clicked();
+        }
+    });
 }
 
 MainWindow::~MainWindow()
@@ -2076,10 +2090,15 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     }
     case WIFI_ODOM_DATA: { // WIFI_ODOM_DATA=0xDC — push periódico (no pedido), no requiere ACTIVATE_WIFI_LOG
-        if (datosRx[0] < (sizeof(WifiOdomData_t) + 1)) {
+        // Retrocompatible (2026-07-11): lat_deg se agregó al FINAL del struct —
+        // un firmware sin ese campo manda 4 bytes menos y sigue siendo válido
+        // (lat=0). Solo se rechaza si ni siquiera trae el layout base.
+        const quint8 kOdomBaseLen = sizeof(WifiOdomData_t) - sizeof(float); // sin lat_deg
+        if (datosRx[0] < (kOdomBaseLen + 1)) {
             ui->textEdit_PROCCES->append("WIFI_ODOM_DATA: Packet too short!");
             break;
         }
+        const bool odomHasLat = (datosRx[0] >= (sizeof(WifiOdomData_t) + 1));
 
         WifiOdomData_t *odata = reinterpret_cast<WifiOdomData_t*>(&datosRx[2]);
         healthDashboard->onOdomSeq(odata->seq);
@@ -2091,7 +2110,20 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         // (que sigue alimentando solo el pitch, a 10 Hz, y conserva este rumbo).
         // Si el modelo gira al revés que el robot, negar theta acá (misma
         // incógnita de signo que ODOM_THETA_SIGN, aún sin validar).
-        robotViewer3D->setPose(odata->roll_deg, odata->theta_deg);
+        // Tercer eje (2026-07-10): banking lateral. Si el modelo se inclina al
+        // revés que el robot en este eje, negar lat_deg acá (incógnita de signo
+        // hermana de ODOM_THETA_SIGN).
+        robotViewer3D->setPose(odata->roll_deg, odata->theta_deg,
+                               odomHasLat ? odata->lat_deg : 0.0f);
+        // Obstáculo frente al modelo 3D: mismos sensores (ADC 5/6/8), mismo umbral
+        // (3200) y mismo mapeo crudo ADC→m que la barrera del mapa de odometría.
+        // La condición de ángulo (roll en [-90°, +30°]) la evalúa el visor sobre
+        // la pose mostrada.
+        {
+            const uint16_t frontMin3D = qMin(odata->adc5, qMin(odata->adc6, odata->adc8));
+            robotViewer3D->setFrontObstacle(frontMin3D < 3200,
+                                            0.06f + 0.30f * (float)frontMin3D / 4095.0f);
+        }
         ui->label_inclination_Xvalue->setText(QString::number(odata->roll_deg, 'f', 2) + " °");
         break;
     }

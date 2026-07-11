@@ -244,6 +244,7 @@ private:
         uint16_t adc7;            // robot en el mapa de odometría (adc7 es el lateral)
         uint16_t adc8;
         float    roll_deg;        // ángulo de balanceo (filtrado) — alimenta la Vista 3D
+        float    lat_deg;         // inclinación lateral (banking) — tercer eje de la Vista 3D (2026-07-10)
     };
     #pragma pack(pop)
 
