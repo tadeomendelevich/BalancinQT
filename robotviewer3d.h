@@ -32,6 +32,7 @@ public:
     void setView(ViewPreset preset);
 
 private:
+    void loadModelBounds(const QString &objPath);     // bbox del mesh leído del .obj (síncrono)
     void applyModelTransform();                       // pose mostrada → transform + tinte + HUD
     void animatePoseTo(float pitchDeg, float yawDeg,
                        float latDeg);                 // interpola la pose mostrada hacia el objetivo

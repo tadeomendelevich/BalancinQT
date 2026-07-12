@@ -2,6 +2,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFile>
 #include <QPushButton>
 #include <QLabel>
 #include <QTimer>
@@ -220,25 +221,28 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     m_robotMaterial->setShininess(90.0f);
     robotEntity->addComponent(m_robotMaterial);
 
-    // Auto-centrado: guarda el centro geométrico del mesh como pivote de rotación.
-    // Se usa conexión manual (no SingleShot) para ignorar disparos con bounds
-    // todavía en cero (antes de que el mesh termine de cargar).
-    auto *bv   = new Qt3DCore::QBoundingVolume(robotEntity);
-    auto *conn = new QMetaObject::Connection();
-    robotEntity->addComponent(bv);
-    *conn = QObject::connect(bv, &Qt3DCore::QBoundingVolume::implicitMaxPointChanged,
-        [bv, this, conn](){
-            QVector3D minPt = bv->implicitMinPoint();
-            QVector3D maxPt = bv->implicitMaxPoint();
-            if (minPt == maxPt) return; // mesh aún no cargado, esperar
+    // Bounding box del mesh: centro = pivote de rotación, extremos = apoyo en
+    // el piso. Se lee SINCRÓNICAMENTE del .obj al arrancar — el QBoundingVolume
+    // de Qt3D publica sus puntos implícitos de forma asíncrona y puede no
+    // publicarlos nunca (componente sin view asignada): con el bbox en cero la
+    // corrección de piso quedaba deshabilitada en silencio y el modelo volvía
+    // a hundirse. El callback queda como refinamiento por si el loader de Qt3D
+    // entrega coordenadas distintas a las del archivo, y ahora se mantiene
+    // conectado (los bounds pueden refinarse en frames posteriores).
+    loadModelBounds(QCoreApplication::applicationDirPath() + "/AutoMicro.obj");
 
+    auto *bv = new Qt3DCore::QBoundingVolume(robotEntity);
+    robotEntity->addComponent(bv);
+    QObject::connect(bv, &Qt3DCore::QBoundingVolume::implicitMaxPointChanged, this,
+        [bv, this]() {
+            const QVector3D minPt = bv->implicitMinPoint();
+            const QVector3D maxPt = bv->implicitMaxPoint();
+            if (minPt == maxPt)
+                return; // bounds aún no calculados
             m_modelCenter = (minPt + maxPt) / 2.0f;
-            m_modelMin    = minPt;   // bbox local: base del apoyo en el piso
+            m_modelMin    = minPt;
             m_modelMax    = maxPt;
             applyModelTransform();
-
-            QObject::disconnect(*conn);
-            delete conn;
         });
 
     m_view->setRootEntity(root);
@@ -319,6 +323,42 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
     }
 
     layout->addWidget(container);
+}
+
+// Bounding box del modelo leído directo del .obj (líneas "v x y z"), en las
+// mismas coordenadas locales que carga QMesh. Determinístico y disponible
+// desde el arranque, a diferencia de los bounds asíncronos de Qt3D.
+void RobotViewer3D::loadModelBounds(const QString &objPath)
+{
+    QFile f(objPath);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QVector3D mn, mx;
+    bool first = true;
+    while (!f.atEnd()) {
+        const QByteArray line = f.readLine();
+        if (line.size() < 7 || line[0] != 'v' || line[1] != ' ')
+            continue;
+        const QList<QByteArray> tok = line.simplified().split(' ');
+        if (tok.size() < 4)
+            continue;
+        const QVector3D p(tok[1].toFloat(), tok[2].toFloat(), tok[3].toFloat());
+        if (first) {
+            mn = mx = p;
+            first = false;
+        } else {
+            mn = QVector3D(qMin(mn.x(), p.x()), qMin(mn.y(), p.y()), qMin(mn.z(), p.z()));
+            mx = QVector3D(qMax(mx.x(), p.x()), qMax(mx.y(), p.y()), qMax(mx.z(), p.z()));
+        }
+    }
+    if (first)
+        return; // sin vértices: el mesh tampoco va a cargar
+
+    m_modelMin    = mn;
+    m_modelMax    = mx;
+    m_modelCenter = (mn + mx) / 2.0f;
+    applyModelTransform();
 }
 
 // Pose mostrada → transform del modelo (rotación alrededor del CENTRO del mesh),
