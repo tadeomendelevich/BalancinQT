@@ -305,6 +305,18 @@ QLabel#label_KP_LINE, QLabel#label_KD_LINE, QLabel#label_KI_LINE {
     padding: 3px 6px;
 }
 
+QLabel#lblLineSpeedStatus {
+    color: #79c0ff;
+    font-family: Consolas;
+    font-size: 10px;
+}
+
+QPushButton#btnApplyLineSpeed {
+    background-color: #22334d;
+    border-color: #33507a;
+    color: #a9cdff;
+}
+
 /* Pista de teclado del control manual */
 QLabel#lblManualHint {
     color: #5d6a7a;

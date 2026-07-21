@@ -136,7 +136,7 @@ Ambos canales usan el mismo formato de trama binaria:
 | MODIFY_KD_LINE | 0xC1 | float32 | Kd del seguidor de línea |
 | MODIFY_KI_LINE | 0xC2 | float32 | Ki del seguidor de línea |
 | MODIFY_LINE_THRES | 0xC3 | float32 | Umbral de detección de línea |
-| MODIFY_LINE_SPEED | 0xC4 | float32 (grados) | Ángulo de avance del seguidor de línea |
+| MODIFY_LINE_SPEED | 0xC4 | float32 (m/s) | Velocidad objetivo del seguidor de línea (Qt limita 0.20..4.00 m/s) |
 | ACTIVATE_LINE_FOLLOWING | 0xC5 | — | Toggle seguidor de línea |
 | ACTIVATE_POS_MAINTENANCE | 0xC6 | — | Toggle mantenimiento de posición |
 | ACTIVATE_MANUAL_CONTROL | 0xC7 | — | Toggle modo control manual |
@@ -238,6 +238,7 @@ Parámetros que Qt puede leer y modificar en el STM32:
 
 | Fecha | Archivo(s) modificado(s) | Cambio realizado | Motivo / Observación |
 |-------|--------------------------|------------------|----------------------|
+| 2026-07-21 | mainwindow.h/.cpp, theme.qss | Agregado control visible `Velocidad objetivo` dentro de PID Seguidor de Línea: spinbox 0.20..4.00 m/s (paso 0.10), botón APLICAR, estado de ACK y envío directo por el canal disponible mediante UNER `MODIFY_LINE_SPEED=0xC4`. Corregidos también los diálogos genéricos de 0xC4, que decían erróneamente "ángulo (grados)". | Permitir cambiar sencillamente la velocidad real de seguimiento desde Qt y mantener compatibilidad con el comando existente. |
 | 2026-07-21 | mainwindow.cpp | Los cajones `DATO RECIBIDO`/`DATO ENVIADO` se movieron debajo de todos los grupos dentro de `scrollArea_controls`, separados del botÃ³n fijo `LIMPIAR PANTALLAS`. Corregido el toggle: ahora usa el estado explÃ­cito `isHidden()` de cada QTextEdit en vez de `isVisible()` (que devolvÃ­a falso siempre que el splitter padre estaba oculto e impedÃ­a abrirlos). | El usuario pidiÃ³ que las consolas se expandan dentro de la ventana scrolleable y reportÃ³ que los botones no lograban abrirlas. |
 | 2026-07-21 | mainwindow.cpp, theme.qss | **ReorganizaciÃ³n integral de pantalla:** el `splitter_main` queda dedicado a grÃ¡ficos + tablero operativo. Los controles se redistribuyen en dos columnas (ConexiÃ³n/Comandos/Control Manual y PID Balance/PID LÃ­nea/Setpoint), evitando la pila vertical larga. `DATO RECIBIDO` y `DATO ENVIADO` pasan a ser cajones inferiores independientes, horizontales y colapsados por defecto; cerrados reservan sÃ³lo una barra de 34 px y abiertos usan 170-280 px de alto a todo el ancho. | Hacer que todas las funciones operativas entren mejor y que las consolas de diagnÃ³stico nunca consuman espacio al iniciar. |
 | 2026-07-21 | mainwindow.cpp | La consola `DATO RECIBIDO` ahora inicia colapsada a una lengüeta de 34 px. Se aumentó el peso de expansión del panel de controles y su ancho máximo a 720 px para priorizar Comandos, PID y Control Manual desde el arranque. | Ajuste solicitado sobre la redistribución adaptable: la consola de recepción debe ocupar espacio solamente cuando el usuario la abre. |

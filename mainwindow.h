@@ -29,6 +29,7 @@
 #include <QGraphicsPolygonItem>
 #include <QGraphicsScene>
 #include <QPushButton>
+#include <QDoubleSpinBox>
 
 #define SAMPLE_INTERVAL_MS 30   // Intervalo de muestreo en milisegundos de todos los sensores
 #define SAMPLE_INTERVAL_S  (static_cast<double>(SAMPLE_INTERVAL_MS) / 1000.0)   // Deriva el intervalo en segundos (double)
@@ -471,6 +472,12 @@ private:
     // Estado de botones
     bool isBalanceActive = false;
     bool isFollowLineActive = false;
+
+    // Velocidad objetivo del seguidor de linea (comando UNER 0xC4, en m/s).
+    QDoubleSpinBox *lineSpeedSpinBox = nullptr;
+    QLabel *lineSpeedStatusLabel = nullptr;
+    float requestedLineSpeedMps = 2.5f;
+    bool sendLineSpeedCommand(float speedMps);
 
     // Control Manual
     QTimer *manualControlTimer;

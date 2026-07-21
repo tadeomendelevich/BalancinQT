@@ -229,6 +229,46 @@ MainWindow::MainWindow(QWidget *parent)
     controlsGrid->setColumnStretch(1, 1);
     controlsGrid->setRowStretch(4, 1);
 
+    // Ajuste directo de la velocidad de crucero del seguidor. El protocolo ya
+    // reservaba 0xC4; esta fila evita el dialogo generico y expresa la unidad real.
+    {
+        auto *speedRow = new QWidget(ui->groupBox_PID_Line);
+        speedRow->setObjectName("lineSpeedRow");
+        auto *speedLayout = new QGridLayout(speedRow);
+        speedLayout->setContentsMargins(0, 4, 0, 0);
+        speedLayout->setHorizontalSpacing(6);
+
+        auto *speedLabel = new QLabel("Velocidad objetivo", speedRow);
+        speedLabel->setToolTip("Velocidad maxima en recta; en curvas el firmware la reduce automaticamente");
+        lineSpeedSpinBox = new QDoubleSpinBox(speedRow);
+        lineSpeedSpinBox->setObjectName("spinLineSpeed");
+        lineSpeedSpinBox->setRange(0.20, 4.00);
+        lineSpeedSpinBox->setDecimals(2);
+        lineSpeedSpinBox->setSingleStep(0.10);
+        lineSpeedSpinBox->setSuffix(" m/s");
+        lineSpeedSpinBox->setValue(2.50);
+        lineSpeedSpinBox->setToolTip("Rango seguro aceptado por STM32: 0.20 a 4.00 m/s");
+
+        auto *applySpeed = new QPushButton("APLICAR", speedRow);
+        applySpeed->setObjectName("btnApplyLineSpeed");
+        lineSpeedStatusLabel = new QLabel("Valor propuesto: 2.50 m/s", speedRow);
+        lineSpeedStatusLabel->setObjectName("lblLineSpeedStatus");
+
+        speedLayout->addWidget(speedLabel, 0, 0);
+        speedLayout->addWidget(lineSpeedSpinBox, 0, 1);
+        speedLayout->addWidget(applySpeed, 0, 2);
+        speedLayout->addWidget(lineSpeedStatusLabel, 1, 0, 1, 3);
+        ui->verticalLayout_PID_LINE->addWidget(speedRow);
+
+        connect(applySpeed, &QPushButton::clicked, this, [this]() {
+            requestedLineSpeedMps = static_cast<float>(lineSpeedSpinBox->value());
+            if (sendLineSpeedCommand(requestedLineSpeedMps)) {
+                lineSpeedStatusLabel->setText(
+                    QString("Enviando %1 m/s...").arg(requestedLineSpeedMps, 0, 'f', 2));
+            }
+        });
+    }
+
     ui->scrollArea_controls->setMinimumWidth(560);
     ui->scrollArea_controls->setMaximumWidth(900);
     ui->splitter_main->setStretchFactor(0, 6);
@@ -1450,6 +1490,55 @@ void MainWindow::OnUdpRxData()
     } // while
 }
 
+bool MainWindow::sendLineSpeedCommand(float speedMps)
+{
+    // Trama UNER: cmd (1) + float32 (4) + checksum (1) => NBYTES=6.
+    _udat value;
+    value.f32 = speedMps;
+    QByteArray frame;
+    frame.reserve(12);
+    frame.append("UNER", 4);
+    frame.append(char(0x06));
+    frame.append(':');
+    frame.append(char(MODIFY_LINE_SPEED));
+    for (int i = 0; i < 4; ++i) frame.append(char(value.ui8[i]));
+
+    quint8 checksum = 0;
+    for (char byte : frame) checksum ^= static_cast<quint8>(byte);
+    frame.append(char(checksum));
+
+    qint64 sent = -1;
+    QString channel;
+    if (serial->isOpen() && serial->isWritable()) {
+        sent = serial->write(frame);
+        channel = "Serial";
+    } else if (UdpSocket1->state() == QAbstractSocket::BoundState &&
+               !clientAddress.isNull() && puertoremoto > 0) {
+        sent = UdpSocket1->writeDatagram(frame, clientAddress,
+                                         static_cast<quint16>(puertoremoto));
+        channel = "UDP";
+    } else {
+        const QString msg = "VELOCIDAD LINEA: Sin conexion Serial/UDP disponible.";
+        ui->textEdit_PROCCES->append(msg);
+        if (lineSpeedStatusLabel) lineSpeedStatusLabel->setText("Sin conexion disponible");
+        return false;
+    }
+
+    if (sent != frame.size()) {
+        const QString msg = QString("VELOCIDAD LINEA: Error de envio por %1").arg(channel);
+        ui->textEdit_PROCCES->append(msg);
+        if (lineSpeedStatusLabel) lineSpeedStatusLabel->setText(msg);
+        return false;
+    }
+
+    ui->textEdit_RAW->append(
+        QString("PC--%1-->STM32 MODIFY_LINE_SPEED=%2 m/s [%3]")
+            .arg(channel)
+            .arg(speedMps, 0, 'f', 2)
+            .arg(QString::fromLatin1(frame.toHex(' '))));
+    return true;
+}
+
 void MainWindow::sendDataUDP()
 {
     // --- Verificar que el socket esté realmente BIND (abierto para recibir) ---
@@ -1645,8 +1734,9 @@ void MainWindow::sendDataUDP()
     case MODIFY_LINE_SPEED: { // MODIFY_LINE_SPEED=0xC4
         dato[indice++] = MODIFY_LINE_SPEED;
 
-        double angle_val = QInputDialog::getDouble(this, "Angulo de seguidor de linea", "Angulo (grados):", 0.0, -100.0, 100.0, 3, &ok);
+        double angle_val = QInputDialog::getDouble(this, "Velocidad del seguidor de linea", "Objetivo (m/s):", 2.5, 0.2, 4.0, 2, &ok);
         if (!ok) return;
+        requestedLineSpeedMps = static_cast<float>(angle_val);
         w.f32 = (float)angle_val;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
@@ -1900,8 +1990,9 @@ void MainWindow::sendDataSerial(){
     case MODIFY_LINE_SPEED: { // MODIFY_LINE_SPEED=0xC4
         dato[indice++] = MODIFY_LINE_SPEED;
 
-        double angle_val = QInputDialog::getDouble(this, "Angulo de seguidor de linea", "Angulo (grados):", 0.0, -100.0, 100.0, 3, &ok);
+        double angle_val = QInputDialog::getDouble(this, "Velocidad del seguidor de linea", "Objetivo (m/s):", 2.5, 0.2, 4.0, 2, &ok);
         if (!ok) return;
+        requestedLineSpeedMps = static_cast<float>(angle_val);
         w.f32 = (float)angle_val;
         dato[indice++] = w.ui8[0];
         dato[indice++] = w.ui8[1];
@@ -2584,7 +2675,8 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     case MODIFY_LINE_SPEED :   // MODIFY_LINE_SPEED=0xC4
         if(datosRx[2]==ACK){
-            str="Se ha modificado el valor de LINE_SPEED correctamente!";
+            str=QString("Velocidad de linea aplicada: %1 m/s").arg(requestedLineSpeedMps, 0, 'f', 2);
+            if (lineSpeedStatusLabel) lineSpeedStatusLabel->setText(str);
         }
         ui->textEdit_PROCCES->append(str);
         break;
