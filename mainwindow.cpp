@@ -145,37 +145,98 @@ MainWindow::MainWindow(QWidget *parent)
         ui->textEdit_PROCCES->moveCursor(QTextCursor::End);
     });
 
-    // "Dato enviado" (textEdit_RAW) oculto por defecto — el usuario casi no lo mira
-    // y ocupaba la mitad del panel de texto de forma permanente. Se puede volver a
-    // mostrar con este botón tipo "tab", agregado como la primera hoja del splitter
-    // vertical (splitter_texts) que ya contenía RAW arriba / PROCCES abajo.
-    ui->textEdit_RAW->hide();
+    // Las consolas pasan a ser cajones al final del tablero scrolleable. Ambas
+    // arrancan colapsadas para priorizar siempre la operacion y los graficos.
+    QWidget *consoleDrawer = nullptr;
     {
-        auto *toggleBar = new QWidget(this);
+        consoleDrawer = new QWidget(ui->widget_controls);
+        consoleDrawer->setObjectName("dataConsoleDrawer");
+        auto *drawerLayout = new QVBoxLayout(consoleDrawer);
+        drawerLayout->setContentsMargins(0, 0, 0, 0);
+        drawerLayout->setSpacing(2);
+
+        auto *toggleBar = new QWidget(consoleDrawer);
         auto *toggleLayout = new QHBoxLayout(toggleBar);
         toggleLayout->setContentsMargins(4, 2, 4, 2);
-
-        auto *btnToggleRaw = new QPushButton("▾ Ver dato enviado", toggleBar);
-        btnToggleRaw->setObjectName("btnToggleRaw"); // apariencia definida en theme.qss
+        toggleLayout->setSpacing(6);
+        auto *btnToggleReceived = new QPushButton("\u25b8 Dato recibido", toggleBar);
+        auto *btnToggleRaw = new QPushButton("\u25b8 Dato enviado", toggleBar);
+        btnToggleReceived->setObjectName("btnToggleReceived");
+        btnToggleRaw->setObjectName("btnToggleRaw");
+        btnToggleReceived->setToolTip("Mostrar u ocultar datos recibidos");
+        btnToggleRaw->setToolTip("Mostrar u ocultar datos enviados");
+        toggleLayout->addWidget(btnToggleReceived);
         toggleLayout->addWidget(btnToggleRaw);
-        toggleBar->setFixedHeight(28);
+        toggleLayout->addStretch(1);
+        toggleBar->setFixedHeight(32);
+        drawerLayout->addWidget(toggleBar);
 
-        connect(btnToggleRaw, &QPushButton::clicked, this, [this, btnToggleRaw]() {
-            const bool nowVisible = !ui->textEdit_RAW->isVisible();
-            ui->textEdit_RAW->setVisible(nowVisible);
-            btnToggleRaw->setText(nowVisible ? "▴ Ocultar dato enviado" : "▾ Ver dato enviado");
+        ui->splitter_texts->setParent(consoleDrawer);
+        ui->splitter_texts->setOrientation(Qt::Horizontal);
+        ui->splitter_texts->setMinimumSize(0, 0);
+        ui->splitter_texts->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        ui->splitter_texts->setChildrenCollapsible(false);
+        drawerLayout->addWidget(ui->splitter_texts, 1);
+
+        auto updateDrawer = [this, consoleDrawer, btnToggleReceived, btnToggleRaw]() {
+            // isVisible() tambien depende de la visibilidad del splitter padre;
+            // isHidden() refleja solamente el estado explicito de cada consola.
+            const bool receivedOpen = !ui->textEdit_PROCCES->isHidden();
+            const bool rawOpen = !ui->textEdit_RAW->isHidden();
+            const bool anyOpen = receivedOpen || rawOpen;
+            ui->splitter_texts->setVisible(anyOpen);
+            consoleDrawer->setMinimumHeight(anyOpen ? 170 : 34);
+            consoleDrawer->setMaximumHeight(anyOpen ? 280 : 34);
+            btnToggleReceived->setText(receivedOpen ? "\u25be Ocultar dato recibido"
+                                                    : "\u25b8 Dato recibido");
+            btnToggleRaw->setText(rawOpen ? "\u25be Ocultar dato enviado"
+                                          : "\u25b8 Dato enviado");
+        };
+
+        connect(btnToggleReceived, &QPushButton::clicked, this,
+                [this, updateDrawer]() {
+            ui->textEdit_PROCCES->setVisible(ui->textEdit_PROCCES->isHidden());
+            updateDrawer();
+        });
+        connect(btnToggleRaw, &QPushButton::clicked, this,
+                [this, updateDrawer]() {
+            ui->textEdit_RAW->setVisible(ui->textEdit_RAW->isHidden());
+            updateDrawer();
         });
 
-        ui->splitter_texts->insertWidget(0, toggleBar);
+        ui->textEdit_PROCCES->hide();
+        ui->textEdit_RAW->hide();
+        updateDrawer();
     }
 
-    // Secciones plegables del panel de control: los grupos de tuning (PID
-    // Balance / PID Línea / Setpoint) arrancan colapsados — se despliegan con
-    // el indicador del título del grupo — para que conexión, comandos y
-    // control manual queden siempre a la vista sin scroll.
-    makeCollapsible(ui->groupBox_PID_Balance, false);
-    makeCollapsible(ui->groupBox_PID_Line, false);
-    makeCollapsible(ui->groupBox_Setpoint, false);
+    // Tablero operativo en dos columnas balanceadas. Conexion, comandos y
+    // joystick quedan juntos; los ajustes PID y Setpoint ocupan la otra columna.
+    while (QLayoutItem *item = ui->verticalLayout_6->takeAt(0)) delete item;
+    delete ui->verticalLayout_6;
+    auto *controlsGrid = new QGridLayout(ui->widget_controls);
+    controlsGrid->setObjectName("gridLayout_ControlsDashboard");
+    controlsGrid->setContentsMargins(6, 4, 6, 4);
+    controlsGrid->setHorizontalSpacing(10);
+    controlsGrid->setVerticalSpacing(8);
+    controlsGrid->addWidget(ui->groupBox_Conexion, 0, 0);
+    controlsGrid->addWidget(ui->groupBox_Comandos, 1, 0);
+    controlsGrid->addWidget(ui->groupBox_Manual, 2, 0);
+    controlsGrid->addWidget(ui->groupBox_PID_Balance, 0, 1);
+    controlsGrid->addWidget(ui->groupBox_PID_Line, 1, 1);
+    controlsGrid->addWidget(ui->groupBox_Setpoint, 2, 1);
+    controlsGrid->addWidget(consoleDrawer, 3, 0, 1, 2);
+    controlsGrid->setColumnStretch(0, 1);
+    controlsGrid->setColumnStretch(1, 1);
+    controlsGrid->setRowStretch(4, 1);
+
+    ui->scrollArea_controls->setMinimumWidth(560);
+    ui->scrollArea_controls->setMaximumWidth(900);
+    ui->splitter_main->setStretchFactor(0, 6);
+    ui->splitter_main->setStretchFactor(1, 5);
+    makeCollapsible(ui->groupBox_PID_Balance, true);
+    makeCollapsible(ui->groupBox_PID_Line, true);
+    makeCollapsible(ui->groupBox_Setpoint, true);
+    makeCollapsible(ui->groupBox_Manual, true);
 
     // Estado visual inicial del toggle de conexión (theme.qss: toggleState)
     setToggleState(ui->pushButton_OPENUDP, "off");

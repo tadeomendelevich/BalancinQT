@@ -176,15 +176,22 @@ QPushButton#btn_LEFT:pressed, QPushButton#btn_RIGHT:pressed {
 }
 
 /* Barra inferior "limpiar" y botón mostrar/ocultar dato enviado: discretos */
-QPushButton#pushButton, QPushButton#btnToggleRaw {
+QPushButton#pushButton, QPushButton#btnToggleRaw, QPushButton#btnToggleReceived {
     background-color: transparent;
     border: 1px solid #1f2731;
     color: #8a97a8;
     font-weight: normal;
 }
-QPushButton#pushButton:hover, QPushButton#btnToggleRaw:hover {
+QPushButton#pushButton:hover, QPushButton#btnToggleRaw:hover,
+QPushButton#btnToggleReceived:hover {
     background-color: #1c2531;
     color: #d8dfe8;
+}
+
+QWidget#dataConsoleDrawer {
+    background-color: #0c1117;
+    border: 1px solid #1f2731;
+    border-radius: 6px;
 }
 
 /* ---------------- Entradas ---------------- */
