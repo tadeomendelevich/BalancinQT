@@ -166,6 +166,25 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
         addGridLine(floorEntity, gridSize, offset, false, 0.3f, gridColor);
     }
 
+    // --- Cinta recorrida sobre el piso (alimentada por odometria WiFi) ---
+    // Un unico transform desplaza todo el historial para que la muestra actual
+    // quede bajo el robot, que permanece centrado en la camara.
+    m_groundTrailRoot = new Qt3DCore::QEntity(root);
+    m_groundTrailTransform = new Qt3DCore::QTransform(m_groundTrailRoot);
+    m_groundTrailRoot->addComponent(m_groundTrailTransform);
+
+    m_groundTapeMaterial = new Qt3DExtras::QPhongMaterial(m_groundTrailRoot);
+    m_groundTapeMaterial->setAmbient(QColor(2, 2, 3));
+    m_groundTapeMaterial->setDiffuse(QColor(10, 10, 13));
+    m_groundTapeMaterial->setSpecular(QColor(45, 50, 58));
+    m_groundTapeMaterial->setShininess(12.0f);
+
+    m_groundArrowMaterial = new Qt3DExtras::QPhongMaterial(m_groundTrailRoot);
+    m_groundArrowMaterial->setAmbient(QColor(20, 105, 150));
+    m_groundArrowMaterial->setDiffuse(QColor(55, 190, 245));
+    m_groundArrowMaterial->setSpecular(QColor(180, 235, 255));
+    m_groundArrowMaterial->setShininess(45.0f);
+
     // --- Tríada de ejes en el origen (X rojo, Y verde, Z azul, estilo CAD) ---
     addAxisLine(root, QVector3D(1, 0, 0), QColor(200,  60,  60), 70.0f);
     addAxisLine(root, QVector3D(0, 1, 0), QColor( 60, 180,  60), 70.0f);
@@ -308,6 +327,14 @@ RobotViewer3D::RobotViewer3D(QWidget *parent)
             if (on) m_orbitTimer->start(); else m_orbitTimer->stop();
         });
         btnRow->addWidget(btnOrbit);
+
+        auto *btnClearTrail = new QPushButton("Borrar cinta", this);
+        btnClearTrail->setFixedHeight(24);
+        btnClearTrail->setFocusPolicy(Qt::NoFocus);
+        btnClearTrail->setToolTip("Borra solamente la cinta y las flechas del piso 3D");
+        connect(btnClearTrail, &QPushButton::clicked,
+                this, &RobotViewer3D::clearGroundTrail);
+        btnRow->addWidget(btnClearTrail);
 
         btnRow->addStretch();
 
@@ -473,6 +500,142 @@ void RobotViewer3D::setFrontObstacle(bool present, float distMeters)
     m_obsPresent = present;
     m_obsDistM   = distMeters;
     applyModelTransform();   // re-evalúa visibilidad/posición con la pose actual
+}
+
+void RobotViewer3D::createGroundTapeSegment(float x0, float y0, float x1, float y1)
+{
+    if (!m_groundTrailRoot || !m_groundTapeMaterial)
+        return;
+
+    constexpr float unitsPerMeter = 100.0f;
+    const float dx = x1 - x0;
+    const float dy = y1 - y0;
+    const float length = qSqrt(dx * dx + dy * dy) * unitsPerMeter;
+    if (length < 0.4f)
+        return;
+
+    auto *entity = new Qt3DCore::QEntity(m_groundTrailRoot);
+    auto *mesh = new Qt3DExtras::QCuboidMesh(entity);
+    auto *transform = new Qt3DCore::QTransform(entity);
+    mesh->setXExtent(length);
+    mesh->setYExtent(0.9f);
+    mesh->setZExtent(5.0f); // cinta de unos 5 cm en la escala del visor
+
+    const float sceneX = (x0 + x1) * 0.5f * unitsPerMeter;
+    const float sceneZ = -(y0 + y1) * 0.5f * unitsPerMeter;
+    const float angleDeg = qRadiansToDegrees(qAtan2(dy, dx));
+    transform->setTranslation(QVector3D(sceneX, 1.0f, sceneZ));
+    transform->setRotation(
+        QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), angleDeg));
+    entity->addComponent(mesh);
+    entity->addComponent(transform);
+    entity->addComponent(m_groundTapeMaterial);
+    m_groundTrailItems.append(entity);
+}
+
+void RobotViewer3D::createGroundDirectionArrow(float x, float y, float dx, float dy)
+{
+    if (!m_groundTrailRoot || !m_groundArrowMaterial)
+        return;
+
+    constexpr float unitsPerMeter = 100.0f;
+    auto *arrow = new Qt3DCore::QEntity(m_groundTrailRoot);
+    auto *arrowTransform = new Qt3DCore::QTransform(arrow);
+    const float angleDeg = qRadiansToDegrees(qAtan2(dy, dx));
+    arrowTransform->setTranslation(QVector3D(x * unitsPerMeter, 2.0f,
+                                             -y * unitsPerMeter));
+    arrowTransform->setRotation(
+        QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), angleDeg));
+    arrow->addComponent(arrowTransform);
+
+    auto addBar = [this, arrow](float length, float localX, float localZ, float localYaw) {
+        auto *bar = new Qt3DCore::QEntity(arrow);
+        auto *mesh = new Qt3DExtras::QCuboidMesh(bar);
+        auto *transform = new Qt3DCore::QTransform(bar);
+        mesh->setXExtent(length);
+        mesh->setYExtent(0.8f);
+        mesh->setZExtent(2.2f);
+        transform->setTranslation(QVector3D(localX, 0.0f, localZ));
+        transform->setRotation(
+            QQuaternion::fromAxisAndAngle(QVector3D(0.0f, 1.0f, 0.0f), localYaw));
+        bar->addComponent(mesh);
+        bar->addComponent(transform);
+        bar->addComponent(m_groundArrowMaterial);
+    };
+
+    // Flecha local apuntando a +X: asta + dos alas del cabezal.
+    addBar(12.0f, -1.0f,  0.0f,   0.0f);
+    addBar( 8.0f,  3.0f,  2.4f,  38.0f);
+    addBar( 8.0f,  3.0f, -2.4f, -38.0f);
+    m_groundTrailItems.append(arrow);
+}
+
+void RobotViewer3D::trimGroundTrail()
+{
+    // Varios minutos a 2 Hz sin permitir crecimiento ilimitado de entidades.
+    while (m_groundTrailItems.size() > 1200) {
+        Qt3DCore::QEntity *oldest = m_groundTrailItems.takeFirst();
+        delete oldest;
+    }
+}
+
+void RobotViewer3D::addGroundTrailSample(float xMeters, float yMeters, bool lineDetected)
+{
+    constexpr float unitsPerMeter = 100.0f;
+    if (m_groundTrailTransform) {
+        // Mapeo odometria (X,Y) -> escena (X,-Z); la muestra actual queda en cero.
+        m_groundTrailTransform->setTranslation(
+            QVector3D(-xMeters * unitsPerMeter, 0.0f, yMeters * unitsPerMeter));
+    }
+
+    if (!lineDetected) {
+        m_groundTrailHasPrev = false;
+        m_groundArrowAccumM = 0.0f;
+        return;
+    }
+
+    if (!m_groundTrailHasPrev) {
+        m_groundTrailPrevX = xMeters;
+        m_groundTrailPrevY = yMeters;
+        m_groundTrailHasPrev = true;
+        return;
+    }
+
+    const float dx = xMeters - m_groundTrailPrevX;
+    const float dy = yMeters - m_groundTrailPrevY;
+    const float stepM = qSqrt(dx * dx + dy * dy);
+    if (stepM < 0.004f)
+        return; // quieto: no dibujar ruido de odometria
+
+    if (stepM > 3.0f) {
+        // Salto por reset/reconexion: no cruzar el piso con una recta falsa.
+        m_groundTrailPrevX = xMeters;
+        m_groundTrailPrevY = yMeters;
+        m_groundArrowAccumM = 0.0f;
+        return;
+    }
+
+    createGroundTapeSegment(m_groundTrailPrevX, m_groundTrailPrevY, xMeters, yMeters);
+    m_groundArrowAccumM += stepM;
+    if (m_groundArrowAccumM >= 0.30f) {
+        // Usa el delta real: si el robot retrocede, la flecha apunta hacia atras.
+        createGroundDirectionArrow(xMeters, yMeters, dx, dy);
+        m_groundArrowAccumM = 0.0f;
+    }
+    m_groundTrailPrevX = xMeters;
+    m_groundTrailPrevY = yMeters;
+    trimGroundTrail();
+}
+
+void RobotViewer3D::clearGroundTrail()
+{
+    for (Qt3DCore::QEntity *item : qAsConst(m_groundTrailItems))
+        delete item;
+    m_groundTrailItems.clear();
+    m_groundTrailHasPrev = false;
+    m_groundArrowAccumM = 0.0f;
+    if (m_groundTrailTransform)
+        m_groundTrailTransform->setTranslation(QVector3D());
 }
 
 void RobotViewer3D::animatePoseTo(float pitchDeg, float yawDeg, float latDeg)

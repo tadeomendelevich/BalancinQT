@@ -2257,6 +2257,8 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         healthDashboard->onRobotState(odata->robot_state);
         updateOdomChart(odata->x_m, odata->y_m, odata->theta_deg, odata->line_detected != 0, odata->line_state,
                         odata->adc5, odata->adc6, odata->adc7, odata->adc8, odata->t_ms);
+        robotViewer3D->addGroundTrailSample(odata->x_m, odata->y_m,
+                                            odata->line_detected != 0);
         // Balanceo + rumbo → Vista 3D: el modelo se inclina Y gira como el robot
         // real siempre que haya WiFi, sin necesidad de activar el log de control
         // (que sigue alimentando solo el pitch, a 10 Hz, y conserva este rumbo).
@@ -2280,9 +2282,10 @@ void MainWindow::decodeData(uint8_t *datosRx, uint8_t source){
         break;
     }
     case RESET_ODOMETRY: // RESET_ODOMETRY=0xDB — respuesta: ACK
-        if (datosRx[2] == ACK)
+        if (datosRx[2] == ACK) {
             str = "ODOMETRIA RESETEADA (ACK)";
-        else
+            robotViewer3D->clearGroundTrail();
+        } else
             str = "RESET_ODOMETRY: NO ACK!";
         ui->textEdit_PROCCES->append(str);
         break;
@@ -3094,6 +3097,7 @@ void MainWindow::updateHeadingArrow(double x, double y, double thetaDeg)
 
 void MainWindow::clearOdomMap()
 {
+    robotViewer3D->clearGroundTrail();
     odomTrailSeries->clear();
     odomCurrentSeries->clear();
     odomLostMarkers->clear();

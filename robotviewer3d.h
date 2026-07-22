@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QVector3D>
+#include <QList>
 
 class QLabel;
 class QTimer;
@@ -29,6 +30,10 @@ public:
     // modelo. Solo se muestra con roll entre -90° y +30° (la condición vive acá,
     // evaluada sobre la pose MOSTRADA para que acompañe la interpolación).
     void setFrontObstacle(bool present, float distMeters);
+    // Dibuja sobre el piso la cinta recorrida usando odometria. El robot queda
+    // centrado y las flechas indican el sentido real del movimiento.
+    void addGroundTrailSample(float xMeters, float yMeters, bool lineDetected);
+    void clearGroundTrail();
     void setView(ViewPreset preset);
 
 private:
@@ -38,6 +43,9 @@ private:
                        float latDeg);                 // interpola la pose mostrada hacia el objetivo
     void goToView(const QVector3D &pos, const QVector3D &center,
                   const QVector3D &up, bool animated = true);
+    void createGroundTapeSegment(float x0, float y0, float x1, float y1);
+    void createGroundDirectionArrow(float x, float y, float dx, float dy);
+    void trimGroundTrail();
 
     Qt3DExtras::Qt3DWindow     *m_view;
     Qt3DCore::QTransform       *m_robotTransform;
@@ -53,6 +61,18 @@ private:
     Qt3DExtras::QPhongAlphaMaterial *m_obstacleMaterial  = nullptr;
     bool  m_obsPresent = false;
     float m_obsDistM   = 0.36f;   // distancia estimada (m), mapeo crudo ADC→m del llamador
+
+    // Cinta recorrida sobre el piso. Coordenadas odometricas absolutas dentro
+    // del root; el transform las recentra para mantener el robot en (0,0).
+    Qt3DCore::QEntity          *m_groundTrailRoot      = nullptr;
+    Qt3DCore::QTransform       *m_groundTrailTransform = nullptr;
+    Qt3DExtras::QPhongMaterial *m_groundTapeMaterial   = nullptr;
+    Qt3DExtras::QPhongMaterial *m_groundArrowMaterial  = nullptr;
+    QList<Qt3DCore::QEntity*>   m_groundTrailItems;
+    bool  m_groundTrailHasPrev = false;
+    float m_groundTrailPrevX   = 0.0f;
+    float m_groundTrailPrevY   = 0.0f;
+    float m_groundArrowAccumM  = 0.0f;
 
     // Pose objetivo (última recibida) y pose mostrada (interpolada, para que el
     // dato de 2 Hz no se vea a saltos).
